@@ -1318,6 +1318,10 @@ a { color: inherit; text-decoration: inherit; }
                     <button onclick="applyPieceColor('midnight')" id="arena-piece-color-midnight" title="Midnight Indigo" class="w-5 h-5 rounded-full border border-slate-600" style="background:linear-gradient(135deg,#818cf8 50%,#1e1b4b 50%)"></button>
                 </div>
                 <div class="chess-board-wrapper"><div id="play-board" class="chess-board"></div></div>
+                <div id="arena-stalemate-banner" class="hidden" role="status" aria-live="assertive" style="margin-top:10px;padding:12px 16px;border:1px solid rgba(251,191,36,.65);border-radius:14px;background:linear-gradient(135deg,rgba(120,83,18,.28),rgba(30,41,59,.96));text-align:center;color:#fef3c7;box-shadow:0 8px 24px rgba(0,0,0,.18)">
+                    <div style="font-weight:900;letter-spacing:.12em;font-size:14px">STALEMATE — DRAW</div>
+                    <div style="margin-top:3px;font-size:12px;color:#cbd5e1">No legal moves available, and the king is not in check.</div>
+                </div>
                 <!-- Player clock (bottom) with review buttons in lower-right -->
                 <div class="flex items-center justify-between">
                     <div class="chess-clock flex-1 mr-2" id="clock-player">
@@ -2344,6 +2348,7 @@ let lockedRepertoireMoves = [];
 // AUDIO SYSTEM
 // ── MOVE SOUNDS (pure Web Audio — no external files, always works) ──
 let sharedAudioCtx = null;
+let stalemateSoundPlayed = false;
 function getSharedAudioCtx() {
     if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
         sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2412,6 +2417,42 @@ function playCheckmateSound() {
         thudGain.gain.exponentialRampToValueAtTime(0.0001, t + 1.5);
         thud.start(t + 0.9); thud.stop(t + 1.6);
     } catch(e) {}
+}
+
+function playStalemateSound() {
+    // A short, calm descending chime distinct from the checkmate sound.
+    try {
+        const ctx = getSharedAudioCtx();
+        const t = ctx.currentTime;
+        [659.25, 523.25, 392.00].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = 'sine';
+            const start = t + i * 0.16;
+            osc.frequency.setValueAtTime(freq, start);
+            gain.gain.setValueAtTime(0.0001, start);
+            gain.gain.exponentialRampToValueAtTime(0.16, start + 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.30);
+            osc.start(start); osc.stop(start + 0.32);
+        });
+    } catch (e) {}
+}
+
+function updateStalemateIndicator() {
+    const banner = document.getElementById('arena-stalemate-banner');
+    if (!banner) return;
+    let stalemate = false;
+    try {
+        stalemate = !!game && typeof game.in_stalemate === 'function' && game.in_stalemate();
+    } catch (e) {}
+    banner.classList.toggle('hidden', !stalemate);
+    if (stalemate && !stalemateSoundPlayed) {
+        stalemateSoundPlayed = true;
+        playStalemateSound();
+    } else if (!stalemate) {
+        stalemateSoundPlayed = false;
+    }
 }
 
 function playSynthBeep(isError = false) {
@@ -5150,6 +5191,7 @@ function setBotDifficulty(diff) {
 
 function initPlayBoard() {
     // If we're loading an ECO system, don't wipe the state
+    stalemateSoundPlayed = false;
     if (lockedRepertoireMode) { return; }
     game = createChessInstance(); playSelectedSquare = null; lastPlayMove = null;
     openingBookActive = false; openingBookMoves = [];
@@ -5167,6 +5209,7 @@ function initPlayBoard() {
 
 function renderPlayBoardUI() {
     const boardEl = document.getElementById('play-board'); if(!boardEl) return;
+    updateStalemateIndicator();
     boardEl.innerHTML = '';
 
     // Review mode: build a snapshot game replayed to reviewIndex
