@@ -3805,7 +3805,7 @@ function squareToRC(sq) {
                 const file = document.createElement('span');
                 file.className = `square-coordinate file-coordinate ${tone}`;
                 file.textContent = String(fileLabel);
-                file.style[flipped ? 'top' : 'bottom'] = '2px';
+                file.style.bottom = '2px';
                 file.style[flipped ? 'left' : 'right'] = '3px';
                 squareEl.appendChild(file);
             }
