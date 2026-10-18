@@ -5228,7 +5228,7 @@ function renderPlayBoardUI() {
             addSquareCoordinates(
                 sq,
                 (playerSide === 'white' ? colIdx === 0 : colIdx === 7) ? 8 - r : null,
-                (playerSide === 'white' ? rowIdx === 7 : rowIdx === 0) ? files[c] : null,
+                rowIdx === 7 ? files[c] : null,
                 playerSide !== 'white'
             );
 
