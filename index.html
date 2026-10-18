@@ -6446,9 +6446,10 @@ function useCheckmateHint() {
     const puzzle = labsCheckmatePuzzles[labsCheckmatePuzzleIdx]; if (!puzzle) return;
     labsCheckmateLives--;
     renderCheckmateLives();
-    // Highlight the solution square
-    const sol = (puzzle.solution || '').replace(/[+#]/g, '').trim().toLowerCase();
-    labsHighlightSqs = [sol];
+    // Highlight the destination square from the move's SAN (e.g. Re8# -> e8).
+    // The full SAN string is not itself a valid board-square coordinate.
+    const destination = (puzzle.move || puzzle.solution || '').match(/([a-h][1-8])(?:[+#?!]*)$/i);
+    labsHighlightSqs = destination ? [destination[1].toLowerCase()] : [];
     renderLabsBoard();
     try { playSynthBeep(false); } catch(e){}
     if (labsCheckmateLives <= 0) {
