@@ -3414,9 +3414,11 @@ function switchTab(tabId) {
     const hideHeader = tabId === 'home' || tabId === 'landing' || tabId === 'play';
     if (headerEl) headerEl.classList.toggle('hidden', hideHeader);
 
-    // Hide all sections, then show target section
+    // Hide all sections with the site's !important .hidden utility.
+    // Inline display:none is overridden by utility classes such as .flex !important.
     document.querySelectorAll('.tab-content').forEach(el => {
-        el.style.display = 'none';
+        el.classList.add('hidden');
+        el.style.removeProperty('display');
     });
 
     let targetSectionId = tabId;
@@ -3424,7 +3426,8 @@ function switchTab(tabId) {
 
     const targetEl = document.getElementById(`tab-${targetSectionId}`);
     if (targetEl) {
-        targetEl.style.display = 'block';
+        targetEl.classList.remove('hidden');
+        targetEl.style.removeProperty('display');
     }
 
     // Update Desktop Navigation Bar
