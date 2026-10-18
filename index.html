@@ -649,6 +649,10 @@ a { color: inherit; text-decoration: inherit; }
         .chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); position: absolute; inset: 0; border-radius: 0.75rem; overflow: hidden; border: 1px solid #334155; }
         #results-chess-board { max-width: 340px; }
         .square { display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; width: 100%; height: 100%; }
+        .square-coordinate { position: absolute; z-index: 2; pointer-events: none; font: 800 clamp(8px, 1.5vw, 12px)/1 sans-serif; line-height: 1; user-select: none; }
+        .square-coordinate.on-light { color: #334155; }
+        .square-coordinate.on-dark { color: #f8fafc; }
+
         .square.light { background: #e2e8f0; }
         .square.dark { background: #64748b; }
         .square.selected { box-shadow: inset 0 0 0 3px #22d3ee; }
@@ -3785,6 +3789,28 @@ function squareToRC(sq) {
     return { r, c };
 }
 
+
+        /* Coordinate labels are part of each board square, so they follow the board when it is flipped. */
+        function addSquareCoordinates(squareEl, rankLabel, fileLabel, flipped = false) {
+            const tone = squareEl.classList.contains('dark') ? 'on-dark' : 'on-light';
+            if (rankLabel !== null && rankLabel !== undefined) {
+                const rank = document.createElement('span');
+                rank.className = `square-coordinate rank-coordinate ${tone}`;
+                rank.textContent = String(rankLabel);
+                rank.style.top = '2px';
+                rank.style[flipped ? 'right' : 'left'] = '3px';
+                squareEl.appendChild(rank);
+            }
+            if (fileLabel !== null && fileLabel !== undefined) {
+                const file = document.createElement('span');
+                file.className = `square-coordinate file-coordinate ${tone}`;
+                file.textContent = String(fileLabel);
+                file.style[flipped ? 'top' : 'bottom'] = '2px';
+                file.style[flipped ? 'left' : 'right'] = '3px';
+                squareEl.appendChild(file);
+            }
+        }
+
 function renderResultsBoardUI() {
     const boardEl = document.getElementById('results-chess-board'); if(!boardEl) return;
     boardEl.innerHTML = '';
@@ -3805,6 +3831,7 @@ function renderResultsBoardUI() {
             const isDark = (r + c) % 2 === 1;
             const isSelected = isPracticeMode && practiceSelectedSquare && practiceSelectedSquare.r === r && practiceSelectedSquare.c === c;
             sq.className = `square ${isDark ? 'dark' : 'light'} ${isSelected ? 'selected' : ''}`;
+            addSquareCoordinates(sq, c === 0 ? 8 - r : null, r === 7 ? String.fromCharCode(97 + c) : null, false);
 
             // Last-move gradient arrow overlay (from = lighter tint, to = stronger tint)
             if (lastFrom && lastFrom.r === r && lastFrom.c === c) {
@@ -5197,6 +5224,13 @@ function renderPlayBoardUI() {
                 isLegalMove    ? 'legal-move'    : '',
                 isLegalCapture ? 'legal-capture' : ''
             ].filter(Boolean).join(' ');
+            // Keep coordinates aligned with the visible orientation, not the underlying board array.
+            addSquareCoordinates(
+                sq,
+                (playerSide === 'white' ? colIdx === 0 : colIdx === 7) ? 8 - r : null,
+                (playerSide === 'white' ? rowIdx === 7 : rowIdx === 0) ? files[c] : null,
+                playerSide !== 'white'
+            );
 
             // Gold hint glow on destination square (overrides last-move if both active)
             if (hintRC && hintRC.r === r && hintRC.c === c) {
@@ -5912,6 +5946,7 @@ function renderLabsBoard() {
             const sqName = String.fromCharCode(97 + c) + (8 - r);
             const isSelected = labsSelectedSq && labsSelectedSq.r === r && labsSelectedSq.c === c;
             sq.className = `square ${isDark ? 'dark' : 'light'} ${isSelected ? 'selected' : ''}`;
+            addSquareCoordinates(sq, colIdx === 0 ? 8 - r : null, rowIdx === 7 ? String.fromCharCode(97 + c) : null, false);
             if (labsHighlightSqs.includes(sqName)) sq.style.boxShadow = 'inset 0 0 0 4px #22D3EE';
             const pieceObj = boardData[r][c];
             const symbol = pieceObj ? (pieceObj.color === 'w' ? pieceObj.type.toUpperCase() : pieceObj.type.toLowerCase()) : '';
