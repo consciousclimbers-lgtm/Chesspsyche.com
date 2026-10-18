@@ -986,6 +986,7 @@ a { color: inherit; text-decoration: inherit; }
                     <h3 class="text-lg font-black text-white">Checkmate Lab</h3>
                     <p class="text-slate-400 text-xs leading-relaxed">5 puzzles per skill level. Find the mating move — limited lives based on difficulty.</p>
                 </button>
+                <button onclick="startLabsBoardEditor()" class="group bg-slate800 border border-slate-700 hover:border-accentCyan/60 rounded-2xl p-6 text-left space-y-2 transition-all hover:-translate-y-0.5"><div class="text-3xl">♜</div><h3 class="text-lg font-black text-white">Board Editor</h3><p class="text-slate-400 text-xs leading-relaxed">Build a position square by square, use labeled coordinates, and copy or load FEN.</p></button>
                 <button onclick="showLabsLeaderboard()" class="group bg-slate800 border border-slate-700 hover:border-accentCyan/60 rounded-2xl p-6 text-left space-y-2 transition-all hover:-translate-y-0.5">
                     <div class="text-3xl">📊</div>
                     <h3 class="text-lg font-black text-white">My Stats</h3>
@@ -1001,7 +1002,7 @@ a { color: inherit; text-decoration: inherit; }
             <!-- Labs active area (hidden until a drill is picked) -->
             <div id="labs-active" class="hidden space-y-4">
                 <!-- Drill header bar -->
-                <div class="flex items-center justify-between gap-3 flex-wrap">
+                <div id="labs-drill-header" class="flex items-center justify-between gap-3 flex-wrap">
                     <div class="flex items-center gap-3">
                         <span id="labs-drill-title" class="text-base font-black gradient-text"></span>
                         <span id="labs-session-badge" class="text-xs font-mono text-accentCyan bg-accentCyan/10 border border-accentCyan/30 px-2.5 py-1 rounded-lg hidden"></span>
@@ -1023,6 +1024,18 @@ a { color: inherit; text-decoration: inherit; }
                     </div>
                 </div>
 
+
+                <div id="labs-board-editor" class="hidden space-y-4">
+                    <div class="flex items-start justify-between gap-3 flex-wrap"><div><h3 class="text-xl font-black text-white">Board Editor</h3><p class="text-sm text-slate-400 mt-1">Choose a piece, then click a square to place it. Select Eraser to remove pieces.</p></div><button onclick="exitLabsDrill()" class="px-3 py-2 rounded-xl bg-slate800 border border-slate-700 text-slate-300 text-sm font-bold">Back to Chess Labs</button></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                        <div class="bg-slate800 border border-slate-700 rounded-2xl p-3 sm:p-4 min-w-0"><div class="flex items-center justify-between mb-3"><span class="text-xs font-black uppercase tracking-wider text-slate-400">Position board</span><button onclick="flipLabsEditorBoard()" id="labs-editor-flip-btn" class="px-2.5 py-1.5 rounded-lg bg-slate900 border border-slate-700 text-xs font-bold text-slate-300">Flip board</button></div><div id="labs-editor-board" class="chess-board" role="grid" aria-label="Labeled chess position editor board"></div><p class="text-[11px] text-slate-500 mt-3">Files a–h and ranks 1–8 are labeled on the board. Flipping changes the view, not square names.</p></div>
+                        <div class="space-y-4 min-w-0">
+                            <div class="bg-slate900 border border-slate-700 rounded-2xl p-4"><h4 class="text-sm font-black text-white mb-3">White pieces</h4><div class="grid grid-cols-6 gap-2 mb-4"><button onclick="selectLabsEditorPiece('K')" data-editor-piece="K" class="labs-editor-piece" title="White king">♔</button><button onclick="selectLabsEditorPiece('Q')" data-editor-piece="Q" class="labs-editor-piece" title="White queen">♕</button><button onclick="selectLabsEditorPiece('R')" data-editor-piece="R" class="labs-editor-piece" title="White rook">♖</button><button onclick="selectLabsEditorPiece('B')" data-editor-piece="B" class="labs-editor-piece" title="White bishop">♗</button><button onclick="selectLabsEditorPiece('N')" data-editor-piece="N" class="labs-editor-piece" title="White knight">♘</button><button onclick="selectLabsEditorPiece('P')" data-editor-piece="P" class="labs-editor-piece" title="White pawn">♙</button></div><h4 class="text-sm font-black text-white mb-3">Black pieces</h4><div class="grid grid-cols-6 gap-2 mb-4"><button onclick="selectLabsEditorPiece('k')" data-editor-piece="k" class="labs-editor-piece" title="Black king">♚</button><button onclick="selectLabsEditorPiece('q')" data-editor-piece="q" class="labs-editor-piece" title="Black queen">♛</button><button onclick="selectLabsEditorPiece('r')" data-editor-piece="r" class="labs-editor-piece" title="Black rook">♜</button><button onclick="selectLabsEditorPiece('b')" data-editor-piece="b" class="labs-editor-piece" title="Black bishop">♝</button><button onclick="selectLabsEditorPiece('n')" data-editor-piece="n" class="labs-editor-piece" title="Black knight">♞</button><button onclick="selectLabsEditorPiece('p')" data-editor-piece="p" class="labs-editor-piece" title="Black pawn">♟</button></div><div class="flex flex-wrap gap-2"><button onclick="selectLabsEditorPiece('')" data-editor-piece="" class="px-3 py-2 rounded-lg bg-slate800 border border-slate-600 text-xs font-bold text-slate-300">⌫ Eraser</button><button onclick="resetLabsEditorBoard()" class="px-3 py-2 rounded-lg bg-slate800 border border-slate-600 text-xs font-bold text-slate-300">Starting position</button><button onclick="clearLabsEditorBoard()" class="px-3 py-2 rounded-lg bg-slate800 border border-red-500/40 text-xs font-bold text-red-300">Clear board</button></div><p id="labs-editor-selection" class="text-xs text-accentCyan mt-3" role="status">Selected: White queen</p></div>
+                            <div class="bg-slate900 border border-slate-700 rounded-2xl p-4 space-y-3"><label for="labs-editor-turn" class="block text-xs font-bold text-slate-400">Side to move</label><select id="labs-editor-turn" onchange="updateLabsEditorFen()" class="w-full px-3 py-2 rounded-lg bg-slate800 border border-slate-700 text-sm text-slate-200"><option value="w">White to move</option><option value="b">Black to move</option></select><label for="labs-editor-fen" class="block text-xs font-bold text-slate-400">FEN position</label><textarea id="labs-editor-fen" rows="3" spellcheck="false" class="w-full px-3 py-2 rounded-lg bg-slate800 border border-slate-700 text-xs font-mono text-slate-200" placeholder="FEN position"></textarea><p class="text-[11px] text-slate-500">Board edits update FEN automatically. Load FEN checks it with the chess rules engine.</p><div class="flex flex-wrap gap-2"><button onclick="loadLabsEditorFen()" class="px-3 py-2 rounded-lg gradient-btn text-white text-xs font-black">Load FEN</button><button onclick="copyLabsEditorFen()" class="px-3 py-2 rounded-lg bg-slate800 border border-accentCyan/40 text-accentCyan text-xs font-black">Copy FEN</button></div><p id="labs-editor-status" class="text-xs text-slate-400" role="status" aria-live="polite">Ready. Place pieces to build a position.</p></div>
+                            <div class="bg-slate900/70 border border-slate-700/70 rounded-xl p-3 text-xs text-slate-400 leading-relaxed"><strong class="text-slate-200">Sound:</strong> Piece placement and removal use the same move sound as Play Arena. Your browser may require a click before sound is allowed. Selecting a piece is silent.</div>
+                        </div>
+                    </div>
+                </div>
                 <!-- Drill prompt / question -->
                 <div id="labs-prompt" class="bg-slate900 border border-accentPurple/30 rounded-xl px-4 py-3 text-sm text-slate-300 leading-snug hidden"></div>
 
@@ -5883,6 +5896,10 @@ let labsGmMoveIdx = 0;
 let labsHistoryGame = null;
 let labsHistoryMoveIdx = 0;
 let labsHighlightSqs = [];
+let labsEditorPieces = {};
+let labsEditorSelectedPiece = "Q";
+let labsEditorFlipped = false;
+let labsEditorFenMeta = {turn:"w",castling:"KQkq",ep:"-",halfmove:"0",fullmove:"1"};
 
 const LABS_FAMOUS_GAMES = [
     { title:"Immortal Game (Anderssen vs Kieseritzky, 1851)", white:"Adolf Anderssen", black:"Lionel Kieseritzky",
@@ -5917,13 +5934,68 @@ const LABS_FAMOUS_GAMES = [
       keyMoves:[4,8,12,16,22,28,32], note:"Morphy plays a King's Gambit — brilliance in every move." },
 ];
 
+
+function startLabsBoardEditor() {
+ stopLabsTimer(); stopSpeedRunTimer(); labsCurrentDrill="board-editor";
+ document.getElementById("labs-drill-picker").classList.add("hidden"); document.getElementById("labs-active").classList.remove("hidden"); document.getElementById("labs-drill-header").classList.add("hidden");
+ ["labs-session-done","labs-gm-picker","labs-history-picker","labs-board-area","labs-prompt","labs-feedback","labs-next-btn","labs-history-nav","labs-move-commentary","labs-score-bar","labs-endgame-picker","labs-checkmate-picker","labs-opening-eco-picker","labs-speedrun-ui","labs-leaderboard-panel","labs-gm-deeplink","labs-elo-panel"].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add("hidden");});
+ document.getElementById("labs-board-editor").classList.remove("hidden"); labsEditorFlipped=false; resetLabsEditorBoard(false);
+}
+function selectLabsEditorPiece(piece) {
+ labsEditorSelectedPiece=piece; const names={K:"White king",Q:"White queen",R:"White rook",B:"White bishop",N:"White knight",P:"White pawn",k:"Black king",q:"Black queen",r:"Black rook",b:"Black bishop",n:"Black knight",p:"Black pawn"};
+ const status=document.getElementById("labs-editor-selection");if(status)status.textContent="Selected: "+(piece?names[piece]:"Eraser");
+ document.querySelectorAll("[data-editor-piece]").forEach(btn=>{const active=btn.getAttribute("data-editor-piece")===piece;btn.classList.toggle("ring-2",active);btn.classList.toggle("ring-accentCyan",active);btn.classList.toggle("border-accentCyan",active);});
+}
+function resetLabsEditorBoard(playSound=true) {
+ labsEditorPieces={};["rnbqkbnr","pppppppp","........","........","........","........","PPPPPPPP","RNBQKBNR"].forEach((row,ri)=>Array.from(row).forEach((p,ci)=>{if(p!==".")labsEditorPieces[String.fromCharCode(97+ci)+(8-ri)]=p;}));
+ labsEditorFenMeta={turn:"w",castling:"KQkq",ep:"-",halfmove:"0",fullmove:"1"};const turn=document.getElementById("labs-editor-turn");if(turn)turn.value="w";
+ labsEditorFlipped=false;renderLabsEditorBoard();updateLabsEditorFen();selectLabsEditorPiece(labsEditorSelectedPiece||"Q");const flip=document.getElementById("labs-editor-flip-btn");if(flip)flip.textContent="Flip board";
+ const status=document.getElementById("labs-editor-status");if(status)status.textContent="Starting position restored.";if(playSound&&typeof playMoveSound==="function")playMoveSound();
+}
+function clearLabsEditorBoard() {
+ labsEditorPieces={};labsEditorFenMeta={turn:"w",castling:"-",ep:"-",halfmove:"0",fullmove:"1"};const turn=document.getElementById("labs-editor-turn");if(turn)turn.value="w";renderLabsEditorBoard();updateLabsEditorFen();
+ const status=document.getElementById("labs-editor-status");if(status)status.textContent="Board cleared. Place pieces to build a position.";if(typeof playMoveSound==="function")playMoveSound();
+}
+function flipLabsEditorBoard() {labsEditorFlipped=!labsEditorFlipped;renderLabsEditorBoard();const btn=document.getElementById("labs-editor-flip-btn");if(btn)btn.textContent=labsEditorFlipped?"Flip to White":"Flip to Black";}
+function renderLabsEditorBoard() {
+ const board=document.getElementById("labs-editor-board");if(!board)return;board.innerHTML="";
+ for(let vr=0;vr<8;vr++)for(let vc=0;vc<8;vc++){
+  const r=labsEditorFlipped?7-vr:vr,c=labsEditorFlipped?7-vc:vc,name=String.fromCharCode(97+c)+(8-r),dark=(r+c)%2===1,piece=labsEditorPieces[name]||"";
+  const sq=document.createElement("button");sq.type="button";sq.className="square "+(dark?"dark":"light");sq.style.position="relative";sq.style.padding="0";sq.style.border="0";sq.style.minWidth="0";sq.setAttribute("role","gridcell");sq.setAttribute("aria-label",name+(piece?", piece "+piece:", empty"));sq.title=name;if(piece)sq.innerHTML=getPieceSVG(piece);
+  if((labsEditorFlipped?vc===7:vc===0)){const el=document.createElement("span");el.textContent=name[1];el.style.cssText="position:absolute;top:2px;left:3px;font-size:clamp(8px,1.5vw,11px);font-weight:900;line-height:1;opacity:.8;pointer-events:none;color:"+(dark?"#fff":"#111827");sq.appendChild(el);}
+  if((labsEditorFlipped?vr===0:vr===7)){const el=document.createElement("span");el.textContent=name[0];el.style.cssText="position:absolute;bottom:2px;right:3px;font-size:clamp(8px,1.5vw,11px);font-weight:900;line-height:1;opacity:.8;pointer-events:none;color:"+(dark?"#fff":"#111827");sq.appendChild(el);}
+  sq.addEventListener("click",()=>{if(labsEditorSelectedPiece)labsEditorPieces[name]=labsEditorSelectedPiece;else delete labsEditorPieces[name];renderLabsEditorBoard();updateLabsEditorFen();const status=document.getElementById("labs-editor-status");if(status)status.textContent=(labsEditorSelectedPiece?"Placed "+labsEditorSelectedPiece:"Removed piece")+" on "+name+".";if(typeof playMoveSound==="function")playMoveSound();});board.appendChild(sq);
+ }
+ updateLabsThemeButtons(currentBoardThemeKey);
+}
+function labsEditorBuildFen() {
+ const rows=[];for(let rank=8;rank>=1;rank--){let row="",empty=0;for(let file=0;file<8;file++){const p=labsEditorPieces[String.fromCharCode(97+file)+rank];if(!p)empty++;else{if(empty)row+=empty;empty=0;row+=p;}}if(empty)row+=empty;rows.push(row);}
+ const m=labsEditorFenMeta;return rows.join("/")+" "+m.turn+" "+(m.castling||"-")+" "+(m.ep||"-")+" "+m.halfmove+" "+m.fullmove;
+}
+function updateLabsEditorFen(){const turn=document.getElementById("labs-editor-turn");if(turn)labsEditorFenMeta.turn=turn.value==="b"?"b":"w";const field=document.getElementById("labs-editor-fen");if(field)field.value=labsEditorBuildFen();}
+function loadLabsEditorFen() {
+ const field=document.getElementById("labs-editor-fen"),status=document.getElementById("labs-editor-status"),fen=(field?field.value:"").trim();
+ try{const candidate=createChessInstance(),accepted=candidate.load(fen);if(accepted===false)throw new Error("Invalid FEN");labsEditorPieces={};candidate.board().forEach((row,ri)=>row.forEach((p,ci)=>{if(p)labsEditorPieces[String.fromCharCode(97+ci)+(8-ri)]=p.color==="w"?p.type.toUpperCase():p.type;}));
+ const parts=fen.split(/\s+/);labsEditorFenMeta={turn:candidate.turn?candidate.turn():(parts[1]||"w"),castling:parts[2]||"-",ep:parts[3]||"-",halfmove:parts[4]||"0",fullmove:parts[5]||"1"};const turn=document.getElementById("labs-editor-turn");if(turn)turn.value=labsEditorFenMeta.turn;renderLabsEditorBoard();updateLabsEditorFen();if(status)status.textContent="FEN loaded successfully.";if(typeof playMoveSound==="function")playMoveSound();
+ }catch(e){if(status)status.textContent="Could not load that FEN. Check the notation and try again.";if(typeof playSynthBeep==="function")playSynthBeep(true);}
+}
+async function copyLabsEditorFen() {
+ const field=document.getElementById("labs-editor-fen"),status=document.getElementById("labs-editor-status"),fen=labsEditorBuildFen();if(field)field.value=fen;
+ try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(fen);else{const temp=document.createElement("textarea");temp.value=fen;temp.style.position="fixed";temp.style.opacity="0";document.body.appendChild(temp);temp.select();const ok=document.execCommand("copy");temp.remove();if(!ok)throw new Error("Clipboard unavailable");}if(status)status.textContent="FEN copied to clipboard.";}
+ catch(e){if(field){field.focus();field.select();}if(status)status.textContent="Select the FEN text and copy it manually.";}
+}
+
 function initLabsTab() {
+    document.getElementById('labs-drill-header').classList.remove('hidden');
+    document.getElementById('labs-board-editor').classList.add('hidden');
     document.getElementById('labs-drill-picker').classList.remove('hidden');
     document.getElementById('labs-active').classList.add('hidden');
     updateLabsThemeButtons(currentBoardThemeKey);
 }
 
 function startLabsDrill(drill) {
+    document.getElementById('labs-drill-header').classList.remove('hidden');
+    document.getElementById('labs-board-editor').classList.add('hidden');
     labsCurrentDrill = drill;
     labsSessionIdx = 0; labsSessionCorrect = 0; labsRetryCount = 0;
     labsSelectedSq = null; labsHighlightSqs = [];
@@ -5986,6 +6058,8 @@ function startLabsDrill(drill) {
 
 function exitLabsDrill() {
     stopLabsTimer(); stopSpeedRunTimer(); labsCurrentDrill = null;
+    document.getElementById('labs-drill-header').classList.remove('hidden');
+    document.getElementById('labs-board-editor').classList.add('hidden');
     document.getElementById('labs-active').classList.add('hidden');
     document.getElementById('labs-drill-picker').classList.remove('hidden');
 }
