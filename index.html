@@ -6481,9 +6481,13 @@ function useCheckmateHint() {
     const puzzle = labsCheckmatePuzzles[labsCheckmatePuzzleIdx]; if (!puzzle) return;
     labsCheckmateLives--;
     renderCheckmateLives();
-    // Highlight the solution square
-    const sol = (puzzle.solution || '').replace(/[+#]/g, '').trim().toLowerCase();
-    labsHighlightSqs = [sol];
+    // Convert the solution SAN (for example, "Re8") to its actual destination square.
+    const sol = (puzzle.solution || '').replace(/[+#!=?]/g, '').trim().toLowerCase();
+    const solutionMove = labsGame.moves({ verbose: true }).find(m =>
+        (m.san || '').replace(/[+#!=?]/g, '').trim().toLowerCase() === sol
+    );
+    const destination = solutionMove ? solutionMove.to : (sol.match(/([a-h][1-8])$/) || [])[1];
+    labsHighlightSqs = destination ? [destination.toLowerCase()] : [];
     renderLabsBoard();
     try { playSynthBeep(false); } catch(e){}
     if (labsCheckmateLives <= 0) {
