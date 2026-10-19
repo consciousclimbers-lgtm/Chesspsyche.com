@@ -20,6 +20,8 @@ Both tests run automatically on every pull request to `main` (GitHub Actions, ch
 
 10. **Notable GM pools and rotation.** The Notable GM on a card comes from `NOTABLE_GM_POOLS` (approved GMs per opening family and side) in a fixed round-robin. The test checks the data (every code is in the vault and on the pool's side, no code is in two pools for one side, no GM is listed twice in a pool, every entry has a GM, an https source and a status, and every verified GM is an exact GM record name) and that every female GM record is in `NOTABLE_GM_CONSIDERED` with her actual pools. For every pool, with fresh storage, n completed surveys show each of its n GMs once and survey n + 1 repeats survey 1; the GM does not change without a new survey. Through the page, a re-render and a reload (no saved picks in memory) show the same GM as the results. Every card's GM must come from its opening's pool, and a card whose opening has no pool shows none. It prints a representation report (women's share of the pool entries and of the GMs shown, pools with no women, the GMs in the most pools) and warns when a GM is in more than 6 pools; the report is not a quota or a pass/fail gate.
 
+11. **Every reachable card.** For every style × experience level × normal/strong answers, the test retakes the survey until both the White and Black candidate lists are used up (currently 4 to 77 surveys per combination), not just the 3 surveys of check 2. Every card that can appear (190 White, 297 Black) must come from its own side, have a legal line, show a Notable GM from its approved pool (or none when it has no pool), and have a real summary (see **Card summaries** below).
+
 Checks 7 to 9 read `gm-baseline.json`, kept separate from `expected.json`. Each file has its own update command, so updating one can never overwrite the other: `npm run update` rewrites only `expected.json`, and `npm run update:gm-baseline` rewrites only `gm-baseline.json`. An owner-approved change to the Notable GM, the hand-written names or the Labs drill needs `npm run update:gm-baseline`, and the diff of `gm-baseline.json` shows exactly what changed.
 
 **Determinism.** The opening picker (`ecoCandidatesFor`, `pickEcoCode`, `choosePicksForRun`) uses no randomness. Its only state is the retake history saved in localStorage. Other parts of the page do use `Math.random`, for question order and answer order. So that nothing random can leak into the result, the test:
@@ -48,17 +50,36 @@ If an owner-approved change is meant to alter picks, scoring or protected code, 
 
 ## Results-page click-through
 
-`npm run clickthrough` (`clickthrough.js`) is a separate browser test of the results page. It takes the survey by clicking, the way a visitor does, for five cases: a White B12 pick, a Black B40 pick, a White D85 pick, a White D00 pick and a White E06 (Catalan) pick that is taken twice. For each it checks:
+`npm run clickthrough` (`clickthrough.js`) is a separate browser test of the results page. It takes the survey by clicking, the way a visitor does, for nine cases: a White B12 pick, a Black B40 pick, a White D85 pick (with B82 on the Black card), a White D00 pick, a White E06 (Catalan) pick that is taken twice, and the cards reported in issue #24: Black A40, Black D07 (2nd survey), Black A86 (5th survey) and the White D35 control (2nd survey). For each it checks:
 - both cards show the expected opening, each from its own side;
 - the board puts the chosen side at the bottom;
 - stepping through the demo moves the pieces as the line says, square by square, until the counter reaches the last move;
 - each card shows the expected Notable GM (or none), and clicking a shown GM that is in the GM database opens that GM's pop-up.
 - switching to another tab and back keeps the same Notable GM;
-- for the Catalan case, taking the survey again shows the next GM in the Catalan pool.
+- for the Catalan case, taking the survey again shows the next GM in the Catalan pool;
+- each card's summary, as rendered, passes the card summary rules below;
+- each card's Notable GM is one of the approved GMs for that exact ECO code and side (none when it has no pool), and the "Notable GM:" line is on the card exactly when there is a GM.
+
+A case for a later survey starts from **saved state** instead of clicking through the earlier surveys: `preload` holds the saved picks (`chesspsyche_opening_picks_v1`) and Notable GM rotation (`chesspsyche_notable_gm_rotation_v1`) that the earlier surveys leave. Before using it, the test replays those earlier surveys in the page and fails if they would save anything different, so a fixture cannot drift from real behaviour. A86 is the 5th survey of `aggressiveVanguard` / no experience / normal answers (the 5th or 6th for other levels), which is why the 3-survey baseline never showed it.
 
 It also opens the Labs board editor, places and erases a piece, plays 1.e4 and checks that the evaluation bar updates (it waits for Stockfish to finish each analysis rather than for a fixed time). Then it checks navigation: the home-page logo opens the survey, the header buttons open Grandmasters, Clubs, Play, the survey and home, and the header logo opens the survey. Any JavaScript or console error fails. It runs offline in the same way as `npm test`. Add `--shots DIR` to save screenshots.
 
 **Live smoke test.** `node clickthrough.js --url https://www.chesspsyche.com/` runs the same checks against a deployed site, with nothing blocked or replaced, so every console error counts. The **Live smoke test** workflow runs it after each GitHub Pages deployment; see `RELEASE.md` in the repository root.
+
+## Card summaries and `known-card-issues.json`
+
+`card_checks.js` holds the rules both tests use. A card's summary must not be:
+- `empty`;
+- `fallback`: the generic "Starts with <moves>" text `ecoToSystem` uses when it has nothing better;
+- `move-comment`: copied from a move comment in `ecoVaultData` (the text after " — "), such as "English" or "Queen's Pawn";
+- `wrong-side`: a Black card summarised by the comment on a White move (or the other way round).
+
+Today 457 reachable cards break these rules, almost all because only the 36 hand-written systems have real summaries. They are listed, one card per line, in `known-card-issues.json` (keyed `ECO|side`), so the checks can run in CI now. The list is **temporary and can only shrink**:
+- an issue that is not listed fails;
+- a listed issue that no longer occurs also fails, until its entry is removed with `npm run prune:known-card-issues` (which only removes, never adds);
+- each kind of entry says how it will be removed (the `removal` notes in the file): by the sourced family-and-side summary data planned in issue #24.
+
+`npm run test:strict-cards` and `npm run clickthrough:strict-cards` ignore the list and show every issue the checks catch. The list was created once with `--init-known-card-issues`, which refuses to run again. Never add entries to get a test to pass without the owner's approval.
 
 ## Side mismatches (fixed)
 

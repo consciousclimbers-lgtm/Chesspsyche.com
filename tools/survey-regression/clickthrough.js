@@ -7,7 +7,15 @@
 //     GM database opens that GM's pop-up;
 //   - the board shows the chosen side at the bottom (White/Black orientation);
 //   - stepping through the demo moves the pieces: after every step the on-screen pieces must match the
-//     line replayed in chess.js, and the move counter must reach the end.
+//     line replayed in chess.js, and the move counter must reach the end;
+//   - each card's rendered summary passes card_checks.js (not empty, not the "Starts with" fallback, not a
+//     copied move comment, not a comment on the other side's move); issues listed in
+//     known-card-issues.json are reported, not failed (--strict-cards ignores that list);
+//   - each card's Notable GM comes from the approved pool for that exact ECO code and side (none when it
+//     has no pool), and the "Notable GM:" line is on the card exactly when there is a GM.
+// A case with "preload" starts from the saved picks and Notable GM rotation that earlier surveys leave in
+// localStorage, so a later survey (such as the 5th) is tested without clicking through the earlier ones.
+// The test first checks that the fixture is exactly what those earlier surveys save (preload.after).
 // It opens the Labs board editor and checks that placing and erasing a piece works, that a move can be
 // played, and that the evaluation bar updates: it waits for Stockfish to finish analysing the start
 // position, plays 1.e4, and waits for the finished analysis of the new position.
@@ -21,14 +29,16 @@
 // every console error counts. A fresh browser context (empty localStorage) is used for every case, so
 // each case gets the first pick for its combination.
 //
-// Usage: node clickthrough.js [path/to/index.html] [--shots DIR]
+// Usage: node clickthrough.js [path/to/index.html] [--shots DIR] [--strict-cards]
 //        node clickthrough.js --url https://www.chesspsyche.com/ [--shots DIR]
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 const { Chess } = require('chess.js');
+const cardChecks = require('./card_checks');
 
 const args = process.argv.slice(2);
+const strictCards = args.includes('--strict-cards');
 const shots = args.includes('--shots') ? path.resolve(args[args.indexOf('--shots') + 1]) : null;
 const url = args.includes('--url') ? args[args.indexOf('--url') + 1] : null;
 const positional = args.filter((a, i) => !a.startsWith('--') && !['--shots', '--url'].includes(args[i - 1]));
@@ -49,6 +59,16 @@ const CASES = [
   { name: 'white-D00', style: 'patientGrinder', level: 'none', strong: false, side: 'white', white: 'D00', black: 'C42', gm: { white: null, black: 'Yu Yangyi' } },
   { name: 'white-E06', style: 'flexibleChameleon', level: 'advanced', strong: true, side: 'white', white: 'E06', black: 'A16', gm: { white: 'Ding Liren', black: null },
     retake: { white: 'E07', black: 'D71', gm: { white: 'Aleksandra Goryachkina', black: null } } },
+  // Reported cards (issue #24). The white-D85 case above covers the B82 Black card.
+  { name: 'black-A40', style: 'strategicArchitect', level: 'none', strong: false, side: 'black', white: 'D06', black: 'A40', gm: { white: 'Levon Aronian', black: null } },
+  { name: 'black-D07', style: 'strategicArchitect', level: 'none', strong: false, side: 'black', white: 'A10', black: 'D07', gm: { white: null, black: null },
+    preload: { after: 1, picks: { 'strategicArchitect|white': 'D06', 'strategicArchitect|black': 'A40' }, rotation: { "Queen's Gambit / QGD Exchange|white": 1 } } },
+  // A86 first appears on the 5th survey of this combination (not in the 3-survey baseline)
+  { name: 'black-A86', style: 'aggressiveVanguard', level: 'none', strong: false, side: 'black', white: 'D03', black: 'A86', gm: { white: null, black: 'Anna Muzychuk' },
+    preload: { after: 4, picks: { 'aggressiveVanguard|white': 'A46', 'aggressiveVanguard|black': 'A85' }, rotation: { 'Dutch Defence|black': 3, "Alekhine's Defence|black": 1 } } },
+  // Control: hand-written White system with a summary and a pool GM
+  { name: 'white-D35', style: 'patientGrinder', level: 'none', strong: true, side: 'white', white: 'D35', black: 'D30', gm: { white: 'Levon Aronian', black: 'Nino Batsiashvili' },
+    preload: { after: 1, picks: { 'patientGrinder|white': 'B12', 'patientGrinder|black': 'C42' }, rotation: { 'Caro-Kann Advance|white': 1, "Petrov's Defence|black": 1 } } },
 ];
 
 async function takeSurvey(page, label, vec) {
@@ -114,6 +134,22 @@ async function runCase(browser, c) {
   }, c);
   if (!vec) { await context.close(); return { ...c, fails: ['no answer set gives this style'], info, errors }; }
   const label = await page.evaluate(k => SKILL_LEVELS.find(l => l.key === k).label, c.level);
+  if (c.preload) {
+    // The fixture must equal what `after` earlier surveys with these inputs save; then it is loaded
+    const made = await page.evaluate(({ style, level, strong, preload }) => {
+      localStorage.removeItem(PICKS_KEY); localStorage.removeItem(GM_ROTATION_KEY);
+      skillLevelKey = level; lastExtremeCount = strong ? 5 : 0;
+      for (let i = 0; i < preload.after; i++) choosePicksForRun(style);
+      const got = { picks: loadOpeningPicks(), rotation: loadGmRotation() };
+      currentPicks = null;
+      localStorage.setItem(PICKS_KEY, JSON.stringify(preload.picks));
+      localStorage.setItem(GM_ROTATION_KEY, JSON.stringify(preload.rotation));
+      return got;
+    }, c);
+    info.preload = `saved state of ${c.preload.after} earlier survey(s)`;
+    if (JSON.stringify(made.picks) !== JSON.stringify(c.preload.picks) || JSON.stringify(made.rotation) !== JSON.stringify(c.preload.rotation))
+      fails.push(`fixture differs from what ${c.preload.after} earlier survey(s) save: ${JSON.stringify(made)}`);
+  }
   await takeSurvey(page, label, vec);
 
   info.scored = await page.evaluate(() => ({ level: skillLevelKey, extremeAnswers: lastExtremeCount }));
@@ -157,6 +193,32 @@ async function runCase(browser, c) {
     else info.gm.modal.push(`${name}: pop-up opens`);
     await page.evaluate(() => closeGmModal());
   }
+  // Card text as rendered: summary under each title, and whether the card has a "Notable GM:" line;
+  // the approved pool GMs for each card's exact ECO code and side
+  const texts = await page.evaluate(() => [...document.querySelectorAll('#results-container h3.gradient-text')].slice(0, 2).map((h, i) => {
+    const sys = currentPicks[i ? 'blackSystem' : 'whiteSystem'], side = i ? 'black' : 'white';
+    const pool = notableGmPool(sys.eco, side);
+    return {
+      eco: sys.eco, side, summary: (h.nextElementSibling && h.nextElementSibling.tagName === 'P') ? h.nextElementSibling.textContent.trim() : '',
+      comments: (ecoVaultData[sys.eco] || {}).commentary || [],
+      gmLine: [...h.parentElement.querySelectorAll('span')].some(s => s.textContent.trim().startsWith('Notable GM')),
+      pool: pool ? pool.key : null, approved: pool ? eligibleNotableGms(pool) : []
+    };
+  }));
+  const found = {};
+  info.text = [];
+  for (const [i, t] of texts.entries()) {
+    const gm = gmShown[i];
+    const issues = cardChecks.summaryIssues(t);
+    if (issues.length) found[`${t.eco}|${t.side}`] = issues;
+    info.text.push(`${t.side} ${t.eco}: "${t.summary}"${issues.length ? ` [${issues.join(', ')}]` : ''}; GM pool ${t.pool || 'none'}`);
+    if (gm ? !t.approved.includes(gm) : t.approved.length) fails.push(`${t.side} ${t.eco} Notable GM "${gm}" is not from the approved pool (${t.pool || 'none'}: ${t.approved.join(', ') || 'no GMs'})`);
+    if (t.gmLine !== !!gm) fails.push(`${t.side} ${t.eco} card ${t.gmLine ? 'shows' : 'has no'} a "Notable GM:" line, but its GM is ${gm || 'none'}`);
+  }
+  const cmp = cardChecks.compareKnown(found, { strict: strictCards });
+  fails.push(...cmp.fails);
+  info.knownText = cmp.listed;
+
   // Switching tabs and coming back keeps the same Notable GM
   await page.evaluate(() => switchTab('grandmasters')); await page.waitForTimeout(200);
   await page.evaluate(() => switchTab('results')); await page.waitForTimeout(300);
@@ -280,7 +342,9 @@ async function runNav(browser) {
     failed += fails.length;
     console.log(`\n${r.name}: ${r.style}, ${r.level}, ${r.strong ? 'strong' : 'normal'} answers ${JSON.stringify(r.answers)} -> ${fails.length ? 'FAIL' : 'PASS'}`);
     if (r.info.cards) console.log(`  White card: ${r.info.cards.whitePanel} (${r.info.cards.white.side} card)\n  Black card: ${r.info.cards.blackPanel} (${r.info.cards.black.side} card)`);
+    if (r.info.preload) console.log(`  Starts from: ${r.info.preload}`);
     if (r.info.gm) console.log(`  Notable GM: White ${r.info.gm.white || 'none'}, Black ${r.info.gm.black || 'none'}${r.info.gm.modal.length ? '; ' + r.info.gm.modal.join('; ') : ''}${r.info.gm.retake ? `; retake: ${r.info.gm.retake}` : ''}`);
+    if (r.info.text) console.log(`  Summary: ${r.info.text.join('\n           ')}${r.info.knownText.length ? `\n  (listed in known-card-issues.json: ${r.info.knownText.join('; ')})` : ''}`);
     if (r.info.title) console.log(`  Board: ${r.info.title}, ${r.info.orientation}; demo ${r.info.demoLine}; ${r.info.moveCounter}`);
     for (const f of fails) console.log('  - ' + f);
   }
