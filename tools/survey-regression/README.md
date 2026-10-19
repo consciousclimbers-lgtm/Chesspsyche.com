@@ -14,6 +14,11 @@ Both tests run automatically on every pull request to `main` (GitHub Actions, ch
 4. **The page loads cleanly.** Any JavaScript error or console error fails the test. The only console errors allowed are `Failed to load resource: net::ERR_FAILED`, which the blocked offline requests cause.
 5. **The question bank is complete.** Each of the 5 areas has 10 questions; every question has a text and low/mid/high answers; no text is empty or repeated. 200 survey runs built by the page's `buildSurveyRun()` must each ask one question per area, with answers worth 1, 2 and 3 points taken from the right lists.
 6. **Scoring is unchanged.** All 243 answer combinations (1 to 3 points in each area) must give the style saved under `scoring` in `expected.json`, through the page's `getArchetypeFromPoints`.
+7. **Notable GM is unchanged.** For every combination and run above, the GM named under "Notable GM" on the White and Black cards must match `gm-baseline.json`. The output also lists shown GMs that have no record in the GM database (their name cannot open a pop-up).
+8. **Hand-written Notable GM names are unchanged.** The `notableGm` of all 36 hand-written systems in `archetypes` must match `gm-baseline.json`. These names sit in the opening-data block, which check 1 does not cover.
+9. **The Labs GM drill is unchanged.** For each GM in the Labs picker (the first 30 of the GM list), the moves `startGmDrill(name)` loads must match `gm-baseline.json`. The drill finds a GM's opening by matching their first name against the hand-written `notableGm` names, so renaming one changes the drill.
+
+Checks 7 to 9 read `gm-baseline.json`, kept separate from `expected.json`. `npm run update` rewrites both files; `node survey_regression.js --update-gm-baseline` rewrites only `gm-baseline.json`.
 
 **Determinism.** The opening picker (`ecoCandidatesFor`, `pickEcoCode`, `choosePicksForRun`) uses no randomness. Its only state is the retake history saved in localStorage. Other parts of the page do use `Math.random`, for question order and answer order. So that nothing random can leak into the result, the test:
 - replaces `Math.random` with a seeded generator before any page script runs;
@@ -41,10 +46,11 @@ If an owner-approved change is meant to alter picks, scoring or protected code, 
 
 ## Results-page click-through
 
-`npm run clickthrough` (`clickthrough.js`) is a separate browser test of the results page. It takes the survey by clicking, the way a visitor does, for three cases: a White B12 pick, a Black B40 pick and a White D85 pick. For each it checks:
+`npm run clickthrough` (`clickthrough.js`) is a separate browser test of the results page. It takes the survey by clicking, the way a visitor does, for four cases: a White B12 pick, a Black B40 pick, a White D85 pick and a White D00 pick (a case where both cards name a GM). For each it checks:
 - both cards show the expected opening, each from its own side;
 - the board puts the chosen side at the bottom;
-- stepping through the demo moves the pieces as the line says, square by square, until the counter reaches the last move.
+- stepping through the demo moves the pieces as the line says, square by square, until the counter reaches the last move;
+- each card shows the expected Notable GM (or none), and clicking a shown GM that is in the GM database opens that GM's pop-up.
 
 It also opens the Labs board editor, places and erases a piece, plays 1.e4 and checks that the evaluation bar updates (it waits for Stockfish to finish each analysis rather than for a fixed time). Then it checks navigation: the home-page logo opens the survey, the header buttons open Grandmasters, Clubs, Play, the survey and home, and the header logo opens the survey. Any JavaScript or console error fails. It runs offline in the same way as `npm test`. Add `--shots DIR` to save screenshots.
 
