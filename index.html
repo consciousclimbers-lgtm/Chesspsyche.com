@@ -716,6 +716,11 @@ a { color: inherit; text-decoration: inherit; }
         .promo-piece-btn { font-size:3rem; background:#1E293B; border:2px solid #334155; border-radius:1rem; padding:.6rem 1.1rem; cursor:pointer; transition:all .15s; }
         .promo-piece-btn:hover { border-color:#22D3EE; background:linear-gradient(135deg,rgba(168,85,247,.25),rgba(34,211,238,.18)); transform:scale(1.08); }
         .square svg { width: 85%; height: 85%; }
+        /* High-contrast classic pieces: white pieces keep a dark outline; black pieces get a bright outline so they remain clear on dark squares. */
+        .square svg g[fill="#000000"] { stroke: #f8fafc; }
+        .square svg g[fill="#000000"] path, .square svg g[fill="#000000"] circle { stroke: #f8fafc; }
+        .square svg g[fill="#ffffff"] { stroke: #1c1c1c; }
+        .square svg g[fill="#ffffff"] path, .square svg g[fill="#ffffff"] circle { stroke: #1c1c1c; }
         @keyframes piece-pop { 0% { transform: scale(1.28); } 60% { transform: scale(0.93); } 100% { transform: scale(1); } }
         .piece-pop svg { animation: piece-pop 0.22s ease-out forwards; }
         /* Clocks */
