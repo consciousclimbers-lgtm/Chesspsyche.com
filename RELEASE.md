@@ -56,9 +56,29 @@ git push -u origin revert-<sha>        # then open a pull request and merge it a
 
 To return to an older known-good commit instead, revert each later merge commit, newest first.
 
-**Emergency only:** if the site is down and the revert pull request cannot wait for CI, the repository
-admin can merge it while bypassing the branch ruleset (the ruleset allows the admin to bypass). Record why
-in the pull request, and run the full tests and the live smoke test straight after.
+**Branch protection.** The **Protect main** ruleset (Settings → Rules → Rulesets) is Active on `main`. It
+requires a pull request and a passing **Regression tests** check, restricts deletion and blocks force pushes.
+It has **no bypass list**: nobody, including the repository admin, can merge past a failed or missing
+check. A revert pull request normally passes CI in about two minutes, because it restores code that already
+passed, so the steps above are the recovery route in almost every case.
+
+**Emergency only: the revert pull request cannot pass CI** (for example GitHub Actions is down, or the
+check itself is broken). Only the owner does this, and only for the revert pull request:
+
+1. Note the time, and in the revert pull request write why the check is being skipped.
+2. Settings → Rules → Rulesets → **Protect main** → set **Enforcement status** to **Disabled** →
+   **Save changes**. Do not delete the ruleset: disabling keeps every rule so it can be switched back.
+3. Merge the revert pull request with **Create a merge commit**. Merge nothing else while protection is off.
+4. Straight away, set **Enforcement status** back to **Active** → **Save changes**.
+5. Confirm protection is back. Open **Protect main** again and check that:
+   - **Enforcement status** is **Active** and the target is still the default branch (`main`);
+   - **Bypass list** is still empty;
+   - **Restrict deletions**, **Block force pushes** and **Require a pull request before merging** are ticked;
+   - **Require status checks to pass** is ticked and lists **Regression tests**.
+
+   If anything is missing, restore it before doing anything else. Then check the Pages deployment and run
+   the live smoke test.
+6. Fix the broken check through a normal pull request before the next release.
 
 After a rollback, find the cause on a branch and fix it through a normal pull request; do not mix unrelated
 fixes into the rollback.
