@@ -16,7 +16,9 @@ Checks that a change to `index.html` does not unexpectedly change the survey's o
 - runs the full survey 3 times with the same seed (change with `--repeat N`), and all runs must match;
 - runs it once more with a different seed, which must give the same picks.
 
-chess.js 0.10.3, the same version the page loads from cdnjs, is served from `node_modules`. The test therefore runs offline and gives the same result as the live page.
+**Offline.** The page loads three external resources: chess.js 0.10.3 from cdnjs, Font Awesome CSS from cdnjs, and a Google Fonts stylesheet. The test blocks every http(s) request. The only exception is chess.js, which is served from `node_modules` at the same version the page uses, so the survey and cards behave as on the live page. Fonts and icons are not needed for these checks. The output lists the hosts that were blocked.
+
+Network access is needed only once, for `npm install`, and for `npx playwright install chromium` if Playwright has no browser yet. After that, `npm test` makes no network requests.
 
 ## Run
 

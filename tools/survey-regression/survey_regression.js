@@ -55,6 +55,10 @@ async function runSurvey(browser, file, seed) {
     let a = s >>> 0;
     Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   }, seed);
+  // Offline: block every http(s) request (Google Fonts, Font Awesome, ...), except
+  // chess.js, which the page route below serves from node_modules
+  const blocked = new Set();
+  await context.route(/^https?:\/\//, r => { blocked.add(new URL(r.request().url()).host); r.abort(); });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -88,7 +92,7 @@ async function runSurvey(browser, file, seed) {
   await context.close();
   const picks = {};
   for (const [cfg, runs] of Object.entries(res)) picks[cfg] = runs.map(([w, b]) => `${w ? w.eco : '-'}/${b ? b.eco : '-'}`).join(' ');
-  return { res, picks, errors };
+  return { res, picks, errors, blocked: [...blocked] };
 }
 
 (async () => {
@@ -101,6 +105,7 @@ async function runSurvey(browser, file, seed) {
   await browser.close();
   const { res, picks } = runs[0];
   const errors = [...new Set([...runs, otherSeed].flatMap(r => r.errors))];
+  const blocked = [...new Set([...runs, otherSeed].flatMap(r => r.blocked))].sort();
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res));
   const seedOk = same(otherSeed.picks, picks);
@@ -140,6 +145,7 @@ async function runSurvey(browser, file, seed) {
   console.log(`File: ${htmlPath}`);
   console.log(`Repeat runs (seed ${SEED}): ${repeat}, identical: ${repeatOk ? 'yes' : 'NO'}; different seed (${OTHER_SEED}) gives same picks: ${seedOk ? 'yes' : 'NO'}`);
   console.log(`Picks fingerprint: sha256 ${crypto.createHash('sha256').update(JSON.stringify(picks)).digest('hex').slice(0, 16)}`);
+  console.log(`Network: offline (blocked requests to ${blocked.join(', ') || 'nothing'}; chess.js 0.10.3 served from node_modules)`);
   console.log(`Protected code hash: ${hash === exp.protectedHash ? 'unchanged' : 'CHANGED'}`);
   console.log(`Survey combinations: ${cfgs.size} (x3 runs), ${[...cfgs].filter(c => picks[c] === exp.picks[c]).length} match`);
   console.log(`Card side issues: ${sideIssues.size} (${[...sideIssues].filter(s => known.has(s)).length} known, pre-existing)`);
