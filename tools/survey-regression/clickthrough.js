@@ -3,6 +3,8 @@
 // For each case it takes the survey in headless Chromium by clicking: open the survey tab, click the
 // experience level, click an answer on each of the 5 questions. Then it checks, on the results page:
 //   - the White and Black cards show the expected openings, each from its own side;
+//   - each card shows the expected "Notable GM" (or none), and clicking a shown GM whose name is in the
+//     GM database opens that GM's pop-up;
 //   - the board shows the chosen side at the bottom (White/Black orientation);
 //   - stepping through the demo moves the pieces: after every step the on-screen pieces must match the
 //     line replayed in chess.js, and the move counter must reach the end.
@@ -37,10 +39,12 @@ const chessLocal = require.resolve('chess.js');
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 
 // strong = 4 or more of the 5 answers are the strongest or mildest choice (lastExtremeCount >= 4)
+// gm: the Notable GM each card shows today (null = no Notable GM line)
 const CASES = [
-  { name: 'white-B12', style: 'patientGrinder', level: 'novice', strong: false, side: 'white', white: 'B12', black: 'C42' },
-  { name: 'black-B40', style: 'strategicArchitect', level: 'novice', strong: false, side: 'black', white: 'D06', black: 'B40' },
-  { name: 'white-D85', style: 'patientGrinder', level: 'advanced', strong: true, side: 'white', white: 'D85', black: 'B82' },
+  { name: 'white-B12', style: 'patientGrinder', level: 'novice', strong: false, side: 'white', white: 'B12', black: 'C42', gm: { white: null, black: 'Fabiano Caruana' } },
+  { name: 'black-B40', style: 'strategicArchitect', level: 'novice', strong: false, side: 'black', white: 'D06', black: 'B40', gm: { white: 'Anatoly Karpov', black: null } },
+  { name: 'white-D85', style: 'patientGrinder', level: 'advanced', strong: true, side: 'white', white: 'D85', black: 'B82', gm: { white: null, black: null } },
+  { name: 'white-D00', style: 'patientGrinder', level: 'none', strong: false, side: 'white', white: 'D00', black: 'C42', gm: { white: 'Pia Cramling', black: 'Fabiano Caruana' } },
 ];
 
 async function openPage(browser) {
@@ -122,6 +126,26 @@ async function runCase(browser, c) {
     if (shown[s].eco !== c[s]) fails.push(`${s} pick ${shown[s].eco}, expected ${c[s]}`);
     if (shown[s].side !== s && shown[s].side !== 'either') fails.push(`${s} card "${shown[s].name}" is a ${shown[s].side} card`);
     if (!shown[`${s}Panel`].includes(`ECO: ${c[s]}`) || !shown[`${s}Panel`].includes(shown[s].name)) fails.push(`${s} panel shows "${shown[`${s}Panel`]}"`);
+  }
+
+  // Notable GM line on each card, and the GM pop-up it opens
+  const gmLinks = page.locator('#results-container span[onclick^="openGmModal"]');
+  const gmShown = await page.evaluate(() => ['whiteSystem', 'blackSystem'].map(k => currentPicks[k].notableGm || null));
+  const gmTexts = await gmLinks.allTextContents();
+  info.gm = { white: gmShown[0], black: gmShown[1], modal: [] };
+  for (const [i, s] of ['white', 'black'].entries()) if (gmShown[i] !== c.gm[s]) fails.push(`${s} Notable GM "${gmShown[i]}", expected "${c.gm[s]}"`);
+  const wantTexts = gmShown.filter(Boolean);
+  if (JSON.stringify(gmTexts.map(t => t.trim())) !== JSON.stringify(wantTexts)) fails.push(`Notable GM lines show ${JSON.stringify(gmTexts)}, expected ${JSON.stringify(wantTexts)}`);
+  for (let i = 0; i < gmTexts.length; i++) {
+    const name = gmTexts[i].trim();
+    const inDb = await page.evaluate(n => grandmastersList.some(g => g.name === n), name);
+    if (!inDb) { info.gm.modal.push(`${name}: no GM record, no pop-up`); continue; }
+    await gmLinks.nth(i).click();
+    const opened = await page.waitForSelector('#gm-modal:not(.hidden)', { timeout: 5000 }).then(() => true, () => false);
+    const content = opened ? await page.textContent('#gm-modal-content') : '';
+    if (!opened || !content.includes(name)) fails.push(`clicking Notable GM "${name}" did not open its pop-up`);
+    else info.gm.modal.push(`${name}: pop-up opens`);
+    await page.evaluate(() => closeGmModal());
   }
 
   // Board for the chosen side
@@ -232,6 +256,7 @@ async function runNav(browser) {
     failed += fails.length;
     console.log(`\n${r.name}: ${r.style}, ${r.level}, ${r.strong ? 'strong' : 'normal'} answers ${JSON.stringify(r.answers)} -> ${fails.length ? 'FAIL' : 'PASS'}`);
     if (r.info.cards) console.log(`  White card: ${r.info.cards.whitePanel} (${r.info.cards.white.side} card)\n  Black card: ${r.info.cards.blackPanel} (${r.info.cards.black.side} card)`);
+    if (r.info.gm) console.log(`  Notable GM: White ${r.info.gm.white || 'none'}, Black ${r.info.gm.black || 'none'}${r.info.gm.modal.length ? '; ' + r.info.gm.modal.join('; ') : ''}`);
     if (r.info.title) console.log(`  Board: ${r.info.title}, ${r.info.orientation}; demo ${r.info.demoLine}; ${r.info.moveCounter}`);
     for (const f of fails) console.log('  - ' + f);
   }

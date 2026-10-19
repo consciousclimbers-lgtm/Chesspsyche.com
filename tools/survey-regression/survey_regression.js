@@ -25,6 +25,13 @@
 //   6. Scoring: all 243 answer combinations (1-3 points in each of the 5 areas) must map to the
 //      style saved in expected.json ("scoring"), through the page's getArchetypeFromPoints.
 //
+// Against gm-baseline.json (kept apart from expected.json so the picks snapshot is untouched):
+//   7. Notable GM: the GM named on every White and Black card, for every combination and run.
+//   8. Hand-written Notable GM names: the notableGm of all 36 hand-written systems in archetypes.
+//      The Labs GM drill finds a GM's opening through these names.
+//   9. Labs GM drill: for each GM in the Labs picker (the first 30 of grandmastersList), the moves
+//      startGmDrill(name) loads.
+//
 // Determinism: the picker (ecoCandidatesFor / pickEcoCode / choosePicksForRun) has no
 // randomness; its only state is the retake history in localStorage. Math.random is used
 // elsewhere on the page (question order, answer order), so before any page script runs the
@@ -36,7 +43,9 @@
 // chess.js 0.10.3 (the version index.html loads from cdnjs) is served from node_modules,
 // every other http(s) request is blocked, so the test makes no network requests.
 //
-// Usage: node survey_regression.js [path/to/index.html] [--update] [--repeat N]
+// Usage: node survey_regression.js [path/to/index.html] [--update] [--update-gm-baseline] [--repeat N]
+//   --update              rewrites expected.json only (never gm-baseline.json)
+//   --update-gm-baseline  rewrites gm-baseline.json only (npm run update:gm-baseline); cannot be combined with --update
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -45,11 +54,14 @@ const { Chess } = require('chess.js');
 
 const args = process.argv.slice(2);
 const update = args.includes('--update');
+const updateGm = args.includes('--update-gm-baseline');
+if (update && updateGm) { console.error('Use --update (expected.json) or --update-gm-baseline (gm-baseline.json), not both.'); process.exit(1); }
 const repeat = args.includes('--repeat') ? Math.max(1, parseInt(args[args.indexOf('--repeat') + 1], 10) || 1) : 3;
 const SEED = 20261019, OTHER_SEED = 7;
 const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--repeat');
 const htmlPath = path.resolve(positional[0] || path.join(__dirname, '../../index.html'));
 const expectedPath = path.join(__dirname, 'expected.json');
+const gmBaselinePath = path.join(__dirname, 'gm-baseline.json');
 const chessLocal = require.resolve('chess.js');
 // Console message Chromium logs for each request this test aborts to stay offline
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
@@ -90,7 +102,8 @@ async function runSurvey(browser, file, seed) {
     const card = (sys, want) => sys && {
       eco: sys.eco, want,
       side: slotSide.get(sys) || (ecoVault.find(e => e.eco === sys.eco) || {}).side,
-      moves: sys.variations[0].moves.map(m => m.move)
+      moves: sys.variations[0].moves.map(m => m.move),
+      gm: sys.notableGm || null
     };
     const out = {};
     for (const arch of Object.keys(archetypes)) for (const lvl of Object.keys(LEVEL_BANDS)) for (const strong of [0, 4]) {
@@ -144,10 +157,22 @@ async function runSurvey(browser, file, seed) {
     }
     return { issues, counts, scoring };
   });
+  // Hand-written Notable GM names and the Labs GM drill that depends on them (run last: it changes Labs state)
+  const labs = await page.evaluate(() => {
+    const handWritten = [];
+    for (const [arch, a] of Object.entries(archetypes)) for (const [lvl, s] of Object.entries(a.systems))
+      for (const side of ['whiteSystem', 'blackSystem']) handWritten.push(`${arch}|${lvl}|${side}|${s[side].eco}: ${s[side].notableGm || '-'}`);
+    const drill = {};
+    for (const gm of grandmastersList.slice(0, 30)) { startGmDrill(gm.name); drill[gm.name] = labsGmMoves.join(' ') || '-'; }
+    const names = new Set(grandmastersList.map(g => g.name));
+    return { handWritten, drill, names: [...names] };
+  });
   await context.close();
   const picks = {};
+  const notableGm = {};
   for (const [cfg, runs] of Object.entries(res)) picks[cfg] = runs.map(([w, b]) => `${w ? w.eco : '-'}/${b ? b.eco : '-'}`).join(' ');
-  return { res, picks, bank, errors, blocked: [...blocked] };
+  for (const [cfg, runs] of Object.entries(res)) notableGm[cfg] = runs.map(([w, b]) => `${(w && w.gm) || '-'} / ${(b && b.gm) || '-'}`).join(' | ');
+  return { res, picks, notableGm, labs, bank, errors, blocked: [...blocked] };
 }
 
 (async () => {
@@ -158,12 +183,13 @@ async function runSurvey(browser, file, seed) {
   for (let i = 0; i < repeat; i++) runs.push(await runSurvey(browser, htmlPath, SEED));
   const otherSeed = await runSurvey(browser, htmlPath, OTHER_SEED);
   await browser.close();
-  const { res, picks, bank } = runs[0];
+  const { res, picks, bank, notableGm, labs } = runs[0];
+  const gmNow = { notableGm, handWritten: labs.handWritten, labsDrill: labs.drill };
   const errors = [...new Set([...runs, otherSeed].flatMap(r => r.errors))];
   const blocked = [...new Set([...runs, otherSeed].flatMap(r => r.blocked))].sort();
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res));
-  const seedOk = same(otherSeed.picks, picks);
+  const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res) && same(r.labs, labs));
+  const seedOk = same(otherSeed.picks, picks) && same(otherSeed.notableGm, notableGm) && same(otherSeed.labs, labs);
 
   const sideIssues = new Set(), illegal = [];
   for (const [cfg, runs] of Object.entries(res)) for (const pair of runs) for (const c of pair) {
@@ -171,6 +197,13 @@ async function runSurvey(browser, file, seed) {
     if (c.side !== c.want && c.side !== 'either') sideIssues.add(`${c.eco} shown as ${c.want}, card is ${c.side}`);
     const g = new Chess();
     for (const san of c.moves) if (!g.move(san)) { illegal.push(`${cfg}: ${c.eco} illegal at ${san}`); break; }
+  }
+
+  if (updateGm) {
+    if (!repeatOk || !seedOk || errors.length || bank.issues.length) { console.error('Not updating: survey results were not repeatable, the page threw errors, or the question bank has issues.'); process.exit(1); }
+    fs.writeFileSync(gmBaselinePath, JSON.stringify(gmNow, null, 1) + '\n');
+    console.log(`Updated ${path.relative(process.cwd(), gmBaselinePath)} from ${htmlPath}`);
+    return;
   }
 
   if (update) {
@@ -203,6 +236,24 @@ async function runSurvey(browser, file, seed) {
   const scoreDiffs = [...vecs].filter(v => bank.scoring[v] !== expScoring[v]);
   if (!exp.scoring) fails.push('expected.json has no "scoring" snapshot (run npm run update)');
   else for (const v of scoreDiffs) fails.push(`scoring ${v}: got ${bank.scoring[v]}, expected ${expScoring[v]}`);
+  const gmExp = fs.existsSync(gmBaselinePath) ? JSON.parse(fs.readFileSync(gmBaselinePath, 'utf8')) : null;
+  const diffKeys = (got, want, label) => {
+    const keys = new Set([...Object.keys(want), ...Object.keys(got)]);
+    let n = 0;
+    for (const k of keys) if (got[k] !== want[k]) { n++; fails.push(`${label} ${k}: got "${got[k]}", expected "${want[k]}"`); }
+    return keys.size - n;
+  };
+  let gmMatch = 0, drillMatch = 0, handOk = false;
+  if (!gmExp) fails.push('gm-baseline.json is missing (run node survey_regression.js --update-gm-baseline)');
+  else {
+    gmMatch = diffKeys(notableGm, gmExp.notableGm || {}, 'Notable GM');
+    drillMatch = diffKeys(labs.drill, gmExp.labsDrill || {}, 'Labs GM drill');
+    handOk = same(labs.handWritten, gmExp.handWritten);
+    if (!handOk) fails.push(`hand-written notableGm names changed: ${labs.handWritten.filter(x => !(gmExp.handWritten || []).includes(x)).join('; ') || 'order changed'}`);
+  }
+  const shownGms = new Set(Object.values(res).flat().flat().filter(c => c && c.gm).map(c => c.gm));
+  const names = new Set(labs.names);
+  const noRecord = [...shownGms].filter(g => !names.has(g)).sort();
   const styleCounts = {};
   for (const s of Object.values(bank.scoring)) styleCounts[s] = (styleCounts[s] || 0) + 1;
 
@@ -217,6 +268,9 @@ async function runSurvey(browser, file, seed) {
   for (const s of exp.knownSideIssues.filter(s => !sideIssues.has(s))) console.log(`  known issue no longer seen (remove from expected.json): ${s}`);
   console.log(`Question bank: ${Object.entries(bank.counts).map(([a, n]) => `${a} ${n}`).join(', ')}; 200 built survey runs checked; ${bank.issues.length} issues`);
   console.log(`Scoring: ${vecs.size} answer combinations, ${vecs.size - scoreDiffs.length} match (${Object.entries(styleCounts).map(([s, n]) => `${s} ${n}`).join(', ')})`);
+  console.log(`Notable GM on cards: ${Object.keys(notableGm).length} combinations (x3 runs), ${gmMatch} match gm-baseline.json; ${shownGms.size} different GMs shown, ${noRecord.length} with no GM record (${noRecord.join(', ') || 'none'})`);
+  console.log(`Hand-written Notable GM names: ${labs.handWritten.length}, ${handOk ? 'unchanged' : 'CHANGED'}`);
+  console.log(`Labs GM drill: ${Object.keys(labs.drill).length} picker GMs, ${drillMatch} match gm-baseline.json (${Object.values(labs.drill).filter(m => m !== '-').length} load an opening)`);
   console.log(`Page and console errors: ${errors.length}`);
   if (fails.length) {
     console.log(`\nFAIL (${fails.length})`);

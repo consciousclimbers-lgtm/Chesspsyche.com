@@ -5,6 +5,7 @@
   "scripts": {
     "test": "node survey_regression.js ../../index.html",
     "update": "node survey_regression.js ../../index.html --update",
+    "update:gm-baseline": "node survey_regression.js ../../index.html --update-gm-baseline",
     "clickthrough": "node clickthrough.js ../../index.html"
   },
   "dependencies": {
