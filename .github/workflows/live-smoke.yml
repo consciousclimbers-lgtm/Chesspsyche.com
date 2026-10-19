@@ -1,0 +1,71 @@
+# Live smoke test: runs the browser click-through against the deployed site, with nothing blocked.
+# Runs after every GitHub Pages deployment, on demand (Actions tab -> Live smoke test -> Run workflow),
+# and on pull requests that change this file. It only reads the public website; it changes nothing.
+name: Live smoke test
+
+on:
+  workflow_run:
+    workflows: [pages-build-deployment]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Site to test
+        default: https://www.chesspsyche.com/
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/live-smoke.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke:
+    name: Live smoke test
+    # After a deployment, only when the deployment succeeded
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tools/survey-regression
+    env:
+      SITE_URL: ${{ github.event.inputs.url || 'https://www.chesspsyche.com/' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: tools/survey-regression/package-lock.json
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      # Pages can take a minute to serve a new deployment from every edge
+      - name: Wait for the site to serve the deployed commit
+        if: github.event_name == 'workflow_run'
+        run: sleep 60
+
+      - name: Click-through against the live site
+        run: node clickthrough.js --url "$SITE_URL" --shots out/screens 2>&1 | tee live-smoke.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Live smoke test of $SITE_URL"
+            echo '```'; cat live-smoke.txt 2>/dev/null; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-smoke-results
+          path: |
+            tools/survey-regression/live-smoke.txt
+            tools/survey-regression/out/
+          if-no-files-found: ignore

@@ -2,19 +2,18 @@
 
 Checks that a change to `index.html` does not unexpectedly change the survey's opening recommendations (picks) or touch protected site code.
 
-**Scope: this is a survey-pick regression test, not an end-to-end survey test.** It loads the page in headless Chromium and calls the page's own picker, `choosePicksForRun(style)`, directly. Before each call it sets the inputs the survey would set: the style, the experience level (`skillLevelKey`), and the strong/normal answer count (`lastExtremeCount`). It does **not** click through or submit the survey UI. So it does not test:
-- question display or answer selection;
-- how answers are scored into a style;
-- the results-page rendering, demo board or evaluation bar behaviour.
+**Scope: this is a survey-pick regression test, not an end-to-end survey test.** It loads the page in headless Chromium and calls the page's own picker, `choosePicksForRun(style)`, directly. Before each call it sets the inputs the survey would set: the style, the experience level (`skillLevelKey`), and the strong/normal answer count (`lastExtremeCount`). It does **not** click through or submit the survey UI; `npm run clickthrough` (below) does that, and covers the results page, demo board, board editor, evaluation bar and navigation.
 
-Those areas are covered only by the protected-code check below: the test fails if their code changes, but it does not exercise them.
+Both tests run automatically on every pull request to `main` (GitHub Actions, check name **Regression tests**, `.github/workflows/regression.yml`). The results and screenshots are attached to each run.
 
 ## What it checks
 
 1. **Protected code is unchanged.** The test hashes `index.html` with the opening-data block removed. That block runs from `const ecoNamesMap = {` up to the survey picker comment. Any edit outside that block fails the test, including edits to the demo board, evaluation bar, pieces, board editor, results board, player labels, navigation, or the survey logic.
 2. **Survey picks are unchanged.** For every style × experience level × normal/strong answers, the test calls `choosePicksForRun` three times in a row, which covers the retake behaviour. All 60 × 3 White/Black picks must match `expected.json`.
 3. **Recommendation cards are correct.** Each card must come from the side it was picked for, and its moves must be legal. A mismatch fails the test unless it is listed in `knownSideIssues` (currently empty).
-4. **The page loads cleanly.** Any JavaScript error fails the test.
+4. **The page loads cleanly.** Any JavaScript error or console error fails the test. The only console errors allowed are `Failed to load resource: net::ERR_FAILED`, which the blocked offline requests cause.
+5. **The question bank is complete.** Each of the 5 areas has 10 questions; every question has a text and low/mid/high answers; no text is empty or repeated. 200 survey runs built by the page's `buildSurveyRun()` must each ask one question per area, with answers worth 1, 2 and 3 points taken from the right lists.
+6. **Scoring is unchanged.** All 243 answer combinations (1 to 3 points in each area) must give the style saved under `scoring` in `expected.json`, through the page's `getArchetypeFromPoints`.
 
 **Determinism.** The opening picker (`ecoCandidatesFor`, `pickEcoCode`, `choosePicksForRun`) uses no randomness. Its only state is the retake history saved in localStorage. Other parts of the page do use `Math.random`, for question order and answer order. So that nothing random can leak into the result, the test:
 - replaces `Math.random` with a seeded generator before any page script runs;
@@ -38,7 +37,7 @@ node survey_regression.js /path/to/other/index.html   # check another copy
 
 ## When a change is intended
 
-If an owner-approved change is meant to alter picks or protected code, run `npm run update` and commit the new `expected.json` with that change. The diff of `expected.json` then shows reviewers exactly which recommendations changed.
+If an owner-approved change is meant to alter picks, scoring or protected code, run `npm run update` and commit the new `expected.json` with that change. The diff of `expected.json` then shows reviewers exactly which recommendations changed.
 
 ## Results-page click-through
 
@@ -47,7 +46,9 @@ If an owner-approved change is meant to alter picks or protected code, run `npm 
 - the board puts the chosen side at the bottom;
 - stepping through the demo moves the pieces as the line says, square by square, until the counter reaches the last move.
 
-It also opens the Labs board editor, places and erases a piece, plays 1.e4 and checks that the evaluation bar updates. It runs offline in the same way as `npm test`. Add `--shots DIR` to save screenshots.
+It also opens the Labs board editor, places and erases a piece, plays 1.e4 and checks that the evaluation bar updates (it waits for Stockfish to finish each analysis rather than for a fixed time). Then it checks navigation: the home-page logo opens the survey, the header buttons open Grandmasters, Clubs, Play, the survey and home, and the header logo opens the survey. Any JavaScript or console error fails. It runs offline in the same way as `npm test`. Add `--shots DIR` to save screenshots.
+
+**Live smoke test.** `node clickthrough.js --url https://www.chesspsyche.com/` runs the same checks against a deployed site, with nothing blocked or replaced, so every console error counts. The **Live smoke test** workflow runs it after each GitHub Pages deployment; see `RELEASE.md` in the repository root.
 
 ## Side mismatches (fixed)
 

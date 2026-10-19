@@ -1,0 +1,73 @@
+# Runs the survey regression test and the browser click-through on every pull request to main,
+# on every push to main, and on demand (Actions tab -> Regression tests -> Run workflow).
+# The job is called "Regression tests"; that is the name to require in the main branch ruleset.
+name: Regression tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Read-only: the job only checks out the code and runs tests
+permissions:
+  contents: read
+
+concurrency:
+  group: regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    name: Regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tools/survey-regression
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: tools/survey-regression/package-lock.json
+
+      - name: Install test dependencies
+        run: npm ci
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Survey regression (protected code, picks, question bank, scoring, console errors)
+        run: npm test 2>&1 | tee survey-regression.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Browser click-through (cards, demo board, pieces, board editor, evaluation bar, navigation)
+        if: success() || failure()
+        run: npm run clickthrough -- --shots out/screens 2>&1 | tee clickthrough.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Regression tests on \`${GITHUB_SHA::7}\`"
+            for f in survey-regression.txt clickthrough.txt; do
+              [ -f "$f" ] || continue
+              echo "### $f"; echo '```'; cat "$f"; echo '```'
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload results and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-results
+          path: |
+            tools/survey-regression/survey-regression.txt
+            tools/survey-regression/clickthrough.txt
+            tools/survey-regression/out/
+          if-no-files-found: ignore
