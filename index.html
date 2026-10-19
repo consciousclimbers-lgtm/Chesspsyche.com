@@ -3560,10 +3560,10 @@ function switchTab(tabId) {
     const hideHeader = tabId === 'home' || tabId === 'landing' || tabId === 'play';
     if (headerEl) headerEl.classList.toggle('hidden', hideHeader);
 
-    // Hide every tab decisively, including sections with utility classes that set display.
+    // Hide all sections using the site's hidden utility class.
     document.querySelectorAll('.tab-content').forEach(el => {
         el.classList.add('hidden');
-        el.style.setProperty('display', 'none', 'important');
+        el.style.removeProperty('display');
     });
 
     let targetSectionId = tabId;
@@ -3572,9 +3572,7 @@ function switchTab(tabId) {
     const targetEl = document.getElementById(`tab-${targetSectionId}`);
     if (targetEl) {
         targetEl.classList.remove('hidden');
-        // Explicitly reveal the active tab after the hide pass above.
-        // Inline !important prevents utility-class display rules from leaving a tab blank.
-        targetEl.style.setProperty('display', 'flex', 'important');
+        targetEl.style.removeProperty('display');
     }
 
     // Update Desktop Navigation Bar
@@ -6024,14 +6022,7 @@ function finishLabsEditorAnalysis(move){const fen=labsEditorAnalyzingFen;if(!fen
 function requestLabsEditorAnalysis(){labsEditorAnalysisTimer=null;const panel=document.getElementById("labs-board-editor");if(!panel||panel.classList.contains("hidden"))return;const fen=labsEditorBuildFen();try{const g=createChessInstance(),accepted=g.load(fen);if(accepted===false){setLabsEditorEngineStatus("Add a legal position to analyze.");return;}}catch(e){setLabsEditorEngineStatus("Add a legal position to analyze.");return;}if(!sfWorker&&!sfLoadFailed)initStockfish();if(sfLoadFailed){setLabsEditorEngineStatus("Stockfish could not start. Refresh and try again.");return;}if(!sfWorker||!sfReady){setLabsEditorEngineStatus("Starting Stockfish engine…");labsEditorAnalysisTimer=setTimeout(requestLabsEditorAnalysis,350);return;}if(sfBusy||labsEditorEngineActive){labsEditorAnalysisTimer=setTimeout(requestLabsEditorAnalysis,250);return;}labsEditorAnalyzingFen=fen;labsEditorAnalysisDepth=0;labsEditorScoreWhite=null;labsEditorMateWhite=null;labsEditorBestMove=null;labsEditorBestMoveSan="";clearLabsEditorArrow();updateLabsEditorEvaluationUI();setLabsEditorEngineStatus("Analyzing position…");sfBusy=true;labsEditorEngineActive=true;sfWorker.postMessage("setoption name Skill Level value 20");sfWorker.postMessage("position fen "+fen);sfWorker.postMessage("go depth 12");}
 
 function renderLabsEditorBoard() {
- const board=document.getElementById("labs-editor-board");if(!board)return;
- // Keep the editor grid visible and square even when parent tab visibility changes.
- board.style.setProperty("display","grid","important");
- board.style.setProperty("visibility","visible","important");
- board.style.setProperty("aspect-ratio","1 / 1");
- board.style.setProperty("width","100%");
- board.style.setProperty("max-width","400px");
- board.innerHTML="";
+ const board=document.getElementById("labs-editor-board");if(!board)return;board.innerHTML="";
  for(let vr=0;vr<8;vr++)for(let vc=0;vc<8;vc++){
   const r=labsEditorFlipped?7-vr:vr,c=labsEditorFlipped?7-vc:vc,name=String.fromCharCode(97+c)+(8-r),dark=(r+c)%2===1,piece=labsEditorPieces[name]||"";
   const sq=document.createElement("button");sq.type="button";sq.className="square "+(dark?"dark":"light");sq.style.position="relative";sq.style.padding="0";sq.style.border="0";sq.style.minWidth="0";sq.setAttribute("role","gridcell");sq.setAttribute("aria-label",name+(piece?", piece "+piece:", empty"));sq.title=name;sq.dataset.square=name;if(piece)sq.innerHTML=getPieceSVG(piece);
