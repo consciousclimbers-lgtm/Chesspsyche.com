@@ -3329,7 +3329,7 @@ const archetypes = {
                 blackSystem: { name: "King's Indian (Mar del Plata)", eco: "E97", summary: "A classic attacking race: White attacks on the queenside while Black storms the kingside.", notableGm: "Hikaru Nakamura", variations: [{ moves: [{ move: "d4", from: "d2", to: "d4" }, { move: "Nf6", from: "g8", to: "f6" }, { move: "c4", from: "c2", to: "c4" }, { move: "g6", from: "g7", to: "g6" }, { move: "Nc3", from: "b1", to: "c3" }, { move: "Bg7", from: "f8", to: "g7" }, { move: "e4", from: "e2", to: "e4" }, { move: "d6", from: "d7", to: "d6" }, { move: "Nf3", from: "g1", to: "f3" }, { move: "O-O", from: "e8", to: "g8" }, { move: "Be2", from: "f1", to: "e2" }, { move: "e5", from: "e7", to: "e5" }] }] }
             },
             advancedGm: {
-                whiteSystem: { name: "Open Sicilian (3.d4 Mainlines)", eco: "B80", summary: "Relentless central and wing aggression designed to overwhelm Black's structure.", notableGm: "D Gukesh", variations: [{ moves: [{ move: "e4", from: "e2", to: "e4" }, { move: "c5", from: "c7", to: "c5" }, { move: "Nf3", from: "g1", to: "f3" }, { move: "e6", from: "e7", to: "e6" }, { move: "d4", from: "d2", to: "d4" }, { move: "cxd4", from: "c5", to: "d4" }, { move: "Nxd4", from: "f3", to: "d4" }] }] },
+                whiteSystem: { name: "Sicilian Defense (2...e6 Main Line)", eco: "B40", summary: "Relentless central and wing aggression designed to overwhelm Black's structure.", notableGm: "D Gukesh", variations: [{ moves: [{ move: "e4", from: "e2", to: "e4" }, { move: "c5", from: "c7", to: "c5" }, { move: "Nf3", from: "g1", to: "f3" }, { move: "e6", from: "e7", to: "e6" }, { move: "d4", from: "d2", to: "d4" }, { move: "cxd4", from: "c5", to: "d4" }, { move: "Nxd4", from: "f3", to: "d4" }] }] },
                 blackSystem: { name: "Grünfeld Defense", eco: "D85", summary: "Dynamic hypermodern Defense that destroys White's pawn center with rapid piece counter-attacks.", notableGm: "MVL (Maxime Vachier-Lagrave)", variations: [{ moves: [{ move: "d4", from: "d2", to: "d4" }, { move: "Nf6", from: "g8", to: "f6" }, { move: "c4", from: "c2", to: "c4" }, { move: "g6", from: "g7", to: "g6" }, { move: "Nc3", from: "b1", to: "c3" }, { move: "d5", from: "d7", to: "d5" }] }] }
             }
         }
@@ -3893,7 +3893,8 @@ function initResultsBoard(arch) {
     currentActiveArch = arch; demoGame = createChessInstance(); demoMoveIndex = 0; isPracticeMode = false; practiceStepIndex = 0; practiceSelectedSquare = null;
     demoLastMove = null; demoHintActive = false;
     const systemObj = resultsRepertoireSide === 'white' ? arch.whiteSystem : arch.blackSystem;
-    activeDemoMoves = (systemObj.variations[0].moves || []).slice(0, 10);
+    activeDemoMoves = (systemObj.variations[0].moves || []).slice(0, 20);
+    _attachCatalogCommentary(systemObj, activeDemoMoves);
     document.getElementById('results-system-title').textContent = `Opening: ${systemObj.name} (${resultsRepertoireSide.toUpperCase()})`;
     document.getElementById('btn-practice-toggle').onclick = startPracticeMode;
     document.getElementById('btn-practice-toggle').textContent = 'Practice This Line';
@@ -4094,6 +4095,21 @@ function handlePracticeSquareClick(r, c) {
             practiceSelectedSquare = null; playSynthBeep(true); renderResultsBoardUI();
         }
     }
+}
+
+function _attachCatalogCommentary(systemObj, moves) {
+    // Reuse catalog commentary only while the recommendation line exactly matches
+    // the catalog's SAN move order. Never attach commentary from a different line.
+    const catalog = systemObj && ecoVaultData[systemObj.eco];
+    if (!catalog || !catalog.moves || !Array.isArray(catalog.commentary)) return;
+    const catalogMoves = catalog.moves.trim().split(/\s+/).filter(token => token && !/^\d+\./.test(token));
+    let prefixMatches = true;
+    moves.forEach((moveObj, idx) => {
+        if (catalogMoves[idx] !== moveObj.move) prefixMatches = false;
+        if (prefixMatches && !moveObj.commentary && typeof catalog.commentary[idx] === 'string') {
+            moveObj.commentary = catalog.commentary[idx];
+        }
+    });
 }
 
 function _demoBoardBlurb(moveObj, idx) {
