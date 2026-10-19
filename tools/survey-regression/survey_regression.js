@@ -44,8 +44,8 @@
 // every other http(s) request is blocked, so the test makes no network requests.
 //
 // Usage: node survey_regression.js [path/to/index.html] [--update] [--update-gm-baseline] [--repeat N]
-//   --update              rewrites expected.json and gm-baseline.json
-//   --update-gm-baseline  rewrites gm-baseline.json only
+//   --update              rewrites expected.json only (never gm-baseline.json)
+//   --update-gm-baseline  rewrites gm-baseline.json only (npm run update:gm-baseline); cannot be combined with --update
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -54,7 +54,8 @@ const { Chess } = require('chess.js');
 
 const args = process.argv.slice(2);
 const update = args.includes('--update');
-const updateGm = update || args.includes('--update-gm-baseline');
+const updateGm = args.includes('--update-gm-baseline');
+if (update && updateGm) { console.error('Use --update (expected.json) or --update-gm-baseline (gm-baseline.json), not both.'); process.exit(1); }
 const repeat = args.includes('--repeat') ? Math.max(1, parseInt(args[args.indexOf('--repeat') + 1], 10) || 1) : 3;
 const SEED = 20261019, OTHER_SEED = 7;
 const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--repeat');
@@ -202,7 +203,11 @@ async function runSurvey(browser, file, seed) {
     if (!repeatOk || !seedOk || errors.length || bank.issues.length) { console.error('Not updating: survey results were not repeatable, the page threw errors, or the question bank has issues.'); process.exit(1); }
     fs.writeFileSync(gmBaselinePath, JSON.stringify(gmNow, null, 1) + '\n');
     console.log(`Updated ${path.relative(process.cwd(), gmBaselinePath)} from ${htmlPath}`);
-    if (!update) return;
+    return;
+  }
+
+  if (update) {
+    if (!repeatOk || !seedOk || errors.length || bank.issues.length) { console.error('Not updating: survey results were not repeatable, the page threw errors, or the question bank has issues.'); process.exit(1); }
     const prev = fs.existsSync(expectedPath) ? JSON.parse(fs.readFileSync(expectedPath, 'utf8')) : {};
     fs.writeFileSync(expectedPath, JSON.stringify({
       protectedHash: hash,
