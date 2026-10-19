@@ -18,6 +18,8 @@ Both tests run automatically on every pull request to `main` (GitHub Actions, ch
 8. **Hand-written Notable GM names are unchanged.** The `notableGm` of all 36 hand-written systems in `archetypes` must match `gm-baseline.json`. These names sit in the opening-data block, which check 1 does not cover.
 9. **The Labs GM drill is unchanged.** For each GM in the Labs picker (the first 30 of the GM list), the moves `startGmDrill(name)` loads must match `gm-baseline.json`. The drill finds a GM's opening by matching their first name against the hand-written `notableGm` names, so renaming one changes the drill.
 
+10. **Notable GM pools and rotation.** The Notable GM on a card comes from `NOTABLE_GM_POOLS` (approved GMs per opening family and side) in a fixed round-robin. The test checks the data (every code is in the vault and on the pool's side, no code is in two pools for one side, no GM is listed twice in a pool, every entry has a GM, an https source and a status, and every verified GM is an exact GM record name) and that every female GM record is in `NOTABLE_GM_CONSIDERED` with her actual pools. For every pool, with fresh storage, n completed surveys show each of its n GMs once and survey n + 1 repeats survey 1; the GM does not change without a new survey. Through the page, a re-render and a reload (no saved picks in memory) show the same GM as the results. Every card's GM must come from its opening's pool, and a card whose opening has no pool shows none. It prints a representation report (women's share of the pool entries and of the GMs shown, pools with no women, the GMs in the most pools) and warns when a GM is in more than 6 pools; the report is not a quota or a pass/fail gate.
+
 Checks 7 to 9 read `gm-baseline.json`, kept separate from `expected.json`. Each file has its own update command, so updating one can never overwrite the other: `npm run update` rewrites only `expected.json`, and `npm run update:gm-baseline` rewrites only `gm-baseline.json`. An owner-approved change to the Notable GM, the hand-written names or the Labs drill needs `npm run update:gm-baseline`, and the diff of `gm-baseline.json` shows exactly what changed.
 
 **Determinism.** The opening picker (`ecoCandidatesFor`, `pickEcoCode`, `choosePicksForRun`) uses no randomness. Its only state is the retake history saved in localStorage. Other parts of the page do use `Math.random`, for question order and answer order. So that nothing random can leak into the result, the test:
@@ -46,11 +48,13 @@ If an owner-approved change is meant to alter picks, scoring or protected code, 
 
 ## Results-page click-through
 
-`npm run clickthrough` (`clickthrough.js`) is a separate browser test of the results page. It takes the survey by clicking, the way a visitor does, for four cases: a White B12 pick, a Black B40 pick, a White D85 pick and a White D00 pick (a case where both cards name a GM). For each it checks:
+`npm run clickthrough` (`clickthrough.js`) is a separate browser test of the results page. It takes the survey by clicking, the way a visitor does, for five cases: a White B12 pick, a Black B40 pick, a White D85 pick, a White D00 pick and a White E06 (Catalan) pick that is taken twice. For each it checks:
 - both cards show the expected opening, each from its own side;
 - the board puts the chosen side at the bottom;
 - stepping through the demo moves the pieces as the line says, square by square, until the counter reaches the last move;
 - each card shows the expected Notable GM (or none), and clicking a shown GM that is in the GM database opens that GM's pop-up.
+- switching to another tab and back keeps the same Notable GM;
+- for the Catalan case, taking the survey again shows the next GM in the Catalan pool.
 
 It also opens the Labs board editor, places and erases a piece, plays 1.e4 and checks that the evaluation bar updates (it waits for Stockfish to finish each analysis rather than for a fixed time). Then it checks navigation: the home-page logo opens the survey, the header buttons open Grandmasters, Clubs, Play, the survey and home, and the header logo opens the survey. Any JavaScript or console error fails. It runs offline in the same way as `npm test`. Add `--shots DIR` to save screenshots.
 
