@@ -3609,8 +3609,7 @@ function switchTab(tabId) {
         }
     });
 
-    // Switch directly to the selected tab's top without an animated scroll.
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     if (tabId === 'quiz') startAssessment();
     if (tabId === 'grandmasters') renderGrandmasters();
