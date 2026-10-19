@@ -1,0 +1,86 @@
+# Live smoke test: runs the browser click-through against the deployed site, with nothing blocked.
+# Runs after every GitHub Pages deployment, on demand (Actions tab -> Live smoke test -> Run workflow),
+# and on pull requests that change this file. It only reads the public website; it changes nothing.
+# It first waits until the site serves the same index.html as the commit being tested, so it never
+# passes by testing an older, cached copy of the page.
+name: Live smoke test
+
+on:
+  # GitHub's built-in Pages workflow. It is listed as "pages build and deployment" in the Actions tab
+  # and as pages-build-deployment in its path; both names are given, an unmatched name is ignored.
+  # workflow_run triggers are read from the default branch only, so this one takes effect once merged.
+  workflow_run:
+    workflows: [pages build and deployment, pages-build-deployment]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Site to test
+        default: https://www.chesspsyche.com/
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/live-smoke.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke:
+    name: Live smoke test
+    # After a deployment, only when the deployment succeeded
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tools/survey-regression
+    env:
+      SITE_URL: ${{ github.event.inputs.url || 'https://www.chesspsyche.com/' }}
+    steps:
+      # After a deployment, test the commit that was deployed
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/survey-regression/package-lock.json
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      # Pages can take a few minutes to serve a new deployment; the query string avoids cached copies
+      - name: Wait until the site serves this commit's index.html
+        run: |
+          want=$(sha256sum ../../index.html | cut -d' ' -f1)
+          for i in $(seq 1 40); do
+            got=$(curl -fsSL "${SITE_URL}?smoke=${GITHUB_RUN_ID}-$i" | sha256sum | cut -d' ' -f1) || got=unreachable
+            if [ "$got" = "$want" ]; then echo "The site serves this commit's index.html (sha256 ${want:0:12})"; exit 0; fi
+            echo "Attempt $i: the site serves ${got:0:12}, waiting for ${want:0:12}"; sleep 15
+          done
+          echo "::error::After 10 minutes the site still does not serve this commit's index.html"; exit 1
+        shell: bash
+
+      - name: Click-through against the live site
+        run: node clickthrough.js --url "${SITE_URL}?smoke=${GITHUB_RUN_ID}" --shots out/screens 2>&1 | tee live-smoke.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Live smoke test of $SITE_URL"
+            echo '```'; cat live-smoke.txt 2>/dev/null; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-smoke-results
+          path: |
+            tools/survey-regression/live-smoke.txt
+            tools/survey-regression/out/
+          if-no-files-found: ignore

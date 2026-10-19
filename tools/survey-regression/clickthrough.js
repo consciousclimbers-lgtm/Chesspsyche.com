@@ -6,14 +6,21 @@
 //   - the board shows the chosen side at the bottom (White/Black orientation);
 //   - stepping through the demo moves the pieces: after every step the on-screen pieces must match the
 //     line replayed in chess.js, and the move counter must reach the end.
-// Finally it opens the Labs board editor and checks that placing and erasing a piece works, that a move
-// can be played, and that the evaluation bar updates.
+// It opens the Labs board editor and checks that placing and erasing a piece works, that a move can be
+// played, and that the evaluation bar updates: it waits for Stockfish to finish analysing the start
+// position, plays 1.e4, and waits for the finished analysis of the new position.
+// It checks navigation: from the home page the logo opens the survey; the header buttons open the
+// Grandmasters, Clubs, Play, survey and home sections; the header logo opens the survey.
+// Any JavaScript error or console error fails the case it happens in.
 //
-// Offline like survey_regression.js: every http(s) request is blocked except chess.js 0.10.3, served
-// from node_modules. A fresh browser context (empty localStorage) is used for every case, so each case
-// gets the first pick for its combination.
+// Offline by default, like survey_regression.js: every http(s) request is blocked except chess.js 0.10.3,
+// served from node_modules (the console errors those blocked requests cause are expected and ignored).
+// With --url it tests a deployed site instead (live smoke test): nothing is blocked or replaced, and
+// every console error counts. A fresh browser context (empty localStorage) is used for every case, so
+// each case gets the first pick for its combination.
 //
 // Usage: node clickthrough.js [path/to/index.html] [--shots DIR]
+//        node clickthrough.js --url https://www.chesspsyche.com/ [--shots DIR]
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
@@ -21,9 +28,13 @@ const { Chess } = require('chess.js');
 
 const args = process.argv.slice(2);
 const shots = args.includes('--shots') ? path.resolve(args[args.indexOf('--shots') + 1]) : null;
-const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--shots');
+const url = args.includes('--url') ? args[args.indexOf('--url') + 1] : null;
+const positional = args.filter((a, i) => !a.startsWith('--') && !['--shots', '--url'].includes(args[i - 1]));
 const htmlPath = path.resolve(positional[0] || path.join(__dirname, '../../index.html'));
+const target = url || 'file://' + htmlPath;
 const chessLocal = require.resolve('chess.js');
+// Console message Chromium logs for each request blocked in offline mode
+const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 
 // strong = 4 or more of the 5 answers are the strongest or mildest choice (lastExtremeCount >= 4)
 const CASES = [
@@ -34,13 +45,15 @@ const CASES = [
 
 async function openPage(browser) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
-  await context.route(/^https?:\/\//, r => r.abort());
+  if (!url) await context.route(/^https?:\/\//, r => r.abort());
   const page = await context.newPage();
   const errors = [];
-  page.on('pageerror', e => errors.push(e.message));
-  await page.route('**/chess.js/0.10.3/chess.min.js', r => r.fulfill({ path: chessLocal, contentType: 'application/javascript' }));
-  await page.goto('file://' + htmlPath);
-  await page.waitForFunction(() => typeof window.Chess === 'function' && typeof archetypes === 'object');
+  page.on('pageerror', e => errors.push(`page error: ${e.message}`));
+  page.on('console', m => { if (m.type() === 'error' && (url || m.text() !== BLOCKED_LOAD)) errors.push(`console error: ${m.text()}`); });
+  if (!url) await page.route('**/chess.js/0.10.3/chess.min.js', r => r.fulfill({ path: chessLocal, contentType: 'application/javascript' }));
+  await page.goto(target);
+  const ready = await page.waitForFunction(() => typeof window.Chess === 'function' && typeof archetypes === 'object', null, { timeout: 30000 }).then(() => true, () => false);
+  if (!ready) throw new Error(`${target} did not load chess.js and the page scripts within 30 s. Errors: ${errors.join('; ') || 'none'}`);
   return { context, page, errors };
 }
 
@@ -146,8 +159,12 @@ async function runEditor(browser) {
   const fails = [], info = {};
   await page.evaluate(() => switchTab('labs')); await page.waitForTimeout(300);
   await page.locator('button[onclick="startLabsBoardEditor()"]').click();
-  const read = () => page.evaluate(() => ({ bar: document.getElementById('labs-editor-evalbar-white').style.height, score: document.getElementById('labs-editor-eval-score').textContent }));
-  await page.waitForTimeout(4000);
+  const read = () => page.evaluate(() => ({ bar: document.getElementById('labs-editor-evalbar-white').style.height, score: document.getElementById('labs-editor-eval-score').textContent, depth: document.getElementById('labs-editor-eval-depth').textContent }));
+  // Analysis of the position on the board has finished and is shown
+  const analysed = () => page.waitForFunction(() => labsEditorAnalyzingFen === labsEditorBuildFen()
+    && document.getElementById('labs-editor-engine-status').textContent.trim() === 'Live Stockfish analysis ready'
+    && document.getElementById('labs-editor-eval-score').textContent !== 'Eval: —', null, { timeout: 60000 }).then(() => true, () => false);
+  if (!await analysed()) fails.push(`no finished evaluation of the start position (engine status "${await page.textContent('#labs-editor-engine-status')}")`);
   info.startFen = await page.evaluate(() => labsEditorBuildFen());
   info.evalStart = await read();
   // Edit mode: place a white knight on d4, then erase it
@@ -164,10 +181,9 @@ async function runEditor(browser) {
   // Play mode: 1.e4, then the evaluation bar must update
   await page.click('#labs-editor-mode-btn');
   await page.click('#labs-editor-board [data-square="e2"]'); await page.click('#labs-editor-board [data-square="e4"]');
-  await page.waitForTimeout(500);
   info.afterMove = await page.evaluate(() => ({ e2: labsEditorPieces.e2 || null, e4: labsEditorPieces.e4 || null }));
   if (info.afterMove.e4 !== 'P' || info.afterMove.e2) fails.push(`1.e4 not played: ${JSON.stringify(info.afterMove)}`);
-  await page.waitForTimeout(5000);
+  if (!await analysed()) fails.push(`no finished evaluation after 1.e4 (engine status "${await page.textContent('#labs-editor-engine-status')}")`);
   info.evalAfter = await read();
   if (info.evalStart.score === 'Eval: —' || info.evalAfter.score === 'Eval: —') fails.push('no evaluation shown');
   if (JSON.stringify(info.evalStart) === JSON.stringify(info.evalAfter)) fails.push('evaluation bar did not update after 1.e4');
@@ -176,30 +192,60 @@ async function runEditor(browser) {
   return { fails, info, errors };
 }
 
+// Navigation: click the visible button or logo, then record which tab section is showing
+async function runNav(browser) {
+  const { context, page, errors } = await openPage(browser);
+  const fails = [], steps = [];
+  const showing = () => page.evaluate(() => [...document.querySelectorAll('section[id^="tab-"]')].filter(e => e.getClientRects().length && getComputedStyle(e).display !== 'none').map(e => e.id).join(','));
+  const step = async (label, selector, want) => {
+    const l = page.locator(`${selector}:visible`);
+    let got;
+    if (!(await l.count())) got = 'nothing to click';
+    else { await l.first().click({ timeout: 5000 }); await page.waitForTimeout(300); got = await showing(); }
+    steps.push(`${label} -> ${got}`);
+    if (got !== want) fails.push(`${label} showed "${got}", expected ${want}`);
+  };
+  const start = await showing();
+  steps.push(`start -> ${start}`);
+  if (start !== 'tab-home') fails.push(`page opened on "${start}", expected tab-home`);
+  await step('home-page logo', '#tab-home img[data-logo]', 'tab-quiz');
+  for (const t of ['grandmasters', 'clubs', 'play-hub', 'quiz']) await step(`header ${t}`, `#main-header [onclick="switchTab('${t}')"]`, `tab-${t}`);
+  await step('header logo', '#main-header img[data-logo]', 'tab-quiz');
+  await step('header home', `#main-header [onclick="switchTab('home')"]`, 'tab-home');
+  await context.close();
+  return { fails, steps, errors };
+}
+
 (async () => {
   if (shots) fs.mkdirSync(shots, { recursive: true });
   const browser = await chromium.launch();
   const results = [];
   for (const c of CASES) results.push(await runCase(browser, c));
   const editor = await runEditor(browser);
+  const nav = await runNav(browser);
   await browser.close();
 
   let failed = 0;
-  console.log(`File: ${htmlPath}`);
+  console.log(url ? `URL: ${url} (live: nothing blocked, all console errors count)` : `File: ${htmlPath} (offline)`);
   for (const r of results) {
-    const fails = [...r.fails, ...r.errors.map(e => `page error: ${e}`)];
+    const fails = [...r.fails, ...r.errors];
     failed += fails.length;
     console.log(`\n${r.name}: ${r.style}, ${r.level}, ${r.strong ? 'strong' : 'normal'} answers ${JSON.stringify(r.answers)} -> ${fails.length ? 'FAIL' : 'PASS'}`);
     if (r.info.cards) console.log(`  White card: ${r.info.cards.whitePanel} (${r.info.cards.white.side} card)\n  Black card: ${r.info.cards.blackPanel} (${r.info.cards.black.side} card)`);
     if (r.info.title) console.log(`  Board: ${r.info.title}, ${r.info.orientation}; demo ${r.info.demoLine}; ${r.info.moveCounter}`);
     for (const f of fails) console.log('  - ' + f);
   }
-  const efails = [...editor.fails, ...editor.errors.map(e => `page error: ${e}`)];
+  const efails = [...editor.fails, ...editor.errors];
   failed += efails.length;
   console.log(`\nLabs board editor -> ${efails.length ? 'FAIL' : 'PASS'}`);
   console.log(`  place N on d4: ${editor.info.placed}; erase: ${editor.info.erased || 'empty'}; 1.e4 played: e4=${editor.info.afterMove && editor.info.afterMove.e4}`);
-  console.log(`  eval bar: ${editor.info.evalStart.score} (${editor.info.evalStart.bar}) -> ${editor.info.evalAfter && editor.info.evalAfter.score} (${editor.info.evalAfter && editor.info.evalAfter.bar})`);
+  console.log(`  eval bar: ${editor.info.evalStart.score}, ${editor.info.evalStart.depth} (${editor.info.evalStart.bar}) -> ${editor.info.evalAfter && editor.info.evalAfter.score}, ${editor.info.evalAfter && editor.info.evalAfter.depth} (${editor.info.evalAfter && editor.info.evalAfter.bar})`);
   for (const f of efails) console.log('  - ' + f);
+  const nfails = [...nav.fails, ...nav.errors];
+  failed += nfails.length;
+  console.log(`\nNavigation -> ${nfails.length ? 'FAIL' : 'PASS'}`);
+  console.log('  ' + nav.steps.join('\n  '));
+  for (const f of nfails) console.log('  - ' + f);
   console.log(failed ? `\nFAIL (${failed})` : '\nPASS');
   process.exit(failed ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
