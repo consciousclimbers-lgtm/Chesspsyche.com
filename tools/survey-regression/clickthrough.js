@@ -3,7 +3,7 @@
 // For each case it takes the survey in headless Chromium by clicking: open the survey tab, click the
 // experience level, click an answer on each of the 5 questions. Then it checks, on the results page:
 //   - the White and Black cards show the expected openings, each from its own side;
-//   - each card shows the expected "Notable GM" (or none), and clicking a shown GM whose name is in the
+//   - each card shows the "Notable GM" heading and the expected GM (or a "none yet" note), and clicking a shown GM whose name is in the
 //     GM database opens that GM's pop-up;
 //   - the board shows the chosen side at the bottom (White/Black orientation);
 //   - stepping through the demo moves the pieces: after every step the on-screen pieces must match the
@@ -39,7 +39,7 @@ const chessLocal = require.resolve('chess.js');
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 
 // strong = 4 or more of the 5 answers are the strongest or mildest choice (lastExtremeCount >= 4)
-// gm: the Notable GM each card shows on a first survey (null = no Notable GM line): the starting GM of
+// gm: the Notable GM each card shows on a first survey (null = the heading with a "none yet" note): the starting GM of
 // the opening's approved pool. retake: the picks and Notable GMs after taking the same survey again,
 // where the pool's next GM must appear.
 const CASES = [
@@ -145,6 +145,9 @@ async function runCase(browser, c) {
   info.gm = { white: gmShown[0], black: gmShown[1], modal: [] };
   for (const [i, s] of ['white', 'black'].entries()) if (gmShown[i] !== c.gm[s]) fails.push(`${s} Notable GM "${gmShown[i]}", expected "${c.gm[s]}"`);
   const wantTexts = gmShown.filter(Boolean);
+  // Both cards keep the "Notable GM" heading, also when the opening has no approved GM yet
+  const headings = await page.evaluate(() => [...document.querySelectorAll('#results-container .bg-slate900.rounded-xl')].filter(p => /Playing as (White|Black)/.test(p.textContent)).map(p => /Notable GM:/.test(p.textContent)));
+  if (JSON.stringify(headings) !== '[true,true]') fails.push(`Notable GM heading shown on the White/Black cards: ${JSON.stringify(headings)}, expected [true,true]`);
   if (JSON.stringify(gmTexts.map(t => t.trim())) !== JSON.stringify(wantTexts)) fails.push(`Notable GM lines show ${JSON.stringify(gmTexts)}, expected ${JSON.stringify(wantTexts)}`);
   for (let i = 0; i < gmTexts.length; i++) {
     const name = gmTexts[i].trim();

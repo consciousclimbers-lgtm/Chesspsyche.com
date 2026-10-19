@@ -101,12 +101,17 @@ async function runSurvey(browser, file, seed) {
       handSide.add(`${s.whiteSystem.eco}|white`); handSide.add(`${s.blackSystem.eco}|black`);
     }
     const approved = (eco, side) => { const p = notableGmPool(eco, side); return p ? eligibleNotableGms(p) : []; };
+    // Notes on White's moves in the vault commentary (even entries are White's moves, odd entries Black's)
+    const whiteNotes = eco => ((ecoVault.find(e => e.eco === eco) || {}).commentary || []).filter((t, i) => i % 2 === 0).map(t => String(t).split(' — ').slice(1).join(' — ')).filter(Boolean);
     const card = (sys, want) => sys && {
       eco: sys.eco, want,
       side: handSide.has(`${sys.eco}|${want}`) ? want : (ecoVault.find(e => e.eco === sys.eco) || {}).side,
       moves: sys.variations[0].moves.map(m => m.move),
       gm: sys.notableGm || null,
-      gmApproved: sys.notableGm ? approved(sys.eco, want).includes(sys.notableGm) : !approved(sys.eco, want).length
+      summary: sys.summary,
+      gmApproved: sys.notableGm ? approved(sys.eco, want).includes(sys.notableGm) : !approved(sys.eco, want).length,
+      // A Black card's summary must not be the note on one of White's moves (such as "Queen's Pawn" for 1.d4)
+      summaryOk: !!sys.summary && !(want === 'black' && !handSide.has(`${sys.eco}|black`) && whiteNotes(sys.eco).includes(sys.summary))
     };
     const out = {};
     for (const arch of Object.keys(archetypes)) for (const lvl of Object.keys(LEVEL_BANDS)) for (const strong of [0, 4]) {
@@ -280,6 +285,7 @@ async function runSurvey(browser, file, seed) {
   for (const [cfg, runs] of Object.entries(res)) for (const pair of runs) for (const c of pair) {
     if (!c) continue;
     if (c.side !== c.want && c.side !== 'either') sideIssues.add(`${c.eco} shown as ${c.want}, card is ${c.side}`);
+    if (!c.summaryOk) illegal.push(`${cfg}: ${c.eco} (${c.want}) summary "${c.summary || ''}" describes White's move, not the ${c.want} card`);
     if (!c.gmApproved) illegal.push(`${cfg}: ${c.eco} (${c.want}) shows Notable GM "${c.gm || '-'}", not from its approved pool`);
     const g = new Chess();
     for (const san of c.moves) if (!g.move(san)) { illegal.push(`${cfg}: ${c.eco} illegal at ${san}`); break; }

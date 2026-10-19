@@ -10,7 +10,7 @@ Both tests run automatically on every pull request to `main` (GitHub Actions, ch
 
 1. **Protected code is unchanged.** The test hashes `index.html` with the opening-data block removed. That block runs from `const ecoNamesMap = {` up to the survey picker comment. Any edit outside that block fails the test, including edits to the demo board, evaluation bar, pieces, board editor, results board, player labels, navigation, or the survey logic.
 2. **Survey picks are unchanged.** For every style × experience level × normal/strong answers, the test calls `choosePicksForRun` three times in a row, which covers the retake behaviour. All 60 × 3 White/Black picks must match `expected.json`.
-3. **Recommendation cards are correct.** Each card must come from the side it was picked for, and its moves must be legal. A mismatch fails the test unless it is listed in `knownSideIssues` (currently empty).
+3. **Recommendation cards are correct.** Each card must come from the side it was picked for, its moves must be legal, and it must have a summary; a generated Black card's summary must not be the vault note on one of White's moves (such as "Queen's Pawn" for 1.d4). A side mismatch fails the test unless it is listed in `knownSideIssues` (currently empty).
 4. **The page loads cleanly.** Any JavaScript error or console error fails the test. The only console errors allowed are `Failed to load resource: net::ERR_FAILED`, which the blocked offline requests cause.
 5. **The question bank is complete.** Each of the 5 areas has 10 questions; every question has a text and low/mid/high answers; no text is empty or repeated. 200 survey runs built by the page's `buildSurveyRun()` must each ask one question per area, with answers worth 1, 2 and 3 points taken from the right lists.
 6. **Scoring is unchanged.** All 243 answer combinations (1 to 3 points in each area) must give the style saved under `scoring` in `expected.json`, through the page's `getArchetypeFromPoints`.
@@ -52,7 +52,7 @@ If an owner-approved change is meant to alter picks, scoring or protected code, 
 - both cards show the expected opening, each from its own side;
 - the board puts the chosen side at the bottom;
 - stepping through the demo moves the pieces as the line says, square by square, until the counter reaches the last move;
-- each card shows the expected Notable GM (or none), and clicking a shown GM that is in the GM database opens that GM's pop-up.
+- each card shows the "Notable GM" heading with the expected GM, or "none approved for this opening yet" when its opening has no approved pool, and clicking a shown GM that is in the GM database opens that GM's pop-up.
 - switching to another tab and back keeps the same Notable GM;
 - for the Catalan case, taking the survey again shows the next GM in the Catalan pool.
 
