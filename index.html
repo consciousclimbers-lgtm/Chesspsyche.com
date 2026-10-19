@@ -3932,6 +3932,31 @@ function squareToRC(sq) {
 
 function renderResultsBoardUI() {
     const boardEl = document.getElementById('results-chess-board'); if(!boardEl) return;
+
+    // Fix sizing only for the Interactive Demonstration board in Results.
+    // The shared .chess-board CSS uses absolute positioning inside a padding
+    // wrapper; explicitly size this one board so its 64 squares can be seen.
+    const boardWrapper = boardEl.closest('.chess-board-wrapper');
+    if (boardWrapper) {
+        boardWrapper.style.position = 'relative';
+        boardWrapper.style.width = '100%';
+        boardWrapper.style.maxWidth = '340px';
+        boardWrapper.style.height = 'auto';
+        boardWrapper.style.aspectRatio = '1 / 1';
+        boardWrapper.style.paddingBottom = '0';
+        boardWrapper.style.margin = '0 auto';
+    }
+    boardEl.style.position = 'relative';
+    boardEl.style.inset = 'auto';
+    boardEl.style.display = 'grid';
+    boardEl.style.gridTemplateColumns = 'repeat(8, minmax(0, 1fr))';
+    boardEl.style.gridTemplateRows = 'repeat(8, minmax(0, 1fr))';
+    boardEl.style.width = '100%';
+    boardEl.style.maxWidth = '340px';
+    boardEl.style.height = 'auto';
+    boardEl.style.aspectRatio = '1 / 1';
+    boardEl.style.boxSizing = 'border-box';
+
     boardEl.innerHTML = '';
     const boardData = demoGame.board();
 
