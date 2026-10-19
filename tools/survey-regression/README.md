@@ -1,11 +1,18 @@
-# Survey regression test
+# Survey-pick regression test
 
-Checks that a change to `index.html` does not unexpectedly change the survey's opening recommendations or touch protected site code.
+Checks that a change to `index.html` does not unexpectedly change the survey's opening recommendations (picks) or touch protected site code.
+
+**Scope: this is a survey-pick regression test, not an end-to-end survey test.** It loads the page in headless Chromium and calls the page's own picker, `choosePicksForRun(style)`, directly. Before each call it sets the inputs the survey would set: the style, the experience level (`skillLevelKey`), and the strong/normal answer count (`lastExtremeCount`). It does **not** click through or submit the survey UI. So it does not test:
+- question display or answer selection;
+- how answers are scored into a style;
+- the results-page rendering, demo board or evaluation bar behaviour.
+
+Those areas are covered only by the protected-code check below: the test fails if their code changes, but it does not exercise them.
 
 ## What it checks
 
 1. **Protected code is unchanged.** The test hashes `index.html` with the opening-data block removed. That block runs from `const ecoNamesMap = {` up to the survey picker comment. Any edit outside that block fails the test, including edits to the demo board, evaluation bar, pieces, board editor, results board, player labels, navigation, or the survey logic.
-2. **Survey picks are unchanged.** For every style × experience level × normal/strong answers, the test runs the survey three times in a row, which covers the retake behaviour. All 60 × 3 White/Black picks must match `expected.json`.
+2. **Survey picks are unchanged.** For every style × experience level × normal/strong answers, the test calls `choosePicksForRun` three times in a row, which covers the retake behaviour. All 60 × 3 White/Black picks must match `expected.json`.
 3. **Recommendation cards are correct.** Each card must come from the side it was picked for, and its moves must be legal. The pre-existing side mismatches listed in `knownSideIssues` are reported but do not fail the test.
 4. **The page loads cleanly.** Any JavaScript error fails the test.
 
@@ -13,10 +20,10 @@ Checks that a change to `index.html` does not unexpectedly change the survey's o
 - replaces `Math.random` with a seeded generator before any page script runs;
 - uses a fresh browser context, with empty localStorage, for every run;
 - clears the saved picks before each combination;
-- runs the full survey 3 times with the same seed (change with `--repeat N`), and all runs must match;
+- runs the whole pick simulation 3 times with the same seed (change with `--repeat N`), and all runs must match;
 - runs it once more with a different seed, which must give the same picks.
 
-**Offline.** The page loads three external resources: chess.js 0.10.3 from cdnjs, Font Awesome CSS from cdnjs, and a Google Fonts stylesheet. The test blocks every http(s) request. The only exception is chess.js, which is served from `node_modules` at the same version the page uses, so the survey and cards behave as on the live page. Fonts and icons are not needed for these checks. The output lists the hosts that were blocked.
+**Offline.** The page loads three external resources: chess.js 0.10.3 from cdnjs, Font Awesome CSS from cdnjs, and a Google Fonts stylesheet. The test blocks every http(s) request. The only exception is chess.js, which is served from `node_modules` at the same version the page uses, so the picks and cards behave as on the live page. Fonts and icons are not needed for these checks. The output lists the hosts that were blocked.
 
 Network access is needed only once, for `npm install`, and for `npx playwright install chromium` if Playwright has no browser yet. After that, `npm test` makes no network requests.
 

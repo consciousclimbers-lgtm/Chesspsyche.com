@@ -1,4 +1,9 @@
-// Survey regression test for index.html.
+// Survey-pick regression test for index.html.
+//
+// Scope: not an end-to-end survey test. It calls the page's picker, choosePicksForRun(style),
+// directly, after setting the inputs the survey would set (skillLevelKey, lastExtremeCount).
+// It does not click through or submit the survey UI, score answers or render the results page;
+// that code is covered only by the protected-code hash in check 1.
 //
 // Checks, against expected.json:
 //   1. Protected code is byte-identical: index.html with the opening-data block removed
@@ -6,7 +11,7 @@
 //      This covers the demo board, evaluation bar, pieces, board editor, results board,
 //      player labels, navigation and survey logic.
 //   2. Survey picks: every style x experience level x normal/strong answers, three
-//      consecutive runs each, must give the saved White/Black ECO codes.
+//      consecutive choosePicksForRun calls each, must give the saved White/Black ECO codes.
 //   3. Recommendation cards: each card must come from the side it was picked for, and its
 //      line must be legal. Known pre-existing exceptions are listed in expected.json and
 //      reported, not failed.
@@ -16,12 +21,12 @@
 // randomness; its only state is the retake history in localStorage. Math.random is used
 // elsewhere on the page (question order, answer order), so before any page script runs the
 // test replaces it with a seeded generator, gives every run a fresh browser context (empty
-// localStorage), and clears the saved picks before each combination. The survey is then run
+// localStorage), and clears the saved picks before each combination. The simulation is then run
 // --repeat times with the same seed (all runs must match each other and expected.json) and
 // once more with a different seed, which must give the same picks too.
 //
 // chess.js 0.10.3 (the version index.html loads from cdnjs) is served from node_modules,
-// so the test runs offline and gives the same result as the live page.
+// every other http(s) request is blocked, so the test makes no network requests.
 //
 // Usage: node survey_regression.js [path/to/index.html] [--update] [--repeat N]
 const fs = require('fs');
