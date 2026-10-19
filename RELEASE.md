@@ -13,9 +13,11 @@ live about a minute later. The rules for who may merge are in [`AGENTS.md`](AGEN
 
 ## After merging: live smoke test
 1. Actions tab → **pages-build-deployment**: the run for the merge commit must succeed.
-2. Actions tab → **Live smoke test**: it starts automatically after a successful deployment and runs the
-   browser click-through against www.chesspsyche.com with nothing blocked. It must be green. To run it by
-   hand: Live smoke test → Run workflow. From a computer with the repository checked out:
+2. Actions tab → **Live smoke test**: it starts automatically after a successful deployment (listed with
+   the event `workflow_run`). It waits until the site serves the merged `index.html`, then runs the browser
+   click-through against www.chesspsyche.com with nothing blocked. It must be green. If no run appears
+   within a few minutes of the deployment, start it by hand: Live smoke test → Run workflow (branch
+   `main`). From a computer with the repository checked out:
 
    ```
    cd tools/survey-regression && npm ci && npx playwright install chromium

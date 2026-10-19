@@ -1,11 +1,16 @@
 # Live smoke test: runs the browser click-through against the deployed site, with nothing blocked.
 # Runs after every GitHub Pages deployment, on demand (Actions tab -> Live smoke test -> Run workflow),
 # and on pull requests that change this file. It only reads the public website; it changes nothing.
+# It first waits until the site serves the same index.html as the commit being tested, so it never
+# passes by testing an older, cached copy of the page.
 name: Live smoke test
 
 on:
+  # GitHub's built-in Pages workflow. It is listed as "pages build and deployment" in the Actions tab
+  # and as pages-build-deployment in its path; both names are given, an unmatched name is ignored.
+  # workflow_run triggers are read from the default branch only, so this one takes effect once merged.
   workflow_run:
-    workflows: [pages-build-deployment]
+    workflows: [pages build and deployment, pages-build-deployment]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -32,11 +37,14 @@ jobs:
     env:
       SITE_URL: ${{ github.event.inputs.url || 'https://www.chesspsyche.com/' }}
     steps:
+      # After a deployment, test the commit that was deployed
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: tools/survey-regression/package-lock.json
 
@@ -44,13 +52,20 @@ jobs:
 
       - run: npx playwright install --with-deps chromium
 
-      # Pages can take a minute to serve a new deployment from every edge
-      - name: Wait for the site to serve the deployed commit
-        if: github.event_name == 'workflow_run'
-        run: sleep 60
+      # Pages can take a few minutes to serve a new deployment; the query string avoids cached copies
+      - name: Wait until the site serves this commit's index.html
+        run: |
+          want=$(sha256sum ../../index.html | cut -d' ' -f1)
+          for i in $(seq 1 40); do
+            got=$(curl -fsSL "${SITE_URL}?smoke=${GITHUB_RUN_ID}-$i" | sha256sum | cut -d' ' -f1) || got=unreachable
+            if [ "$got" = "$want" ]; then echo "The site serves this commit's index.html (sha256 ${want:0:12})"; exit 0; fi
+            echo "Attempt $i: the site serves ${got:0:12}, waiting for ${want:0:12}"; sleep 15
+          done
+          echo "::error::After 10 minutes the site still does not serve this commit's index.html"; exit 1
+        shell: bash
 
       - name: Click-through against the live site
-        run: node clickthrough.js --url "$SITE_URL" --shots out/screens 2>&1 | tee live-smoke.txt; exit ${PIPESTATUS[0]}
+        run: node clickthrough.js --url "${SITE_URL}?smoke=${GITHUB_RUN_ID}" --shots out/screens 2>&1 | tee live-smoke.txt; exit ${PIPESTATUS[0]}
         shell: bash
 
       - name: Summary
