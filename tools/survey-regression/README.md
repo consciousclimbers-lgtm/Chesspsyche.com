@@ -9,6 +9,13 @@ Checks that a change to `index.html` does not unexpectedly change the survey's o
 3. **Recommendation cards are correct.** Each card must come from the side it was picked for, and its moves must be legal. The pre-existing side mismatches listed in `knownSideIssues` are reported but do not fail the test.
 4. **The page loads cleanly.** Any JavaScript error fails the test.
 
+**Determinism.** The opening picker (`ecoCandidatesFor`, `pickEcoCode`, `choosePicksForRun`) uses no randomness. Its only state is the retake history saved in localStorage. Other parts of the page do use `Math.random`, for question order and answer order. So that nothing random can leak into the result, the test:
+- replaces `Math.random` with a seeded generator before any page script runs;
+- uses a fresh browser context, with empty localStorage, for every run;
+- clears the saved picks before each combination;
+- runs the full survey 3 times with the same seed (change with `--repeat N`), and all runs must match;
+- runs it once more with a different seed, which must give the same picks.
+
 chess.js 0.10.3, the same version the page loads from cdnjs, is served from `node_modules`. The test therefore runs offline and gives the same result as the live page.
 
 ## Run
@@ -23,3 +30,13 @@ node survey_regression.js /path/to/other/index.html   # check another copy
 ## When a change is intended
 
 If an owner-approved change is meant to alter picks or protected code, run `npm run update` and commit the new `expected.json` with that change. The diff of `expected.json` then shows reviewers exactly which recommendations changed.
+
+## Known issues (separate follow-up, not fixed here)
+
+`ecoToSystem(code)` reuses a hand-written card with the same ECO code even when that card belongs to the other colour. Three picks are affected; they are listed in `knownSideIssues` and existed before PR #13:
+
+- **B40**, picked for Black, shows the White card "Open Sicilian (3.d4 Mainlines)".
+- **B12**, picked for White, shows the Black card "Caro-Kann (Advance Line)".
+- **D85**, picked for White, shows the Black card "Grünfeld Defense".
+
+Fixing these needs a survey-logic change, which is out of scope for this test PR. When a fix lands, remove the entries from `knownSideIssues`. The test reports any entry that is no longer seen.

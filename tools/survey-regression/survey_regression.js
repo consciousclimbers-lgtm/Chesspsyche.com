@@ -12,10 +12,18 @@
 //      reported, not failed.
 //   4. The page loads with no JavaScript errors.
 //
+// Determinism: the picker (ecoCandidatesFor / pickEcoCode / choosePicksForRun) has no
+// randomness; its only state is the retake history in localStorage. Math.random is used
+// elsewhere on the page (question order, answer order), so before any page script runs the
+// test replaces it with a seeded generator, gives every run a fresh browser context (empty
+// localStorage), and clears the saved picks before each combination. The survey is then run
+// --repeat times with the same seed (all runs must match each other and expected.json) and
+// once more with a different seed, which must give the same picks too.
+//
 // chess.js 0.10.3 (the version index.html loads from cdnjs) is served from node_modules,
 // so the test runs offline and gives the same result as the live page.
 //
-// Usage: node survey_regression.js [path/to/index.html] [--update]
+// Usage: node survey_regression.js [path/to/index.html] [--update] [--repeat N]
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -24,7 +32,10 @@ const { Chess } = require('chess.js');
 
 const args = process.argv.slice(2);
 const update = args.includes('--update');
-const htmlPath = path.resolve(args.find(a => !a.startsWith('--')) || path.join(__dirname, '../../index.html'));
+const repeat = args.includes('--repeat') ? Math.max(1, parseInt(args[args.indexOf('--repeat') + 1], 10) || 1) : 3;
+const SEED = 20261019, OTHER_SEED = 7;
+const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--repeat');
+const htmlPath = path.resolve(positional[0] || path.join(__dirname, '../../index.html'));
 const expectedPath = path.join(__dirname, 'expected.json');
 const chessLocal = require.resolve('chess.js');
 
@@ -37,9 +48,14 @@ function protectedHash(html) {
   return crypto.createHash('sha256').update(rest).digest('hex');
 }
 
-async function runSurvey(file) {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
+async function runSurvey(browser, file, seed) {
+  const context = await browser.newContext();   // fresh, empty localStorage for every run
+  await context.addInitScript(s => {
+    // mulberry32: replaces Math.random before any page script runs
+    let a = s >>> 0;
+    Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }, seed);
+  const page = await context.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.route('**/chess.js/0.10.3/chess.min.js', r => r.fulfill({ path: chessLocal, contentType: 'application/javascript' }));
@@ -69,16 +85,25 @@ async function runSurvey(file) {
     localStorage.removeItem(PICKS_KEY);
     return out;
   });
-  await browser.close();
-  return { res, errors };
+  await context.close();
+  const picks = {};
+  for (const [cfg, runs] of Object.entries(res)) picks[cfg] = runs.map(([w, b]) => `${w ? w.eco : '-'}/${b ? b.eco : '-'}`).join(' ');
+  return { res, picks, errors };
 }
 
 (async () => {
   const html = fs.readFileSync(htmlPath, 'utf8');
   const hash = protectedHash(html);
-  const { res, errors } = await runSurvey(htmlPath);
-  const picks = {};
-  for (const [cfg, runs] of Object.entries(res)) picks[cfg] = runs.map(([w, b]) => `${w ? w.eco : '-'}/${b ? b.eco : '-'}`).join(' ');
+  const browser = await chromium.launch();
+  const runs = [];
+  for (let i = 0; i < repeat; i++) runs.push(await runSurvey(browser, htmlPath, SEED));
+  const otherSeed = await runSurvey(browser, htmlPath, OTHER_SEED);
+  await browser.close();
+  const { res, picks } = runs[0];
+  const errors = [...new Set([...runs, otherSeed].flatMap(r => r.errors))];
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res));
+  const seedOk = same(otherSeed.picks, picks);
 
   const sideIssues = new Set(), illegal = [];
   for (const [cfg, runs] of Object.entries(res)) for (const pair of runs) for (const c of pair) {
@@ -89,6 +114,7 @@ async function runSurvey(file) {
   }
 
   if (update) {
+    if (!repeatOk || !seedOk || errors.length) { console.error('Not updating: survey results were not repeatable or the page threw errors.'); process.exit(1); }
     const prev = fs.existsSync(expectedPath) ? JSON.parse(fs.readFileSync(expectedPath, 'utf8')) : {};
     fs.writeFileSync(expectedPath, JSON.stringify({
       protectedHash: hash,
@@ -101,6 +127,8 @@ async function runSurvey(file) {
 
   const exp = JSON.parse(fs.readFileSync(expectedPath, 'utf8'));
   const fails = [];
+  if (!repeatOk) fails.push(`survey results differ between the ${repeat} runs with seed ${SEED}`);
+  if (!seedOk) fails.push(`survey picks change with a different Math.random seed (${OTHER_SEED})`);
   if (hash !== exp.protectedHash) fails.push(`protected code changed (sha256 ${hash.slice(0, 12)}, expected ${exp.protectedHash.slice(0, 12)})`);
   const cfgs = new Set([...Object.keys(exp.picks), ...Object.keys(picks)]);
   for (const cfg of cfgs) if (picks[cfg] !== exp.picks[cfg]) fails.push(`picks ${cfg}: got "${picks[cfg]}", expected "${exp.picks[cfg]}"`);
@@ -110,6 +138,8 @@ async function runSurvey(file) {
   if (errors.length) fails.push(...errors.map(e => `page error: ${e}`));
 
   console.log(`File: ${htmlPath}`);
+  console.log(`Repeat runs (seed ${SEED}): ${repeat}, identical: ${repeatOk ? 'yes' : 'NO'}; different seed (${OTHER_SEED}) gives same picks: ${seedOk ? 'yes' : 'NO'}`);
+  console.log(`Picks fingerprint: sha256 ${crypto.createHash('sha256').update(JSON.stringify(picks)).digest('hex').slice(0, 16)}`);
   console.log(`Protected code hash: ${hash === exp.protectedHash ? 'unchanged' : 'CHANGED'}`);
   console.log(`Survey combinations: ${cfgs.size} (x3 runs), ${[...cfgs].filter(c => picks[c] === exp.picks[c]).length} match`);
   console.log(`Card side issues: ${sideIssues.size} (${[...sideIssues].filter(s => known.has(s)).length} known, pre-existing)`);
