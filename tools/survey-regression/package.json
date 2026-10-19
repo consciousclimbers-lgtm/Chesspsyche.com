@@ -1,0 +1,13 @@
+{
+  "name": "chesspsyche-survey-regression",
+  "private": true,
+  "description": "Regression test for the ChessPsyche survey opening recommendations",
+  "scripts": {
+    "test": "node survey_regression.js ../../index.html",
+    "update": "node survey_regression.js ../../index.html --update"
+  },
+  "dependencies": {
+    "chess.js": "0.10.3",
+    "playwright": "1.56.1"
+  }
+}
