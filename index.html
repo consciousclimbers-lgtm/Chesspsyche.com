@@ -3975,12 +3975,31 @@ function renderResultsBoardUI() {
 
             // Label the board edges with algebraic coordinates (a-h and 8-1).
             const coordinateLabels = [];
-            if (colIdx === 0) coordinateLabels.push(`<span class="board-coordinate rank-coordinate">${8 - r}</span>`);
-            if (rowIdx === 7) coordinateLabels.push(`<span class="board-coordinate file-coordinate">${String.fromCharCode(97 + c)}</span>`);
+            if (c === 0) coordinateLabels.push(`<span class="board-coordinate rank-coordinate">${8 - r}</span>`);
+            if (r === 7) coordinateLabels.push(`<span class="board-coordinate file-coordinate">${String.fromCharCode(97 + c)}</span>`);
             const pieceObj = boardData[r][c];
             const symbol = pieceObj ? (pieceObj.color === 'w' ? pieceObj.type.toUpperCase() : pieceObj.type.toLowerCase()) : '';
             sq.innerHTML = coordinateLabels.join('') + getPieceSVG(symbol);
-            if (isPracticeMode) sq.onclick = () => handlePracticeSquareClick(r, c);
+
+            // Practice mode supports both tap/click-to-move and drag-and-drop.
+            if (isPracticeMode) {
+                sq.onclick = () => handlePracticeSquareClick(r, c);
+                if (pieceObj) {
+                    sq.draggable = true;
+                    sq.addEventListener('dragstart', (event) => {
+                        practiceSelectedSquare = { r, c, sq: String.fromCharCode(97 + c) + (8 - r) };
+                        if (event.dataTransfer) {
+                            event.dataTransfer.effectAllowed = 'move';
+                            event.dataTransfer.setData('text/plain', practiceSelectedSquare.sq);
+                        }
+                    });
+                }
+                sq.addEventListener('dragover', (event) => event.preventDefault());
+                sq.addEventListener('drop', (event) => {
+                    event.preventDefault();
+                    if (practiceSelectedSquare) handlePracticeSquareClick(r, c);
+                });
+            }
             boardEl.appendChild(sq);
         }
     }
