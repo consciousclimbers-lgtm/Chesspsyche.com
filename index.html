@@ -3560,11 +3560,10 @@ function switchTab(tabId) {
     const hideHeader = tabId === 'home' || tabId === 'landing' || tabId === 'play';
     if (headerEl) headerEl.classList.toggle('hidden', hideHeader);
 
-    // Hide all sections with the site's !important .hidden utility.
-    // Inline display:none is overridden by utility classes such as .flex !important.
+    // Hide every tab decisively, including sections with utility classes that set display.
     document.querySelectorAll('.tab-content').forEach(el => {
         el.classList.add('hidden');
-        el.style.removeProperty('display');
+        el.style.setProperty('display', 'none', 'important');
     });
 
     let targetSectionId = tabId;
@@ -3572,8 +3571,8 @@ function switchTab(tabId) {
 
     const targetEl = document.getElementById(`tab-${targetSectionId}`);
     if (targetEl) {
-        targetEl.classList.remove('hidden');
         targetEl.style.removeProperty('display');
+        targetEl.classList.remove('hidden');
     }
 
     // Update Desktop Navigation Bar
@@ -3610,7 +3609,8 @@ function switchTab(tabId) {
         }
     });
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Switch directly to the selected tab's top without an animated scroll.
+    window.scrollTo({ top: 0, behavior: 'instant' });
 
     if (tabId === 'quiz') startAssessment();
     if (tabId === 'grandmasters') renderGrandmasters();
