@@ -1,10 +1,6 @@
 {
- "protectedHash": "422c0274bc78b1154b05e030ef9f08356e0a1a5eec5aaf251a34050239f61bd8",
- "knownSideIssues": [
-  "B12 shown as white, card is black",
-  "B40 shown as black, card is white",
-  "D85 shown as white, card is black"
- ],
+ "protectedHash": "edcb664ba610bcaddfa9f8209a2b70c27ca6d18b509f52145717892f4c3f3652",
+ "knownSideIssues": [],
  "picks": {
   "tacticalFirebrand|none|normal": "C29/A82 C30/A51 C27/C31",
   "tacticalFirebrand|none|strong": "C30/A82 C51/A51 C27/C31",

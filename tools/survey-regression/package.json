@@ -4,7 +4,8 @@
   "description": "Regression test for the ChessPsyche survey opening recommendations",
   "scripts": {
     "test": "node survey_regression.js ../../index.html",
-    "update": "node survey_regression.js ../../index.html --update"
+    "update": "node survey_regression.js ../../index.html --update",
+    "clickthrough": "node clickthrough.js ../../index.html"
   },
   "dependencies": {
     "chess.js": "0.10.3",
