@@ -13,7 +13,7 @@ Those areas are covered only by the protected-code check below: the test fails i
 
 1. **Protected code is unchanged.** The test hashes `index.html` with the opening-data block removed. That block runs from `const ecoNamesMap = {` up to the survey picker comment. Any edit outside that block fails the test, including edits to the demo board, evaluation bar, pieces, board editor, results board, player labels, navigation, or the survey logic.
 2. **Survey picks are unchanged.** For every style × experience level × normal/strong answers, the test calls `choosePicksForRun` three times in a row, which covers the retake behaviour. All 60 × 3 White/Black picks must match `expected.json`.
-3. **Recommendation cards are correct.** Each card must come from the side it was picked for, and its moves must be legal. The pre-existing side mismatches listed in `knownSideIssues` are reported but do not fail the test.
+3. **Recommendation cards are correct.** Each card must come from the side it was picked for, and its moves must be legal. A mismatch fails the test unless it is listed in `knownSideIssues` (currently empty).
 4. **The page loads cleanly.** Any JavaScript error fails the test.
 
 **Determinism.** The opening picker (`ecoCandidatesFor`, `pickEcoCode`, `choosePicksForRun`) uses no randomness. Its only state is the retake history saved in localStorage. Other parts of the page do use `Math.random`, for question order and answer order. So that nothing random can leak into the result, the test:
@@ -40,12 +40,15 @@ node survey_regression.js /path/to/other/index.html   # check another copy
 
 If an owner-approved change is meant to alter picks or protected code, run `npm run update` and commit the new `expected.json` with that change. The diff of `expected.json` then shows reviewers exactly which recommendations changed.
 
-## Known issues (separate follow-up, not fixed here)
+## Results-page click-through
 
-`ecoToSystem(code)` reuses a hand-written card with the same ECO code even when that card belongs to the other colour. Three picks are affected; they are listed in `knownSideIssues` and existed before PR #13:
+`npm run clickthrough` (`clickthrough.js`) is a separate browser test of the results page. It takes the survey by clicking, the way a visitor does, for three cases: a White B12 pick, a Black B40 pick and a White D85 pick. For each it checks:
+- both cards show the expected opening, each from its own side;
+- the board puts the chosen side at the bottom;
+- stepping through the demo moves the pieces as the line says, square by square, until the counter reaches the last move.
 
-- **B40**, picked for Black, shows the White card "Open Sicilian (3.d4 Mainlines)".
-- **B12**, picked for White, shows the Black card "Caro-Kann (Advance Line)".
-- **D85**, picked for White, shows the Black card "Grünfeld Defense".
+It also opens the Labs board editor, places and erases a piece, plays 1.e4 and checks that the evaluation bar updates. It runs offline in the same way as `npm test`. Add `--shots DIR` to save screenshots.
 
-Fixing these needs a survey-logic change, which is out of scope for this test PR. When a fix lands, remove the entries from `knownSideIssues`. The test reports any entry that is no longer seen.
+## Side mismatches (fixed)
+
+`ecoToSystem` used to reuse a hand-written card with the same ECO code even when it belonged to the other colour, so B40 (Black), B12 (White) and D85 (White) showed a card for the wrong side. PR #15 makes it side-aware, so `knownSideIssues` is now empty and any side mismatch fails the test.
