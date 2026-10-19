@@ -45,10 +45,10 @@ const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 const CASES = [
   { name: 'white-B12', style: 'patientGrinder', level: 'novice', strong: false, side: 'white', white: 'B12', black: 'C42', gm: { white: 'Alexander Grischuk', black: 'Yu Yangyi' } },
   { name: 'black-B40', style: 'strategicArchitect', level: 'novice', strong: false, side: 'black', white: 'D06', black: 'B40', gm: { white: 'Levon Aronian', black: 'Vasyl Ivanchuk' } },
-  { name: 'white-D85', style: 'patientGrinder', level: 'advanced', strong: true, side: 'white', white: 'D85', black: 'B82', gm: { white: null, black: null } },
-  { name: 'white-D00', style: 'patientGrinder', level: 'none', strong: false, side: 'white', white: 'D00', black: 'C42', gm: { white: null, black: 'Yu Yangyi' } },
+  { name: 'white-D85', style: 'patientGrinder', level: 'advanced', strong: true, side: 'white', white: 'D85', black: 'B82', gm: { white: 'Boris Gelfand', black: 'Hou Yifan' } },
+  { name: 'white-D00', style: 'patientGrinder', level: 'none', strong: false, side: 'white', white: 'D00', black: 'C42', gm: { white: 'Gata Kamsky', black: 'Yu Yangyi' } },
   { name: 'white-E06', style: 'flexibleChameleon', level: 'advanced', strong: true, side: 'white', white: 'E06', black: 'A16', gm: { white: 'Ding Liren', black: null },
-    retake: { white: 'E07', black: 'D71', gm: { white: 'Aleksandra Goryachkina', black: null } } },
+    retake: { white: 'E07', black: 'D71', gm: { white: 'Aleksandra Goryachkina', black: 'Loek Van Wely' } } },
 ];
 
 async function takeSurvey(page, label, vec) {

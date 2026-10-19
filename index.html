@@ -3606,12 +3606,90 @@ const NOTABLE_GM_POOLS = [
         { gm: "Alexander Morozevich", source: "https://shop.chessbase.com/en/products/ramirez_sicilian_tajmanov_scheveningen", status: "verified" },
         { gm: "Alexander Grischuk", source: "https://shop.chessbase.com/en/products/ramirez_sicilian_tajmanov_scheveningen", status: "verified" },
         { gm: "Veselin Topalov", source: "https://shop.chessbase.com/en/products/ramirez_sicilian_tajmanov_scheveningen", status: "verified" }
+    ] },
+    // Batch 2: openings the survey picks that had no pool, proposed 2026-10-19 (sources and reasons in the PR)
+    { key: "Sicilian Najdorf|black", side: "black", codes: ["B90", "B91", "B92", "B93", "B94", "B95", "B96", "B97", "B98", "B99"], pool: [
+        { gm: "Bobby Fischer", source: "https://en.wikipedia.org/wiki/Sicilian_Defence,_Najdorf_Variation", status: "verified" },
+        { gm: "Maxime Vachier-Lagrave", source: "https://en.wikipedia.org/wiki/Sicilian_Defence,_Najdorf_Variation", status: "verified" },
+        { gm: "Boris Gelfand", source: "https://reado.app/en/book/my-most-memorable-games-boris-gelfand/9783283004538", status: "verified" },
+        { gm: "Veselin Topalov", source: "https://en.chessbase.com/newsroom/post/robert-ris-fast-and-furious-najdorf-be3-ng4", status: "verified" },
+        { gm: "Viswanathan Anand", source: "https://www.caissa-chess.com/openings/1402-david-vigorito-playing-the-najdorf-k-5747-9781907982651.html", status: "verified" },
+        { gm: "Ian Nepomniachtchi", source: "https://en.chessbase.com/newsroom/post/victor-bologan-the-complex-najdorf", status: "verified" }
+    ] },
+    { key: "Sicilian Dragon|black", side: "black", codes: ["B70", "B71", "B72", "B73", "B74", "B77"], pool: [
+        { gm: "Gawain C B Maroroa Jones", source: "https://www.newinchess.com/gm-repertoire-the-dragon-vol-1", status: "verified" },
+        { gm: "Hikaru Nakamura", source: "https://www.chess.com/lessons/the-fighting-dragon", status: "verified" }
+    ] },
+    { key: "Sicilian Scheveningen|black", side: "black", codes: ["B80", "B82", "B83", "B84"], pool: [
+        { gm: "Veselin Topalov", source: "https://wikipedia.classicistranieri.com/en/articles/s/i/c/Sicilian_Defence%2C_Scheveningen_Variation_7cff.html", status: "verified" },
+        { gm: "Boris Gelfand", source: "https://wikipedia.classicistranieri.com/en/articles/s/i/c/Sicilian_Defence%2C_Scheveningen_Variation_7cff.html", status: "verified" },
+        { gm: "Hou Yifan", source: "https://www.chessgames.com/perl/chessplayer?pid=95916", status: "verified" },
+        { gm: "Sergei Movsesian", source: "https://en.chessbase.com/post/the-first-dvd-by-gm-ftacnik", status: "verified" }
+    ] },
+    { key: "Sicilian Classical|black", side: "black", codes: ["B56", "B57", "B58", "B59"], pool: [
+        { gm: "Viswanathan Anand", source: "https://www.scacco.it/it/prod/the-classical-sicilian-chess-explained", status: "verified" },
+        { gm: "Alexei Shirov", source: "https://www.scacco.it/it/prod/the-classical-sicilian-chess-explained", status: "verified" }
+    ] },
+    { key: "Grünfeld Defence|black", side: "black", codes: ["D71", "D72", "D73", "D74", "D75", "D76", "D77", "D78", "D79", "D80", "D82", "D83", "D84", "D90", "D91", "D92", "D93", "D94", "D95", "D96", "D97", "D98"], pool: [
+        { gm: "Maxime Vachier-Lagrave", source: "https://chess.com/news/view/riga-grand-prix-mamedyarov-vachier-lagrave-to-play-in-the-final", status: "verified" },
+        { gm: "Bobby Fischer", source: "https://en.wikipedia.org/wiki/Gr%C3%BCnfeld_Defence", status: "verified" },
+        { gm: "Peter Leko", source: "https://en.wikipedia.org/wiki/Gr%C3%BCnfeld_Defence", status: "verified" },
+        { gm: "Loek Van Wely", source: "https://en.wikipedia.org/wiki/Gr%C3%BCnfeld_Defence", status: "verified" },
+        { gm: "Gata Kamsky", source: "https://en.wikipedia.org/wiki/Gr%C3%BCnfeld_Defence", status: "verified" }
+    ] },
+    { key: "Berlin Defence|black", side: "black", codes: ["C65", "C66", "C67"], pool: [
+        { gm: "Levon Aronian", source: "https://en.chessbase.com/newsroom/post/victor-bologan-the-berlin-wall-explained", status: "verified" },
+        { gm: "Ian Nepomniachtchi", source: "https://en.wikipedia.org/wiki/Berlin_Defence", status: "verified" }
+    ] },
+    { key: "Marshall Attack|black", side: "black", codes: ["C89"], pool: [
+        { gm: "Levon Aronian", source: "https://en.wikipedia.org/wiki/Marshall_Attack", status: "verified" },
+        { gm: "Ding Liren", source: "https://en.wikipedia.org/wiki/Marshall_Attack", status: "verified" },
+        { gm: "Boris Spassky", source: "https://thinkerspublishing.com/?p=2406", status: "verified" },
+        { gm: "Michael Adams", source: "https://www.chess.com/lessons/learn-the-ruy-lopez-marshall-attack", status: "verified" },
+        { gm: "Peter Leko", source: "https://thinkerspublishing.com/?p=2406", status: "verified" }
+    ] },
+    { key: "Semi-Slav Defence|black", side: "black", codes: ["D43", "D44", "D45", "D46", "D47", "D48", "D49"], pool: [
+        { gm: "Viswanathan Anand", source: "https://thechessworld.com/articles/openings/the-sharp-semi-slav-defense/", status: "verified" },
+        { gm: "Alexei Shirov", source: "https://thechessworld.com/articles/openings/the-sharp-semi-slav-defense/", status: "verified" },
+        { gm: "Veselin Topalov", source: "https://thechessworld.com/articles/openings/the-sharp-semi-slav-defense/", status: "verified" }
+    ] },
+    { key: "French Winawer|black", side: "black", codes: ["C15", "C16", "C17", "C18", "C19"], pool: [
+        { gm: "Alexander Morozevich", source: "https://www.powells.com/book/french-winawer-9780713485240", status: "verified" },
+        { gm: "Wesley So", source: "https://www.newinchess.com/media/wysiwyg/product_pdf/89042.pdf", status: "verified" },
+        { gm: "Ian Nepomniachtchi", source: "https://www.newinchess.com/media/wysiwyg/product_pdf/89042.pdf", status: "verified" }
+    ] },
+    { key: "English Opening|white", side: "white", codes: ["A10", "A12", "A13", "A14", "A17", "A18", "A19", "A20", "A21", "A22", "A23", "A24", "A25", "A26", "A27", "A28", "A29", "A30", "A31", "A32", "A33", "A34", "A35", "A36", "A37", "A38", "A39"], pool: [
+        { gm: "Magnus Carlsen", source: "https://www.chess.com/el/lessons/learn-the-english-opening", status: "verified" },
+        { gm: "Ding Liren", source: "https://en.wikipedia.org/wiki/English_Opening", status: "verified" }
+    ] },
+    { key: "Vienna Game|white", side: "white", codes: ["C25", "C26", "C27", "C28", "C29"], pool: [
+        { gm: "Nigel Short", source: "https://chess.co.uk/products/vienna-game-lane", status: "verified" },
+        { gm: "Michael Adams", source: "https://chess.co.uk/products/vienna-game-lane", status: "verified" },
+        { gm: "Boris Spassky", source: "https://chess.co.uk/products/vienna-game-lane", status: "verified" }
+    ] },
+    { key: "Nimzowitsch-Larsen Attack|white", side: "white", codes: ["A01"], pool: [
+        { gm: "Richárd Rapport", source: "https://en.wikipedia.org/wiki/Rich%C3%A1rd_Rapport", status: "verified" },
+        { gm: "Wesley So", source: "https://shop.chessbase.com/en/products/wesley_so_my_secret_weapon_1b3", status: "verified" }
+    ] },
+    { key: "London System|white", side: "white", codes: ["D00"], pool: [
+        { gm: "Gata Kamsky", source: "https://en.wikipedia.org/wiki/London_System", status: "verified" },
+        { gm: "Magnus Carlsen", source: "https://en.wikipedia.org/wiki/London_System", status: "verified" },
+        { gm: "Levon Aronian", source: "https://en.wikipedia.org/wiki/London_System", status: "verified" },
+        { gm: "Alexander Grischuk", source: "https://www.booksamillion.com/p/9789056916893", status: "verified" }
+    ] },
+    { key: "Grünfeld Exchange|white", side: "white", codes: ["D85", "D86", "D87", "D88", "D89"], pool: [
+        { gm: "Boris Gelfand", source: "https://www.newinchess.com/challenging-the-grunfeld", status: "verified" },
+        { gm: "Viswanathan Anand", source: "https://www.newinchess.com/challenging-the-grunfeld", status: "verified" }
+    ] },
+    { key: "Two Knights / Fried Liver|white", side: "white", codes: ["C58", "C59"], pool: [
+        { gm: "Nigel Short", source: "https://en.wikipedia.org/wiki/Two_Knights_Defense", status: "verified" },
+        { gm: "Alexander Morozevich", source: "https://en.wikipedia.org/wiki/Two_Knights_Defense", status: "verified" }
     ] }
 ];
 // Every female GM record (gender "female") and the pools she is in, so none is overlooked. Not shown on the site.
 const NOTABLE_GM_CONSIDERED = [
     { gm: "Judit Polgár", pools: ["Ruy Lopez|white", "Queen's Indian Defence|black", "King's Gambit|white", "Sicilian Paulsen/Kan/Taimanov|black"] },
-    { gm: "Hou Yifan", pools: ["Italian Game|white", "Ruy Lopez|white", "Petrov's Defence|black", "Queen's Gambit Declined|black"] },
+    { gm: "Hou Yifan", pools: ["Italian Game|white", "Ruy Lopez|white", "Petrov's Defence|black", "Queen's Gambit Declined|black", "Sicilian Scheveningen|black"] },
     { gm: "Susan Polgár", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
     { gm: "Xie Jun", pools: ["King's Indian Defence|black"] },
     { gm: "Zhu Jiner", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
