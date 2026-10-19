@@ -2686,13 +2686,13 @@ const ecoVaultData = {
   "A01": { moves: "1. b3", commentary: ["b3 \u2014 the Nimzowitsch-Larsen Attack, fianchettoing the queen's bishop"] },
   "A02": { moves: "1. f4", commentary: ["f4 \u2014 Bird's Opening, controlling e5 but weakening the kingside"] },
   "A03": { moves: "1. f4 d5", commentary: ["f4 \u2014 Bird's Opening", "d5 \u2014 Black claims the center immediately"] },
-  "A04": { moves: "1. Nf3", commentary: ["Nf3 \u2014 Reti Opening, flexible development keeping options open"] },
+  "A04": { moves: "1. Nf3", commentary: ["Nf3 \u2014 R\u00e9ti/Zukertort start: White develops a piece, stops ...e5 and keeps c4, d4 or g3 in reserve until Black commits"] },
   "A05": { moves: "1. Nf3 Nf6", commentary: ["Nf3 \u2014 Reti Opening", "Nf6 \u2014 Black mirrors with symmetric knight development"] },
   "A06": { moves: "1. Nf3 d5", commentary: ["Nf3 \u2014 Reti Opening", "d5 \u2014 Black stakes a central claim"] },
   "A07": { moves: "1. Nf3 d5 2. g3", commentary: ["Nf3 \u2014 Reti Opening", "d5 \u2014 central claim", "g3 \u2014 preparing the kingside fianchetto"] },
   "A08": { moves: "1. Nf3 d5 2. g3 c5 3. Bg2", commentary: ["Nf3 \u2014 Reti", "d5 \u2014 center", "g3 \u2014 fianchetto setup", "c5 \u2014 Black counters in the center"] },
   "A09": { moves: "1. Nf3 d5 2. c4", commentary: ["Nf3 \u2014 Reti", "d5 \u2014 center", "c4 \u2014 the classic Reti gambit thrust"] },
-  "A10": { moves: "1. c4", commentary: ["c4 \u2014 the English Opening, pressuring d5 from the flank"] },
+  "A10": { moves: "1. c4", commentary: ["c4 \u2014 the English Opening: White controls d5 from the flank and keeps the choice of Nc3, g3 and Bg2 or a later d4 until Black commits"] },
   "A11": { moves: "1. c4 c6", commentary: ["c4 \u2014 English Opening", "c6 \u2014 Caro-Kann style setup against the English"] },
   "A12": { moves: "1. c4 c6 2. Nf3 d5 3. b3", commentary: ["c4 \u2014 English", "c6 \u2014 solid setup", "Nf3 \u2014 development", "d5 \u2014 central pawn", "b3 \u2014 Reti-English hybrid fianchetto"] },
   "A13": { moves: "1. c4 e6", commentary: ["c4 \u2014 English Opening", "e6 \u2014 flexible, prepares d5 or Nf6"] },
@@ -2794,7 +2794,7 @@ const ecoVaultData = {
   "B09": { moves: "1. e4 d6 2. d4 Nf6 3. Nc3 g6 4. f4", commentary: ["e4", "d6", "d4", "Nf6", "Nc3", "g6", "f4 \u2014 Austrian Attack, aggressive"] },
   "B10": { moves: "1. e4 c6", commentary: ["e4", "c6 \u2014 Caro-Kann Defense, solid pawn structure"] },
   "B11": { moves: "1. e4 c6 2. Nc3 d5 3. Nf3 Bg4", commentary: ["e4", "c6", "Nc3", "d5 \u2014 central challenge", "Nf3 \u2014 two knights Caro-Kann"] },
-  "B12": { moves: "1. e4 c6 2. d4 d5", commentary: ["e4", "c6", "d4", "d5 \u2014 Caro-Kann main line"] },
+  "B12": { moves: "1. e4 c6 2. d4 d5 3. e5", commentary: ["e4", "c6", "d4", "d5", "e5 \u2014 Advance Variation: White gains space and fixes the centre"] },
   "B13": { moves: "1. e4 c6 2. d4 d5 3. exd5 cxd5", commentary: ["e4", "c6", "d4", "d5", "exd5 \u2014 exchange", "cxd5 \u2014 Exchange Caro-Kann"] },
   "B14": { moves: "1. e4 c6 2. d4 d5 3. exd5 cxd5 4. c4 Nf6 5. Nc3 e6", commentary: ["e4", "c6", "d4", "d5", "exd5", "cxd5", "c4 \u2014 Panov Attack", "Nf6", "Nc3"] },
   "B15": { moves: "1. e4 c6 2. d4 d5 3. Nc3", commentary: ["e4", "c6", "d4", "d5", "Nc3 \u2014 main line Caro-Kann"] },
@@ -3517,11 +3517,11 @@ function pickEcoCode(archKey, side, advance) {
     return list[idx].eco;
 }
 
-function ecoToSystem(code) {
-    // Reuse the hand-written system (with its summary and notable GM) when this opening has one
+function ecoToSystem(code, side) {
+    // Reuse the hand-written system (with its summary and notable GM) when this opening has one for this side
     for (const a of Object.values(archetypes)) for (const s of Object.values(a.systems)) {
-        if (s.whiteSystem.eco === code) return s.whiteSystem;
-        if (s.blackSystem.eco === code) return s.blackSystem;
+        if (side !== 'black' && s.whiteSystem.eco === code) return s.whiteSystem;
+        if (side !== 'white' && s.blackSystem.eco === code) return s.blackSystem;
     }
     const e = ecoVault.find(x => x.eco === code);
     const g = createChessInstance(), moves = [];
@@ -3539,7 +3539,7 @@ function choosePicksForRun(archKey) {
     if (w) picks[archKey + '|white'] = w;
     if (b) picks[archKey + '|black'] = b;
     saveOpeningPicks(picks);
-    currentPicks = { key: archKey, whiteSystem: w && ecoToSystem(w), blackSystem: b && ecoToSystem(b) };
+    currentPicks = { key: archKey, whiteSystem: w && ecoToSystem(w, 'white'), blackSystem: b && ecoToSystem(b, 'black') };
 }
 
 function getScaledOpeningsForUser(arch) {
@@ -3547,7 +3547,7 @@ function getScaledOpeningsForUser(arch) {
     try {
         if (!currentPicks || currentPicks.key !== archKey) {
             const w = pickEcoCode(archKey, 'white', false), b = pickEcoCode(archKey, 'black', false);
-            currentPicks = { key: archKey, whiteSystem: w && ecoToSystem(w), blackSystem: b && ecoToSystem(b) };
+            currentPicks = { key: archKey, whiteSystem: w && ecoToSystem(w, 'white'), blackSystem: b && ecoToSystem(b, 'black') };
         }
         if (currentPicks.whiteSystem && currentPicks.blackSystem) return currentPicks;
     } catch (e) {}
