@@ -95,19 +95,22 @@ async function runSurvey(browser, file, seed) {
   await page.waitForFunction(() => typeof archetypes === 'object' && typeof choosePicksForRun === 'function');
   const res = await page.evaluate(() => {
     if (typeof window.Chess !== 'function') throw new Error('chess.js did not load');
-    const slotSide = new Map();
+    // Hand-written systems are matched on code and side (cards are copies that carry the rotated Notable GM)
+    const handSide = new Set();
     for (const a of Object.values(archetypes)) for (const s of Object.values(a.systems)) {
-      slotSide.set(s.whiteSystem, 'white'); slotSide.set(s.blackSystem, 'black');
+      handSide.add(`${s.whiteSystem.eco}|white`); handSide.add(`${s.blackSystem.eco}|black`);
     }
+    const approved = (eco, side) => { const p = notableGmPool(eco, side); return p ? eligibleNotableGms(p) : []; };
     const card = (sys, want) => sys && {
       eco: sys.eco, want,
-      side: slotSide.get(sys) || (ecoVault.find(e => e.eco === sys.eco) || {}).side,
+      side: handSide.has(`${sys.eco}|${want}`) ? want : (ecoVault.find(e => e.eco === sys.eco) || {}).side,
       moves: sys.variations[0].moves.map(m => m.move),
-      gm: sys.notableGm || null
+      gm: sys.notableGm || null,
+      gmApproved: sys.notableGm ? approved(sys.eco, want).includes(sys.notableGm) : !approved(sys.eco, want).length
     };
     const out = {};
     for (const arch of Object.keys(archetypes)) for (const lvl of Object.keys(LEVEL_BANDS)) for (const strong of [0, 4]) {
-      localStorage.removeItem(PICKS_KEY); skillLevelKey = lvl; lastExtremeCount = strong;
+      localStorage.removeItem(PICKS_KEY); localStorage.removeItem(GM_ROTATION_KEY); skillLevelKey = lvl; lastExtremeCount = strong;
       const runs = [];
       for (let run = 0; run < 3; run++) {
         choosePicksForRun(arch);
@@ -115,8 +118,90 @@ async function runSurvey(browser, file, seed) {
       }
       out[`${arch}|${lvl}|${strong ? 'strong' : 'normal'}`] = runs;
     }
-    localStorage.removeItem(PICKS_KEY);
+    localStorage.removeItem(PICKS_KEY); localStorage.removeItem(GM_ROTATION_KEY);
     return out;
+  });
+  // Notable GM pools: data checks, fair round-robin, stability on re-render and reload, women's representation
+  const rotation = await page.evaluate(() => {
+    const issues = [], warnings = [];
+    const names = new Set(grandmastersList.map(g => g.name));
+    const women = [...new Set(grandmastersList.filter(g => g.gender === 'female').map(g => g.name))];
+    const owner = {}, poolsPerGm = {}, keys = new Set();
+    for (const p of NOTABLE_GM_POOLS) {
+      if (!p.key || keys.has(p.key)) issues.push(`pool key "${p.key}" missing or repeated`);
+      keys.add(p.key);
+      if (!['white', 'black'].includes(p.side)) issues.push(`${p.key}: side "${p.side}"`);
+      if (!p.codes.length || !p.pool.length) issues.push(`${p.key}: no codes or no GMs`);
+      for (const c of p.codes) {
+        const v = ecoVault.find(e => e.eco === c);
+        if (!v) issues.push(`${p.key}: ${c} is not in the opening vault`);
+        else if (v.side !== p.side && v.side !== 'either') issues.push(`${p.key}: ${c} is a ${v.side} opening`);
+        if (owner[`${c}|${p.side}`]) issues.push(`${c} (${p.side}) is in two pools: ${owner[`${c}|${p.side}`]} and ${p.key}`);
+        owner[`${c}|${p.side}`] = p.key;
+      }
+      const seen = new Set();
+      for (const e of p.pool) {
+        if (!e.gm || !/^https:\/\//.test(e.source || '') || !e.status) issues.push(`${p.key}: entry ${JSON.stringify(e)} needs gm, an https source and status`);
+        if (seen.has(e.gm)) issues.push(`${p.key}: ${e.gm} listed twice`);
+        seen.add(e.gm);
+        if (e.status === 'verified' && !names.has(e.gm)) issues.push(`${p.key}: ${e.gm} has no GM record`);
+        if (e.status === 'verified') poolsPerGm[e.gm] = (poolsPerGm[e.gm] || 0) + 1;
+      }
+    }
+    for (const [g, n] of Object.entries(poolsPerGm)) if (n > 6) warnings.push(`${g} is in ${n} pools (more than 6)`);
+    const considered = new Map(NOTABLE_GM_CONSIDERED.map(c => [c.gm, c]));
+    for (const w of women) {
+      const c = considered.get(w);
+      if (!c) { issues.push(`female GM ${w} is not in NOTABLE_GM_CONSIDERED`); continue; }
+      const actual = NOTABLE_GM_POOLS.filter(p => p.pool.some(e => e.gm === w && e.status === 'verified')).map(p => p.key).sort();
+      if (JSON.stringify(actual) !== JSON.stringify(c.pools.slice().sort())) issues.push(`NOTABLE_GM_CONSIDERED ${w}: lists ${c.pools}, pools have ${actual}`);
+    }
+    // Fair round-robin: n completed surveys show every GM once, survey n+1 repeats survey 1, no advance on re-render
+    const cycles = {};
+    for (const p of NOTABLE_GM_POOLS) {
+      localStorage.removeItem(GM_ROTATION_KEY);
+      const gms = eligibleNotableGms(p), code = p.codes[0], seq = [];
+      if (notableGmFor(code, p.side, false) !== gms[gmPoolOffset(p.key) % gms.length]) issues.push(`${p.key}: wrong starting GM before any survey`);
+      for (let i = 0; i <= gms.length; i++) {
+        seq.push(notableGmFor(code, p.side, true));
+        if (notableGmFor(code, p.side, false) !== seq[i] || notableGmFor(p.codes[p.codes.length - 1], p.side, false) !== seq[i]) issues.push(`${p.key}: GM changes without a new survey`);
+      }
+      if (new Set(seq.slice(0, gms.length)).size !== gms.length) issues.push(`${p.key}: ${gms.length} surveys showed ${seq.slice(0, gms.length)}`);
+      if (seq[gms.length] !== seq[0]) issues.push(`${p.key}: survey ${gms.length + 1} showed ${seq[gms.length]}, expected ${seq[0]}`);
+      cycles[p.key] = seq.join(', ');
+    }
+    // Through the page: a completed survey, then a re-render and a reload (no saved currentPicks)
+    const pages = {};
+    for (const arch of Object.keys(archetypes)) {
+      localStorage.removeItem(PICKS_KEY); localStorage.removeItem(GM_ROTATION_KEY); skillLevelKey = 'intermediate'; lastExtremeCount = 0;
+      const shown = [];
+      for (let run = 0; run < 2; run++) {
+        choosePicksForRun(arch);
+        const first = [currentPicks.whiteSystem.notableGm, currentPicks.blackSystem.notableGm];
+        const again = getScaledOpeningsForUser(archetypes[arch]);
+        currentPicks = null;
+        const reload = getScaledOpeningsForUser(archetypes[arch]);
+        const r = [reload.whiteSystem.notableGm, reload.blackSystem.notableGm];
+        if (again.whiteSystem.notableGm !== first[0] || again.blackSystem.notableGm !== first[1]) issues.push(`${arch}: Notable GM changed on re-render`);
+        if (r[0] !== first[0] || r[1] !== first[1]) issues.push(`${arch} run ${run + 1}: reload shows ${r}, results showed ${first}`);
+        shown.push(first.map(g => g || '-').join(' / '));
+      }
+      pages[arch] = shown.join(' | ');
+      if (JSON.stringify(loadOpeningPicks()).includes('notableGm')) issues.push('rotation state leaked into the saved picks');
+    }
+    localStorage.removeItem(PICKS_KEY); localStorage.removeItem(GM_ROTATION_KEY); currentPicks = null;
+    const entries = NOTABLE_GM_POOLS.flatMap(p => p.pool.filter(e => e.status === 'verified'));
+    const womenSet = new Set(women);
+    return {
+      issues, warnings, cycles, pages,
+      report: {
+        pools: NOTABLE_GM_POOLS.length, entries: entries.length, womenEntries: entries.filter(e => womenSet.has(e.gm)).length,
+        womenInPools: women.filter(w => poolsPerGm[w]).length, women: women.length,
+        noWomen: NOTABLE_GM_POOLS.filter(p => !p.pool.some(e => womenSet.has(e.gm))).map(p => p.key),
+        mostPools: Object.entries(poolsPerGm).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([g, n]) => `${g} ${n}`),
+        womenNames: women
+      }
+    };
   });
   const bank = await page.evaluate(() => {
     const issues = [], seen = new Set(), counts = {};
@@ -172,7 +257,7 @@ async function runSurvey(browser, file, seed) {
   const notableGm = {};
   for (const [cfg, runs] of Object.entries(res)) picks[cfg] = runs.map(([w, b]) => `${w ? w.eco : '-'}/${b ? b.eco : '-'}`).join(' ');
   for (const [cfg, runs] of Object.entries(res)) notableGm[cfg] = runs.map(([w, b]) => `${(w && w.gm) || '-'} / ${(b && b.gm) || '-'}`).join(' | ');
-  return { res, picks, notableGm, labs, bank, errors, blocked: [...blocked] };
+  return { res, picks, notableGm, labs, rotation, bank, errors, blocked: [...blocked] };
 }
 
 (async () => {
@@ -183,18 +268,19 @@ async function runSurvey(browser, file, seed) {
   for (let i = 0; i < repeat; i++) runs.push(await runSurvey(browser, htmlPath, SEED));
   const otherSeed = await runSurvey(browser, htmlPath, OTHER_SEED);
   await browser.close();
-  const { res, picks, bank, notableGm, labs } = runs[0];
+  const { res, picks, bank, notableGm, labs, rotation } = runs[0];
   const gmNow = { notableGm, handWritten: labs.handWritten, labsDrill: labs.drill };
   const errors = [...new Set([...runs, otherSeed].flatMap(r => r.errors))];
   const blocked = [...new Set([...runs, otherSeed].flatMap(r => r.blocked))].sort();
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res) && same(r.labs, labs));
-  const seedOk = same(otherSeed.picks, picks) && same(otherSeed.notableGm, notableGm) && same(otherSeed.labs, labs);
+  const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res) && same(r.labs, labs) && same(r.rotation, rotation));
+  const seedOk = same(otherSeed.picks, picks) && same(otherSeed.notableGm, notableGm) && same(otherSeed.labs, labs) && same(otherSeed.rotation, rotation);
 
   const sideIssues = new Set(), illegal = [];
   for (const [cfg, runs] of Object.entries(res)) for (const pair of runs) for (const c of pair) {
     if (!c) continue;
     if (c.side !== c.want && c.side !== 'either') sideIssues.add(`${c.eco} shown as ${c.want}, card is ${c.side}`);
+    if (!c.gmApproved) illegal.push(`${cfg}: ${c.eco} (${c.want}) shows Notable GM "${c.gm || '-'}", not from its approved pool`);
     const g = new Chess();
     for (const san of c.moves) if (!g.move(san)) { illegal.push(`${cfg}: ${c.eco} illegal at ${san}`); break; }
   }
@@ -251,6 +337,7 @@ async function runSurvey(browser, file, seed) {
     handOk = same(labs.handWritten, gmExp.handWritten);
     if (!handOk) fails.push(`hand-written notableGm names changed: ${labs.handWritten.filter(x => !(gmExp.handWritten || []).includes(x)).join('; ') || 'order changed'}`);
   }
+  fails.push(...rotation.issues.map(i => `Notable GM pools: ${i}`));
   const shownGms = new Set(Object.values(res).flat().flat().filter(c => c && c.gm).map(c => c.gm));
   const names = new Set(labs.names);
   const noRecord = [...shownGms].filter(g => !names.has(g)).sort();
@@ -271,6 +358,12 @@ async function runSurvey(browser, file, seed) {
   console.log(`Notable GM on cards: ${Object.keys(notableGm).length} combinations (x3 runs), ${gmMatch} match gm-baseline.json; ${shownGms.size} different GMs shown, ${noRecord.length} with no GM record (${noRecord.join(', ') || 'none'})`);
   console.log(`Hand-written Notable GM names: ${labs.handWritten.length}, ${handOk ? 'unchanged' : 'CHANGED'}`);
   console.log(`Labs GM drill: ${Object.keys(labs.drill).length} picker GMs, ${drillMatch} match gm-baseline.json (${Object.values(labs.drill).filter(m => m !== '-').length} load an opening)`);
+  const rp = rotation.report, womenSet = new Set(rp.womenNames);
+  const shownList = Object.values(res).flat().flat().filter(c => c && c.gm).map(c => c.gm);
+  console.log(`Notable GM pools: ${rp.pools} pools, ${rp.entries} approved entries, ${rotation.issues.length} issues; every pool cycles through all its GMs before repeating, and keeps its GM on re-render and reload`);
+  console.log(`  women: ${rp.womenEntries} of ${rp.entries} pool entries (${Math.round(100 * rp.womenEntries / rp.entries)}%), ${rp.womenInPools} of ${rp.women} female GM records in a pool; ${shownList.filter(g => womenSet.has(g)).length} of ${shownList.length} Notable GMs shown in the snapshot are women (reported, not a quota)`);
+  console.log(`  pools with no women: ${rp.noWomen.join(', ') || 'none'}; most pools: ${rp.mostPools.join(', ')}`);
+  for (const w of rotation.warnings) console.log(`  warning: ${w}`);
   console.log(`Page and console errors: ${errors.length}`);
   if (fails.length) {
     console.log(`\nFAIL (${fails.length})`);

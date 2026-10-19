@@ -39,13 +39,31 @@ const chessLocal = require.resolve('chess.js');
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 
 // strong = 4 or more of the 5 answers are the strongest or mildest choice (lastExtremeCount >= 4)
-// gm: the Notable GM each card shows today (null = no Notable GM line)
+// gm: the Notable GM each card shows on a first survey (null = no Notable GM line): the starting GM of
+// the opening's approved pool. retake: the picks and Notable GMs after taking the same survey again,
+// where the pool's next GM must appear.
 const CASES = [
-  { name: 'white-B12', style: 'patientGrinder', level: 'novice', strong: false, side: 'white', white: 'B12', black: 'C42', gm: { white: null, black: 'Fabiano Caruana' } },
-  { name: 'black-B40', style: 'strategicArchitect', level: 'novice', strong: false, side: 'black', white: 'D06', black: 'B40', gm: { white: 'Anatoly Karpov', black: null } },
+  { name: 'white-B12', style: 'patientGrinder', level: 'novice', strong: false, side: 'white', white: 'B12', black: 'C42', gm: { white: 'Alexander Grischuk', black: 'Yu Yangyi' } },
+  { name: 'black-B40', style: 'strategicArchitect', level: 'novice', strong: false, side: 'black', white: 'D06', black: 'B40', gm: { white: 'Levon Aronian', black: 'Vasyl Ivanchuk' } },
   { name: 'white-D85', style: 'patientGrinder', level: 'advanced', strong: true, side: 'white', white: 'D85', black: 'B82', gm: { white: null, black: null } },
-  { name: 'white-D00', style: 'patientGrinder', level: 'none', strong: false, side: 'white', white: 'D00', black: 'C42', gm: { white: 'Pia Cramling', black: 'Fabiano Caruana' } },
+  { name: 'white-D00', style: 'patientGrinder', level: 'none', strong: false, side: 'white', white: 'D00', black: 'C42', gm: { white: null, black: 'Yu Yangyi' } },
+  { name: 'white-E06', style: 'flexibleChameleon', level: 'advanced', strong: true, side: 'white', white: 'E06', black: 'A16', gm: { white: 'Ding Liren', black: null },
+    retake: { white: 'E07', black: 'D71', gm: { white: 'Aleksandra Goryachkina', black: null } } },
 ];
+
+async function takeSurvey(page, label, vec) {
+  await page.locator("[onclick=\"switchTab('quiz')\"]:visible").first().click();
+  await page.getByText(label, { exact: true }).click();
+  for (let q = 0; q < 5; q++) {
+    await page.waitForFunction(n => currentQuestionIdx === n && document.querySelectorAll('#quiz-container button.option-card').length === 3 && !isAdvancing, q);
+    const idx = await page.evaluate(v => { const it = currentRun[currentQuestionIdx]; return it.options.findIndex(o => o.points === v[SURVEY_AREAS.indexOf(it.area)]); }, vec);
+    await page.locator('#quiz-container button.option-card').nth(idx).click();
+  }
+  await page.waitForSelector('#tab-results:not([style*="display: none"]) #results-chess-board .square', { timeout: 10000 });
+  await page.waitForTimeout(400);
+}
+
+const gmLineTexts = page => page.locator('#results-container span[onclick^="openGmModal"]').allTextContents().then(t => t.map(x => x.trim()));
 
 async function openPage(browser) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
@@ -96,29 +114,21 @@ async function runCase(browser, c) {
   }, c);
   if (!vec) { await context.close(); return { ...c, fails: ['no answer set gives this style'], info, errors }; }
   const label = await page.evaluate(k => SKILL_LEVELS.find(l => l.key === k).label, c.level);
-  await page.locator("[onclick=\"switchTab('quiz')\"]:visible").first().click();
-  await page.getByText(label, { exact: true }).click();
-  for (let q = 0; q < 5; q++) {
-    await page.waitForFunction(n => currentQuestionIdx === n && document.querySelectorAll('#quiz-container button.option-card').length === 3 && !isAdvancing, q);
-    const idx = await page.evaluate(v => { const it = currentRun[currentQuestionIdx]; return it.options.findIndex(o => o.points === v[SURVEY_AREAS.indexOf(it.area)]); }, vec);
-    await page.locator('#quiz-container button.option-card').nth(idx).click();
-  }
-  await page.waitForSelector('#tab-results:not([style*="display: none"]) #results-chess-board .square', { timeout: 10000 });
-  await page.waitForTimeout(400);
+  await takeSurvey(page, label, vec);
 
   info.scored = await page.evaluate(() => ({ level: skillLevelKey, extremeAnswers: lastExtremeCount }));
   if (info.scored.level !== c.level || (info.scored.extremeAnswers >= 4) !== c.strong) fails.push(`survey scored ${JSON.stringify(info.scored)}`);
   // Cards on the page, and which side each card object belongs to (hand-written slot side, else vault side)
   const shown = await page.evaluate(() => {
-    const slotSide = new Map();
-    for (const a of Object.values(archetypes)) for (const s of Object.values(a.systems)) { slotSide.set(s.whiteSystem, 'white'); slotSide.set(s.blackSystem, 'black'); }
-    const side = sys => slotSide.get(sys) || (ecoVault.find(e => e.eco === sys.eco) || {}).side;
+    const handSide = new Set();
+    for (const a of Object.values(archetypes)) for (const s of Object.values(a.systems)) { handSide.add(`${s.whiteSystem.eco}|white`); handSide.add(`${s.blackSystem.eco}|black`); }
+    const sideOf = (sys, want) => handSide.has(`${sys.eco}|${want}`) ? want : (ecoVault.find(e => e.eco === sys.eco) || {}).side;
     const titles = [...document.querySelectorAll('#results-container h3.gradient-text')].map(h => h.textContent.trim());
     const ecos = [...document.querySelectorAll('#results-container span.text-accentGold')].map(s => s.textContent.trim()).filter(x => x.startsWith('ECO'));
     return {
       whitePanel: `${ecos[0]} ${titles[0]}`, blackPanel: `${ecos[1]} ${titles[1]}`,
-      white: { eco: currentPicks.whiteSystem.eco, name: currentPicks.whiteSystem.name, side: side(currentPicks.whiteSystem) },
-      black: { eco: currentPicks.blackSystem.eco, name: currentPicks.blackSystem.name, side: side(currentPicks.blackSystem) },
+      white: { eco: currentPicks.whiteSystem.eco, name: currentPicks.whiteSystem.name, side: sideOf(currentPicks.whiteSystem, 'white') },
+      black: { eco: currentPicks.blackSystem.eco, name: currentPicks.blackSystem.name, side: sideOf(currentPicks.blackSystem, 'black') },
     };
   });
   info.cards = shown;
@@ -147,6 +157,11 @@ async function runCase(browser, c) {
     else info.gm.modal.push(`${name}: pop-up opens`);
     await page.evaluate(() => closeGmModal());
   }
+  // Switching tabs and coming back keeps the same Notable GM
+  await page.evaluate(() => switchTab('grandmasters')); await page.waitForTimeout(200);
+  await page.evaluate(() => switchTab('results')); await page.waitForTimeout(300);
+  const afterTabs = await gmLineTexts(page);
+  if (JSON.stringify(afterTabs) !== JSON.stringify(wantTexts)) fails.push(`after switching tabs the Notable GM lines show ${JSON.stringify(afterTabs)}, expected ${JSON.stringify(wantTexts)}`);
 
   // Board for the chosen side
   await page.click(c.side === 'white' ? '#rep-side-white' : '#rep-side-black');
@@ -173,6 +188,15 @@ async function runCase(browser, c) {
   if (shots) {
     await page.locator('#results-chess-board').screenshot({ path: `${shots}/${c.name}-end.png` });
     await page.locator('#results-container').screenshot({ path: `${shots}/${c.name}-cards.png` });
+  }
+  // Taking the survey again into the same pool shows that pool's next GM
+  if (c.retake) {
+    await takeSurvey(page, label, vec);
+    const again = await page.evaluate(() => ({ white: currentPicks.whiteSystem.eco, black: currentPicks.blackSystem.eco, gm: { white: currentPicks.whiteSystem.notableGm || null, black: currentPicks.blackSystem.notableGm || null } }));
+    const lines = await gmLineTexts(page);
+    info.gm.retake = `${again.white} ${again.gm.white || 'none'}, ${again.black} ${again.gm.black || 'none'}`;
+    if (JSON.stringify(again) !== JSON.stringify(c.retake)) fails.push(`retake shows ${JSON.stringify(again)}, expected ${JSON.stringify(c.retake)}`);
+    if (JSON.stringify(lines) !== JSON.stringify([again.gm.white, again.gm.black].filter(Boolean))) fails.push(`retake Notable GM lines show ${JSON.stringify(lines)}`);
   }
   await context.close();
   return { ...c, answers: vec, fails, info, errors };
@@ -256,7 +280,7 @@ async function runNav(browser) {
     failed += fails.length;
     console.log(`\n${r.name}: ${r.style}, ${r.level}, ${r.strong ? 'strong' : 'normal'} answers ${JSON.stringify(r.answers)} -> ${fails.length ? 'FAIL' : 'PASS'}`);
     if (r.info.cards) console.log(`  White card: ${r.info.cards.whitePanel} (${r.info.cards.white.side} card)\n  Black card: ${r.info.cards.blackPanel} (${r.info.cards.black.side} card)`);
-    if (r.info.gm) console.log(`  Notable GM: White ${r.info.gm.white || 'none'}, Black ${r.info.gm.black || 'none'}${r.info.gm.modal.length ? '; ' + r.info.gm.modal.join('; ') : ''}`);
+    if (r.info.gm) console.log(`  Notable GM: White ${r.info.gm.white || 'none'}, Black ${r.info.gm.black || 'none'}${r.info.gm.modal.length ? '; ' + r.info.gm.modal.join('; ') : ''}${r.info.gm.retake ? `; retake: ${r.info.gm.retake}` : ''}`);
     if (r.info.title) console.log(`  Board: ${r.info.title}, ${r.info.orientation}; demo ${r.info.demoLine}; ${r.info.moveCounter}`);
     for (const f of fails) console.log('  - ' + f);
   }

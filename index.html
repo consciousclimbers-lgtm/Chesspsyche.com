@@ -3465,6 +3465,197 @@ const archetypes = {
     }
 };
 
+// ---- Notable GM pools (Results page): approved GMs per opening family and side, shown in a fair round-robin ----
+// Only status "verified" entries whose gm is an exact grandmastersList name are shown. Batch 1, approved by the owner 2026-10-19.
+const NOTABLE_GM_POOLS = [
+    { key: "Italian Game|white", side: "white", codes: ["C50", "C51", "C52", "C53", "C54"], pool: [
+        { gm: "Wesley So", source: "https://shop.chessbase.com/en/products/italian_game_powerbook_2019", status: "verified" },
+        { gm: "Fabiano Caruana", source: "https://shop.chessbase.com/en/products/italian_game_powerbook_2019", status: "verified" },
+        { gm: "Anish Giri", source: "https://shop.chessbase.com/en/products/italian_game_powerbook_2019", status: "verified" },
+        { gm: "Levon Aronian", source: "https://www.chess.com/openings/Giuoco-Piano-Game", status: "verified" },
+        { gm: "Nigel Short", source: "https://books.chessbase.com/es/openings-1-the-open-games/italian-game-evans-gambit", status: "verified" },
+        { gm: "Hou Yifan", source: "https://www.365chess.com/players/Yifan_Hou", status: "verified" },
+        { gm: "Vaishali Rameshbabu", source: "https://www.fide.com/2024/08/17/", status: "verified" }
+    ] },
+    { key: "Dutch Defence|black", side: "black", codes: ["A80", "A82", "A84", "A85", "A86", "A87", "A88", "A89", "A90", "A91", "A92", "A93", "A94", "A95", "A96", "A97", "A98", "A99"], pool: [
+        { gm: "Hikaru Nakamura", source: "https://en.wikipedia.org/wiki/Dutch_Defence", status: "verified" },
+        { gm: "Nigel Short", source: "https://en.wikipedia.org/wiki/Dutch_Defence", status: "verified" },
+        { gm: "Anna Muzychuk", source: "https://chessgames.com/perl/chessplayer?pid=54881", status: "verified" },
+        { gm: "Hoang Thanh Trang", source: "https://www.365chess.com/eco/A81_Dutch_defence", status: "verified" }
+    ] },
+    { key: "Alekhine's Defence|black", side: "black", codes: ["B02", "B04", "B05"], pool: [
+        { gm: "Olexandr Bortnyk", source: "https://lichess.org/ublog/fna1jCYo/redirect", status: "verified" },
+        { gm: "Richárd Rapport", source: "https://www.houseofstaunton.com/blogs/chess-strategies/the-alekhine-defense", status: "verified" },
+        { gm: "Hikaru Nakamura", source: "https://www.houseofstaunton.com/blogs/chess-strategies/the-alekhine-defense", status: "verified" },
+        { gm: "Magnus Carlsen", source: "https://theweekinchess.com/chessnews/events/magnus-carlsen-invitational-2020/carlsen-beats-caruana-on-day-5-things-go-very-wrong-for-firouzja-against-nakamura", status: "verified" }
+    ] },
+    { key: "King's Indian Defence|black", side: "black", codes: ["E60", "E61", "E67", "E70", "E90", "E91", "E92", "E93", "E94", "E95", "E96", "E97", "E98", "E99"], pool: [
+        { gm: "Teimour Radjabov", source: "https://www.chessgames.com/player/teimour_radjabov.html", status: "verified" },
+        { gm: "Hikaru Nakamura", source: "https://en.wikipedia.org/wiki/King%27s_Indian_Defence", status: "verified" },
+        { gm: "Ding Liren", source: "https://en.wikipedia.org/wiki/King%27s_Indian_Defence", status: "verified" },
+        { gm: "Victor Bologan", source: "https://newinchess.com/bologan-s-king-s-indian", status: "verified" },
+        { gm: "Xie Jun", source: "https://en.chessbase.com/newsroom/post/understanding-before-moving-68-ideas-in-the-king-s-indian-2", status: "verified" },
+        { gm: "Maia Chiburdanidze", source: "https://www.chessgames.com/perl/chessplayer?pid=16894", status: "verified" },
+        { gm: "Ketevan Arakhamia-Grant", source: "https://www.chessgames.com/perl/chessplayer?pid=12540", status: "verified" },
+        { gm: "Monika Soćko", source: "https://chessgames.com/perl/chessplayer?pid=51452", status: "verified" },
+        { gm: "Bibisara Assaubayeva", source: "https://mer.vin/chess/shuvalova-polina-vs-assaubayeva-bibisar-at-new-delhi-wgp-2023-6-2", status: "verified" },
+        { gm: "Kateryna Lagno", source: "https://ugra2018.fide.com/2018/11/21/review-of-final-games-1-and-2/", status: "verified" }
+    ] },
+    { key: "Ruy Lopez|white", side: "white", codes: ["C60", "C68", "C69", "C70", "C81", "C84", "C85", "C86", "C87", "C88", "C90", "C91", "C92", "C95", "C96", "C97", "C99"], pool: [
+        { gm: "Fabiano Caruana", source: "https://chessbase.in/news/Navigating-the-Ruy-Lopez-Vol-1-Review", status: "verified" },
+        { gm: "Bobby Fischer", source: "https://dev.chessdailynews.com/?p=33490", status: "verified" },
+        { gm: "Judit Polgár", source: "https://archive.spectator.co.uk/article/20th-february-1993/52/judits-win", status: "verified" },
+        { gm: "Marie Sebag", source: "https://www.chessgames.com/player/marie_sebag.html", status: "verified" },
+        { gm: "Tatiana Kosintseva", source: "https://www.chessgames.com/player/tatiana_kosintseva.html?kpage=3", status: "verified" },
+        { gm: "Hou Yifan", source: "https://www.365chess.com/players/Yifan_Hou", status: "verified" }
+    ] },
+    { key: "Queen's Indian Defence|black", side: "black", codes: ["E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19"], pool: [
+        { gm: "Viswanathan Anand", source: "https://chessiverse.com/resources/openings/queens-indian", status: "verified" },
+        { gm: "Michael Adams", source: "https://www.scacco.it/it/starting-out-the-queen-s-indian", status: "verified" },
+        { gm: "Judit Polgár", source: "https://www.scacco.it/it/starting-out-the-queen-s-indian", status: "verified" },
+        { gm: "Peter Leko", source: "https://www.chessgames.com/player/peter_leko.html", status: "verified" },
+        { gm: "Julio Granda Zuniga", source: "https://www.chessgames.com/perl/chessplayer?pid=47009", status: "verified" },
+        { gm: "Sergey A. Fedorchuk", source: "https://chessgames.com/perl/chessplayer?pid=38807", status: "verified" }
+    ] },
+    { key: "Nimzo-Indian Defence|black", side: "black", codes: ["E20", "E21", "E22", "E23", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59"], pool: [
+        { gm: "Alexandra Kosteniuk", source: "https://www.chessgames.com/perl/chessplayer?pid=10940", status: "verified" },
+        { gm: "Tatiana Kosintseva", source: "https://www.chessgames.com/player/tatiana_kosintseva.html?kpage=3", status: "verified" },
+        { gm: "Alexander Onischuk", source: "https://www.chessgames.com/perl/chessplayer?pid=41227", status: "verified" },
+        { gm: "Sergey A. Fedorchuk", source: "https://chessgames.com/perl/chessplayer?pid=38807", status: "verified" },
+        { gm: "Peter Leko", source: "https://www.chessgames.com/player/peter_leko.html", status: "verified" }
+    ] },
+    { key: "Caro-Kann Defence|black", side: "black", codes: ["B10", "B11", "B15", "B16", "B17", "B18", "B19"], pool: [
+        { gm: "Alireza Firouzja", source: "https://wikipedia.com/wiki/Caro-Kann", status: "verified" },
+        { gm: "Vladislav Artemiev", source: "https://wikipedia.com/wiki/Caro-Kann", status: "verified" },
+        { gm: "Ding Liren", source: "https://newsouthbooks.com.au/books/the-modernized-caro-kann", status: "verified" },
+        { gm: "Viswanathan Anand", source: "https://newsouthbooks.com.au/books/the-modernized-caro-kann", status: "verified" },
+        { gm: "Valentina Gunina", source: "https://www.chessgames.com/player/valentina_gunina.html", status: "verified" },
+        { gm: "Elina Danielian", source: "https://www.chessgames.com/perl/chessplayer?pid=26789", status: "verified" },
+        { gm: "Bella Khotenashvili", source: "https://www.chessgames.com/perl/chessplayer?pid=87968", status: "verified" },
+        { gm: "Olga Girya", source: "https://chessgames.com/perl/chessplayer?pid=105120", status: "verified" },
+        { gm: "Antoaneta Stefanova", source: "https://www.chessgames.com/player/antoaneta_stefanova.html", status: "verified" },
+        { gm: "Anna Ushenina", source: "https://www.chessgames.com/perl/chessplayer?pid=76809", status: "verified" }
+    ] },
+    { key: "Caro-Kann Advance|white", side: "white", codes: ["B12"], pool: [
+        { gm: "Alexei Shirov", source: "https://365chess.com/eco/B12_Caro-Kann_advance_variation", status: "verified" },
+        { gm: "Nigel Short", source: "https://www.chess.com/blog/Illingworth/how-to-quickly-understand-an-opening", status: "verified" },
+        { gm: "Fabiano Caruana", source: "https://www.chess.com/blog/Illingworth/how-to-quickly-understand-an-opening", status: "verified" },
+        { gm: "Maxime Vachier-Lagrave", source: "https://www.chess.com/blog/Illingworth/how-to-quickly-understand-an-opening", status: "verified" },
+        { gm: "Alexander Grischuk", source: "https://www.chess.com/blog/Illingworth/how-to-quickly-understand-an-opening", status: "verified" }
+    ] },
+    { key: "Queen's Gambit / QGD Exchange|white", side: "white", codes: ["D06", "D35", "D36"], pool: [
+        { gm: "Magnus Carlsen", source: "https://www.caissa-chess.com/strategy/-squeezing-the-qgd-semko-semkov-k-6486-9786197188431-2061", status: "verified" },
+        { gm: "D Gukesh", source: "https://www.caissa-chess.com/strategy/-squeezing-the-qgd-semko-semkov-k-6486-9786197188431-2061", status: "verified" },
+        { gm: "Fabiano Caruana", source: "https://www.caissa-chess.com/strategy/-squeezing-the-qgd-semko-semkov-k-6486-9786197188431-2061", status: "verified" },
+        { gm: "Levon Aronian", source: "https://www.caissa-chess.com/strategy/-squeezing-the-qgd-semko-semkov-k-6486-9786197188431-2061", status: "verified" },
+        { gm: "Alexey Sarana", source: "https://www.caissa-chess.com/strategy/-squeezing-the-qgd-semko-semkov-k-6486-9786197188431-2061", status: "verified" },
+        { gm: "Natalia Zhukova", source: "https://www.chessgames.com/perl/chessplayer?pid=25172", status: "verified" },
+        { gm: "Nino Batsiashvili", source: "https://www.chessgames.com/perl/chessplayer?pid=50118", status: "verified" }
+    ] },
+    { key: "Catalan|white", side: "white", codes: ["E01", "E06", "E07", "E08", "E09"], pool: [
+        { gm: "Boris Gelfand", source: "https://www.chessclub.com/videos/game-of-the-week-gm-boris-gelfand-vs.-gm-vladimir-kramnik", status: "verified" },
+        { gm: "Daniil Dubov", source: "https://www.chess.com/blog/ChessLord_I/catalan-opening", status: "verified" },
+        { gm: "Anish Giri", source: "https://www.chess.com/blog/ChessLord_I/catalan-opening", status: "verified" },
+        { gm: "Ding Liren", source: "https://www.chess.com/blog/ChessLord_I/catalan-opening", status: "verified" },
+        { gm: "Aleksandra Goryachkina", source: "https://www.fide.com/2020/01/05/", status: "verified" },
+        { gm: "Lei Tingjie", source: "https://chessgames.com/perl/chessplayer?pid=135017", status: "verified" }
+    ] },
+    { key: "King's Gambit|white", side: "white", codes: ["C30", "C32", "C34", "C38", "C39"], pool: [
+        { gm: "Boris Spassky", source: "https://en.wikipedia.org/wiki/King%27s_Gambit", status: "verified" },
+        { gm: "Bobby Fischer", source: "https://en.wikipedia.org/wiki/King%27s_Gambit", status: "verified" },
+        { gm: "Nigel Short", source: "https://en.wikipedia.org/wiki/King%27s_Gambit", status: "verified" },
+        { gm: "Alexei Shirov", source: "https://en.wikipedia.org/wiki/King%27s_Gambit", status: "verified" },
+        { gm: "Hikaru Nakamura", source: "https://en.wikipedia.org/wiki/King%27s_Gambit", status: "verified" },
+        { gm: "Judit Polgár", source: "https://en.wikipedia.org/wiki/King%27s_Gambit", status: "verified" }
+    ] },
+    { key: "Budapest Defence|black", side: "black", codes: ["A51", "A52"], pool: [
+        { gm: "Richárd Rapport", source: "https://www.chess.com/lessons/play-the-budapest", status: "verified" }
+    ] },
+    { key: "Petrov's Defence|black", side: "black", codes: ["C42"], pool: [
+        { gm: "Fabiano Caruana", source: "https://en.wikipedia.org/wiki/Petrov%27s_Defence", status: "verified" },
+        { gm: "Michael Adams", source: "https://shop.chessbase.com/en/products/fernandez_the_reliable_petroff", status: "verified" },
+        { gm: "Ding Liren", source: "https://en.chessbase.com/newsroom/post/the-petroff-dependable-or-dangerous", status: "verified" },
+        { gm: "Yu Yangyi", source: "https://en.chessbase.com/newsroom/post/the-petroff-dependable-or-dangerous", status: "verified" },
+        { gm: "Hou Yifan", source: "https://en.chessbase.com/newsroom/post/the-petroff-dependable-or-dangerous", status: "verified" },
+        { gm: "Humpy Koneru", source: "https://en.chessbase.com/post/women-candidates-2022-pool-a-r1g2", status: "verified" }
+    ] },
+    { key: "Queen's Gambit Declined|black", side: "black", codes: ["D30", "D31", "D32", "D33", "D34", "D37", "D38", "D39"], pool: [
+        { gm: "Hou Yifan", source: "https://www.365chess.com/players/Yifan_Hou", status: "verified" },
+        { gm: "Nino Batsiashvili", source: "https://www.chessgames.com/perl/chessplayer?pid=50118", status: "verified" }
+    ] },
+    { key: "Modern Defence|black", side: "black", codes: ["B06", "A41"], pool: [
+        { gm: "Magnus Carlsen", source: "https://en.chessbase.com/newsroom/post/daniel-fernandez-master-the-modern-defence-1-g6-a-dynamic-and-unbalanced-weapon-for-black", status: "verified" }
+    ] },
+    { key: "Réti Opening|white", side: "white", codes: ["A04", "A05", "A06", "A07", "A08", "A09"], pool: [
+        { gm: "Elina Danielian", source: "https://www.chessgames.com/perl/chessplayer?pid=26789", status: "verified" },
+        { gm: "Bella Khotenashvili", source: "https://www.chessgames.com/perl/chessplayer?pid=87968", status: "verified" },
+        { gm: "Antoaneta Stefanova", source: "https://www.chess.com/games/antoaneta-stefanova", status: "verified" }
+    ] },
+    { key: "Scotch Game|white", side: "white", codes: ["C45"], pool: [
+        { gm: "Ian Nepomniachtchi", source: "https://www.modern-chess.com/course/complete-scotch-repertoire/29810/", status: "verified" },
+        { gm: "Hikaru Nakamura", source: "https://www.modern-chess.com/course/complete-scotch-repertoire/29810/", status: "verified" },
+        { gm: "Magnus Carlsen", source: "https://www.newinchess.com/media/wysiwyg/product_pdf/6061.pdf", status: "verified" },
+        { gm: "Alexander Morozevich", source: "https://shop.chessbase.com/en/products/8699", status: "verified" }
+    ] },
+    { key: "Sicilian Paulsen/Kan/Taimanov|black", side: "black", codes: ["B40", "B41", "B42", "B43", "B44", "B46", "B47", "B49"], pool: [
+        { gm: "Pia Cramling", source: "https://www.chessgames.com/player/pia_cramling.html", status: "verified" },
+        { gm: "Zhaoqin Peng", source: "https://www.chessgames.com/perl/chessplayer?pid=17360", status: "verified" },
+        { gm: "Vadim Milov", source: "https://chessgames.com/perl/chessplayer?pid=21410", status: "verified" },
+        { gm: "Judit Polgár", source: "https://shop.chessbase.com/en/products/ramirez_sicilian_tajmanov_scheveningen", status: "verified" },
+        { gm: "Vasyl Ivanchuk", source: "https://shop.chessbase.com/en/products/ramirez_sicilian_tajmanov_scheveningen", status: "verified" },
+        { gm: "Alexander Morozevich", source: "https://shop.chessbase.com/en/products/ramirez_sicilian_tajmanov_scheveningen", status: "verified" },
+        { gm: "Alexander Grischuk", source: "https://shop.chessbase.com/en/products/ramirez_sicilian_tajmanov_scheveningen", status: "verified" },
+        { gm: "Veselin Topalov", source: "https://shop.chessbase.com/en/products/ramirez_sicilian_tajmanov_scheveningen", status: "verified" }
+    ] }
+];
+// Every female GM record (gender "female") and the pools she is in, so none is overlooked. Not shown on the site.
+const NOTABLE_GM_CONSIDERED = [
+    { gm: "Judit Polgár", pools: ["Ruy Lopez|white", "Queen's Indian Defence|black", "King's Gambit|white", "Sicilian Paulsen/Kan/Taimanov|black"] },
+    { gm: "Hou Yifan", pools: ["Italian Game|white", "Ruy Lopez|white", "Petrov's Defence|black", "Queen's Gambit Declined|black"] },
+    { gm: "Susan Polgár", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Xie Jun", pools: ["King's Indian Defence|black"] },
+    { gm: "Zhu Jiner", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Ju Wenjun", pools: [], note: "only a single out-of-range game (Catalan) in batch 1" },
+    { gm: "Lei Tingjie", pools: ["Catalan|white"] },
+    { gm: "Viktorija Čmilytė", pools: [], note: "evidence below the bar in batch 1" },
+    { gm: "Aleksandra Goryachkina", pools: ["Catalan|white"] },
+    { gm: "Tan Zhongyi", pools: [], note: "evidence below the bar in batch 1" },
+    { gm: "Bibisara Assaubayeva", pools: ["King's Indian Defence|black"] },
+    { gm: "Anna Muzychuk", pools: ["Dutch Defence|black"] },
+    { gm: "Humpy Koneru", pools: ["Petrov's Defence|black"] },
+    { gm: "Kateryna Lagno", pools: ["King's Indian Defence|black"] },
+    { gm: "Maia Chiburdanidze", pools: ["King's Indian Defence|black"] },
+    { gm: "Divya Deshmukh", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Nadezhda Kosintseva", pools: [], note: "evidence below the bar in batch 1" },
+    { gm: "Alexandra Kosteniuk", pools: ["Nimzo-Indian Defence|black"] },
+    { gm: "Tatiana Kosintseva", pools: ["Ruy Lopez|white", "Nimzo-Indian Defence|black"] },
+    { gm: "Zhansaya Abdumalik", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Nana Dzagnidze", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Xu Yuhua", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Mariya Muzychuk", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Nino Batsiashvili", pools: ["Queen's Gambit / QGD Exchange|white", "Queen's Gambit Declined|black"] },
+    { gm: "Harika Dronavalli", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Vaishali Rameshbabu", pools: ["Italian Game|white"] },
+    { gm: "Zhao Xue", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Bella Khotenashvili", pools: ["Caro-Kann Defence|black", "Réti Opening|white"] },
+    { gm: "Zhu Chen", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Irina Krush", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Elisabeth Pähtz", pools: [], note: "no reasonable, sourced match in the batch 1 families" },
+    { gm: "Anna Ushenina", pools: ["Caro-Kann Defence|black"] },
+    { gm: "Marie Sebag", pools: ["Ruy Lopez|white"] },
+    { gm: "Antoaneta Stefanova", pools: ["Caro-Kann Defence|black", "Réti Opening|white"] },
+    { gm: "Elina Danielian", pools: ["Caro-Kann Defence|black", "Réti Opening|white"] },
+    { gm: "Pia Cramling", pools: ["Sicilian Paulsen/Kan/Taimanov|black"] },
+    { gm: "Olga Girya", pools: ["Caro-Kann Defence|black"] },
+    { gm: "Hoang Thanh Trang", pools: ["Dutch Defence|black"] },
+    { gm: "Monika Soćko", pools: ["King's Indian Defence|black"] },
+    { gm: "Zhaoqin Peng", pools: ["Sicilian Paulsen/Kan/Taimanov|black"] },
+    { gm: "Valentina Gunina", pools: ["Caro-Kann Defence|black"] },
+    { gm: "Natalia Zhukova", pools: ["Queen's Gambit / QGD Exchange|white"] },
+    { gm: "Ketevan Arakhamia-Grant", pools: ["King's Indian Defence|black"] },
+    { gm: "Koneru Humpy", pools: [], note: "duplicate record of Humpy Koneru, who is in the Petrov pool" }
+];
+
 // ---- Picks one White and one Black opening for the player: matching style, inside their level, in their color ----
 const LEVEL_BANDS = { none: [1, 2], beginner: [1, 2], novice: [2, 3], intermediate: [2, 3], advanced: [3, 5] };
 // If a style has nothing at the player's level, try these neighbouring styles next
@@ -3533,13 +3724,51 @@ function ecoToSystem(code, side) {
     return { name: e.name, eco: e.eco, summary: first || ('Starts with ' + e.moves.split(/\s+/).slice(0, 9).join(' ') + (e.moves.split(/\s+/).length > 9 ? ' ...' : '') + '.'), variations: [{ moves }] };
 }
 
+// ---- Notable GM rotation: the GM shown for a picked opening comes from that family's approved pool ----
+const GM_ROTATION_KEY = 'chesspsyche_notable_gm_rotation_v1';
+function notableGmPool(code, side) {
+    return NOTABLE_GM_POOLS.find(p => p.side === side && p.codes.includes(code)) || null;
+}
+function eligibleNotableGms(pool) {
+    const names = new Set(grandmastersList.map(g => g.name));
+    return pool.pool.filter(e => e.status === 'verified' && names.has(e.gm)).map(e => e.gm);
+}
+function loadGmRotation() {
+    try { return JSON.parse(localStorage.getItem(GM_ROTATION_KEY)) || {}; } catch (e) { return {}; }
+}
+function saveGmRotation(state) {
+    try { localStorage.setItem(GM_ROTATION_KEY, JSON.stringify(state)); } catch (e) {}
+}
+// Fixed starting point per pool, so different families do not all open on their first-listed GM
+function gmPoolOffset(key) {
+    let h = 0;
+    for (const ch of key) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+    return h;
+}
+// advance = true only for a newly completed survey; re-renders and reloads show the same GM
+function notableGmFor(code, side, advance) {
+    const pool = notableGmPool(code, side);
+    if (!pool) return null;
+    const gms = eligibleNotableGms(pool);
+    if (!gms.length) return null;
+    const state = loadGmRotation();
+    let runs = state[pool.key] || 0;
+    if (advance) { runs++; state[pool.key] = runs; saveGmRotation(state); }
+    return gms[(gmPoolOffset(pool.key) + Math.max(runs, 1) - 1) % gms.length];
+}
+// Returns a copy, so the hand-written systems (read by the Labs GM drill) are never changed
+function withNotableGm(sys, code, side, advance) {
+    if (!sys) return sys;
+    return Object.assign({}, sys, { notableGm: notableGmFor(code, side, advance) });
+}
+
 function choosePicksForRun(archKey) {
     const w = pickEcoCode(archKey, 'white', true), b = pickEcoCode(archKey, 'black', true);
     const picks = loadOpeningPicks();
     if (w) picks[archKey + '|white'] = w;
     if (b) picks[archKey + '|black'] = b;
     saveOpeningPicks(picks);
-    currentPicks = { key: archKey, whiteSystem: w && ecoToSystem(w, 'white'), blackSystem: b && ecoToSystem(b, 'black') };
+    currentPicks = { key: archKey, whiteSystem: w && withNotableGm(ecoToSystem(w, 'white'), w, 'white', true), blackSystem: b && withNotableGm(ecoToSystem(b, 'black'), b, 'black', true) };
 }
 
 function getScaledOpeningsForUser(arch) {
@@ -3547,7 +3776,7 @@ function getScaledOpeningsForUser(arch) {
     try {
         if (!currentPicks || currentPicks.key !== archKey) {
             const w = pickEcoCode(archKey, 'white', false), b = pickEcoCode(archKey, 'black', false);
-            currentPicks = { key: archKey, whiteSystem: w && ecoToSystem(w, 'white'), blackSystem: b && ecoToSystem(b, 'black') };
+            currentPicks = { key: archKey, whiteSystem: w && withNotableGm(ecoToSystem(w, 'white'), w, 'white', false), blackSystem: b && withNotableGm(ecoToSystem(b, 'black'), b, 'black', false) };
         }
         if (currentPicks.whiteSystem && currentPicks.blackSystem) return currentPicks;
     } catch (e) {}
@@ -3555,7 +3784,8 @@ function getScaledOpeningsForUser(arch) {
     let tierKey = 'beginnerNovice';
     if (userLevel.includes('Intermediate')) tierKey = 'intermediate';
     else if (userLevel.includes('Advanced')) tierKey = 'advancedGm';
-    return arch.systems[tierKey];
+    const sys = arch.systems[tierKey];
+    return { whiteSystem: withNotableGm(sys.whiteSystem, sys.whiteSystem.eco, 'white', false), blackSystem: withNotableGm(sys.blackSystem, sys.blackSystem.eco, 'black', false) };
 }
 
 // SURVEY SETUP (the 50 questions live in questions.js)
