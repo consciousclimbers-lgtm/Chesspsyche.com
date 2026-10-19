@@ -3720,7 +3720,15 @@ function ecoToSystem(code, side) {
         const m = g.move(san);
         if (m) moves.push({ move: san, from: m.from, to: m.to });
     });
-    const first = (e.commentary && e.commentary[0]) ? String(e.commentary[0]).split(' — ').slice(1).join(' — ') : '';
+    const note = t => String(t).split(' — ').slice(1).join(' — ');
+    let first = (e.commentary && e.commentary[0]) ? note(e.commentary[0]) : '';
+    if (side === 'black') {
+        // commentary[0] is about White's first move, so a Black card uses the last note on one of Black's own moves
+        // (odd entries, and only where the entry names the move actually played at that point)
+        const plies = e.moves.split(/\s+/).filter(x => x && !/^\d+\./.test(x));
+        const i = (e.commentary || []).map((t, j) => j % 2 === 1 && note(t) && String(t).split(' — ')[0].trim() === plies[j] ? j : -1).filter(j => j >= 0).pop();
+        first = i === undefined ? '' : `${(i + 1) / 2}...${plies[i]}: ${note(e.commentary[i])}.`;
+    }
     return { name: e.name, eco: e.eco, summary: first || ('Starts with ' + e.moves.split(/\s+/).slice(0, 9).join(' ') + (e.moves.split(/\s+/).length > 9 ? ' ...' : '') + '.'), variations: [{ moves }] };
 }
 
@@ -4188,7 +4196,7 @@ function renderResultsDashboard(archKey, arch) {
                     </div>
                     <h3 class="text-xl font-bold gradient-text">${arch.whiteSystem.name}</h3>
                     <p class="text-slate-400 text-sm">${arch.whiteSystem.summary}</p>
-                    ${arch.whiteSystem.notableGm ? `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span onclick="openGmModal('${arch.whiteSystem.notableGm.replace(/'/g, "\\'")}')" class="text-sm gradient-text font-bold cursor-pointer hover:underline">${arch.whiteSystem.notableGm}</span></div>` : ''}
+                    ${arch.whiteSystem.notableGm ? `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span onclick="openGmModal('${arch.whiteSystem.notableGm.replace(/'/g, "\\'")}')" class="text-sm gradient-text font-bold cursor-pointer hover:underline">${arch.whiteSystem.notableGm}</span></div>` : `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span class="text-sm text-slate-500">none approved for this opening yet</span></div>`}
                 </div>
 
                 <div class="bg-slate900 border border-slate-700 rounded-xl p-6 space-y-4">
@@ -4198,7 +4206,7 @@ function renderResultsDashboard(archKey, arch) {
                     </div>
                     <h3 class="text-xl font-bold gradient-text">${arch.blackSystem.name}</h3>
                     <p class="text-slate-400 text-sm">${arch.blackSystem.summary}</p>
-                    ${arch.blackSystem.notableGm ? `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span onclick="openGmModal('${arch.blackSystem.notableGm.replace(/'/g, "\\'")}')" class="text-sm gradient-text font-bold cursor-pointer hover:underline">${arch.blackSystem.notableGm}</span></div>` : ''}
+                    ${arch.blackSystem.notableGm ? `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span onclick="openGmModal('${arch.blackSystem.notableGm.replace(/'/g, "\\'")}')" class="text-sm gradient-text font-bold cursor-pointer hover:underline">${arch.blackSystem.notableGm}</span></div>` : `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span class="text-sm text-slate-500">none approved for this opening yet</span></div>`}
                 </div>
             </div>
 
