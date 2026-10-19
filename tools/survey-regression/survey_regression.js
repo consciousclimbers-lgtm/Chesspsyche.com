@@ -101,6 +101,7 @@ async function runSurvey(browser, file, seed) {
       handSide.add(`${s.whiteSystem.eco}|white`); handSide.add(`${s.blackSystem.eco}|black`);
     }
     const approved = (eco, side) => { const p = notableGmPool(eco, side); return p ? eligibleNotableGms(p) : []; };
+    const written = typeof ECO_SUMMARIES === 'object' ? ECO_SUMMARIES : {};
     // Notes on White's moves in the vault commentary (even entries are White's moves, odd entries Black's)
     const whiteNotes = eco => ((ecoVault.find(e => e.eco === eco) || {}).commentary || []).filter((t, i) => i % 2 === 0).map(t => String(t).split(' — ').slice(1).join(' — ')).filter(Boolean);
     const card = (sys, want) => sys && {
@@ -111,6 +112,8 @@ async function runSurvey(browser, file, seed) {
       summary: sys.summary,
       gmApproved: sys.notableGm ? approved(sys.eco, want).includes(sys.notableGm) : !approved(sys.eco, want).length,
       // A Black card's summary must not be the note on one of White's moves (such as "Queen's Pawn" for 1.d4)
+      // Every generated (not hand-written) card the picker shows must use its written summary
+      summaryWritten: handSide.has(`${sys.eco}|${want}`) || (written[`${sys.eco}|${want}`] || {}).summary === sys.summary,
       summaryOk: !!sys.summary && !(want === 'black' && !handSide.has(`${sys.eco}|black`) && whiteNotes(sys.eco).includes(sys.summary))
     };
     const out = {};
@@ -125,6 +128,28 @@ async function runSurvey(browser, file, seed) {
     }
     localStorage.removeItem(PICKS_KEY); localStorage.removeItem(GM_ROTATION_KEY);
     return out;
+  });
+  // Written opening summaries: key, side, one sentence that is not vault commentary, and an https source
+  const summaries = await page.evaluate(() => {
+    const issues = [], seen = new Set();
+    const hand = new Set();
+    for (const a of Object.values(archetypes)) for (const s of Object.values(a.systems)) { hand.add(`${s.whiteSystem.eco}|white`); hand.add(`${s.blackSystem.eco}|black`); }
+    const written = typeof ECO_SUMMARIES === 'object' ? ECO_SUMMARIES : {};
+    for (const [key, e] of Object.entries(written)) {
+      const [code, side] = key.split('|'), v = ecoVault.find(x => x.eco === code);
+      if (!v) { issues.push(`${key}: not in the opening vault`); continue; }
+      if (!['white', 'black'].includes(side) || (v.side !== side && v.side !== 'either')) issues.push(`${key}: the vault opening is a ${v.side} opening`);
+      if (hand.has(key)) issues.push(`${key}: has a hand-written system, so this summary is never shown`);
+      const t = e.summary || '';
+      if (!/^[A-Z].{59,229}\.$/.test(t) || /[a-z)]\. [A-Z]/.test(t)) issues.push(`${key}: summary is not one sentence of 60 to 230 characters`);
+      if (/^Starts with/.test(t)) issues.push(`${key}: summary is the generated move list`);
+      const notes = (v.commentary || []).map(c => String(c).split(' — ').slice(1).join(' — ').toLowerCase()).filter(n => n.split(' ').length >= 4);   // longer notes; short ones are just opening names
+      if (notes.some(n => t.toLowerCase().includes(n))) issues.push(`${key}: summary repeats a move-commentary note`);
+      if (seen.has(t)) issues.push(`${key}: same summary as another opening`);
+      seen.add(t);
+      if (!/^https:\/\/[^\s]+$/.test(e.source || '')) issues.push(`${key}: no https source`);
+    }
+    return { count: Object.keys(written).length, issues };
   });
   // Notable GM pools: data checks, fair round-robin, stability on re-render and reload, women's representation
   const rotation = await page.evaluate(() => {
@@ -262,7 +287,7 @@ async function runSurvey(browser, file, seed) {
   const notableGm = {};
   for (const [cfg, runs] of Object.entries(res)) picks[cfg] = runs.map(([w, b]) => `${w ? w.eco : '-'}/${b ? b.eco : '-'}`).join(' ');
   for (const [cfg, runs] of Object.entries(res)) notableGm[cfg] = runs.map(([w, b]) => `${(w && w.gm) || '-'} / ${(b && b.gm) || '-'}`).join(' | ');
-  return { res, picks, notableGm, labs, rotation, bank, errors, blocked: [...blocked] };
+  return { res, picks, notableGm, labs, rotation, summaries, bank, errors, blocked: [...blocked] };
 }
 
 (async () => {
@@ -273,7 +298,7 @@ async function runSurvey(browser, file, seed) {
   for (let i = 0; i < repeat; i++) runs.push(await runSurvey(browser, htmlPath, SEED));
   const otherSeed = await runSurvey(browser, htmlPath, OTHER_SEED);
   await browser.close();
-  const { res, picks, bank, notableGm, labs, rotation } = runs[0];
+  const { res, picks, bank, notableGm, labs, rotation, summaries } = runs[0];
   const gmNow = { notableGm, handWritten: labs.handWritten, labsDrill: labs.drill };
   const errors = [...new Set([...runs, otherSeed].flatMap(r => r.errors))];
   const blocked = [...new Set([...runs, otherSeed].flatMap(r => r.blocked))].sort();
@@ -285,6 +310,7 @@ async function runSurvey(browser, file, seed) {
   for (const [cfg, runs] of Object.entries(res)) for (const pair of runs) for (const c of pair) {
     if (!c) continue;
     if (c.side !== c.want && c.side !== 'either') sideIssues.add(`${c.eco} shown as ${c.want}, card is ${c.side}`);
+    if (!c.summaryWritten) illegal.push(`${cfg}: ${c.eco} (${c.want}) has no written summary in ECO_SUMMARIES`);
     if (!c.summaryOk) illegal.push(`${cfg}: ${c.eco} (${c.want}) summary "${c.summary || ''}" describes White's move, not the ${c.want} card`);
     if (!c.gmApproved) illegal.push(`${cfg}: ${c.eco} (${c.want}) shows Notable GM "${c.gm || '-'}", not from its approved pool`);
     const g = new Chess();
@@ -344,6 +370,7 @@ async function runSurvey(browser, file, seed) {
     if (!handOk) fails.push(`hand-written notableGm names changed: ${labs.handWritten.filter(x => !(gmExp.handWritten || []).includes(x)).join('; ') || 'order changed'}`);
   }
   fails.push(...rotation.issues.map(i => `Notable GM pools: ${i}`));
+  fails.push(...summaries.issues.map(i => `Opening summaries: ${i}`));
   const shownGms = new Set(Object.values(res).flat().flat().filter(c => c && c.gm).map(c => c.gm));
   const names = new Set(labs.names);
   const noRecord = [...shownGms].filter(g => !names.has(g)).sort();
@@ -362,6 +389,8 @@ async function runSurvey(browser, file, seed) {
   console.log(`Question bank: ${Object.entries(bank.counts).map(([a, n]) => `${a} ${n}`).join(', ')}; 200 built survey runs checked; ${bank.issues.length} issues`);
   console.log(`Scoring: ${vecs.size} answer combinations, ${vecs.size - scoreDiffs.length} match (${Object.entries(styleCounts).map(([s, n]) => `${s} ${n}`).join(', ')})`);
   console.log(`Notable GM on cards: ${Object.keys(notableGm).length} combinations (x3 runs), ${gmMatch} match gm-baseline.json; ${shownGms.size} different GMs shown, ${noRecord.length} with no GM record (${noRecord.join(', ') || 'none'})`);
+  const unwritten = new Set(Object.values(res).flat().flat().filter(c => c && !c.summaryWritten).map(c => `${c.eco}|${c.want}`));
+  console.log(`Opening summaries: ${summaries.count} written, ${summaries.issues.length} issues; generated cards in the snapshot without a written summary: ${unwritten.size}`);
   console.log(`Hand-written Notable GM names: ${labs.handWritten.length}, ${handOk ? 'unchanged' : 'CHANGED'}`);
   console.log(`Labs GM drill: ${Object.keys(labs.drill).length} picker GMs, ${drillMatch} match gm-baseline.json (${Object.values(labs.drill).filter(m => m !== '-').length} load an opening)`);
   const rp = rotation.report, womenSet = new Set(rp.womenNames);
