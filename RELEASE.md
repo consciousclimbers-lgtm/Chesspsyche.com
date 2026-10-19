@@ -70,8 +70,14 @@ check itself is broken). Only the owner does this, and only for the revert pull 
    **Save changes**. Do not delete the ruleset: disabling keeps every rule so it can be switched back.
 3. Merge the revert pull request with **Create a merge commit**. Merge nothing else while protection is off.
 4. Straight away, set **Enforcement status** back to **Active** → **Save changes**.
-5. Confirm protection is back: the ruleset is listed as **Active**, and the Branches page shows the
-   protection shield next to `main`. Then check the Pages deployment and run the live smoke test.
+5. Confirm protection is back. Open **Protect main** again and check that:
+   - **Enforcement status** is **Active** and the target is still the default branch (`main`);
+   - **Bypass list** is still empty;
+   - **Restrict deletions**, **Block force pushes** and **Require a pull request before merging** are ticked;
+   - **Require status checks to pass** is ticked and lists **Regression tests**.
+
+   If anything is missing, restore it before doing anything else. Then check the Pages deployment and run
+   the live smoke test.
 6. Fix the broken check through a normal pull request before the next release.
 
 After a rollback, find the cause on a branch and fix it through a normal pull request; do not mix unrelated
