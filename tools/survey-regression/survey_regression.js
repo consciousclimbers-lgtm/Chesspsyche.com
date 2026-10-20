@@ -32,6 +32,14 @@
 //   9. Labs GM drill: for each GM in the Labs picker (the first 30 of grandmastersList), the moves
 //      startGmDrill(name) loads.
 //
+// Against known-card-issues.json (rules in card_checks.js):
+//  11. Every reachable card: for each style x level x normal/strong, surveys are retaken until the
+//      White and Black candidate lists are used up (not just 3 runs). Every card that can appear must
+//      come from its side, have a legal line and a Notable GM from its approved pool (or none when it
+//      has no pool), and a real summary: not empty, not the "Starts with" fallback, not a copied move
+//      comment, not a comment on the other side's move. Summary issues listed in
+//      known-card-issues.json are reported, not failed; a listed issue that no longer occurs fails.
+//
 // Determinism: the picker (ecoCandidatesFor / pickEcoCode / choosePicksForRun) has no
 // randomness; its only state is the retake history in localStorage. Math.random is used
 // elsewhere on the page (question order, answer order), so before any page script runs the
@@ -44,17 +52,25 @@
 // every other http(s) request is blocked, so the test makes no network requests.
 //
 // Usage: node survey_regression.js [path/to/index.html] [--update] [--update-gm-baseline] [--repeat N]
+//                                  [--strict-cards] [--prune-known-card-issues]
 //   --update              rewrites expected.json only (never gm-baseline.json)
 //   --update-gm-baseline  rewrites gm-baseline.json only (npm run update:gm-baseline); cannot be combined with --update
+//   --strict-cards        ignores known-card-issues.json, to show every card issue the checks catch
+//   --prune-known-card-issues  removes entries that no longer occur from known-card-issues.json;
+//                         it never adds an entry (a new issue has to be fixed or added by hand in review)
+//   --init-known-card-issues  creates known-card-issues.json from today's issues; refuses if it exists
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { chromium } = require('playwright');
 const { Chess } = require('chess.js');
+const cardChecks = require('./card_checks');
 
 const args = process.argv.slice(2);
 const update = args.includes('--update');
 const updateGm = args.includes('--update-gm-baseline');
+const strictCards = args.includes('--strict-cards');
+const pruneKnown = args.includes('--prune-known-card-issues');
 if (update && updateGm) { console.error('Use --update (expected.json) or --update-gm-baseline (gm-baseline.json), not both.'); process.exit(1); }
 const repeat = args.includes('--repeat') ? Math.max(1, parseInt(args[args.indexOf('--repeat') + 1], 10) || 1) : 3;
 const SEED = 20261019, OTHER_SEED = 7;
@@ -120,6 +136,41 @@ async function runSurvey(browser, file, seed) {
     }
     localStorage.removeItem(PICKS_KEY); localStorage.removeItem(GM_ROTATION_KEY);
     return out;
+  });
+  // Every reachable card: retake each combination until both candidate lists are used up
+  // (pickEcoCode stops on the last candidate, so two identical runs in a row mean the end)
+  const reach = await page.evaluate(() => {
+    const handSide = new Set();
+    for (const a of Object.values(archetypes)) for (const s of Object.values(a.systems)) {
+      handSide.add(`${s.whiteSystem.eco}|white`); handSide.add(`${s.blackSystem.eco}|black`);
+    }
+    const cards = {}, combos = {};
+    for (const arch of Object.keys(archetypes)) for (const lvl of Object.keys(LEVEL_BANDS)) for (const strong of [0, 4]) {
+      localStorage.removeItem(PICKS_KEY); localStorage.removeItem(GM_ROTATION_KEY); skillLevelKey = lvl; lastExtremeCount = strong;
+      let prev = '', run = 0;
+      for (run = 1; run <= 400; run++) {
+        choosePicksForRun(arch);
+        const now = `${currentPicks.whiteSystem.eco}/${currentPicks.blackSystem.eco}`;
+        for (const want of ['white', 'black']) {
+          const sys = currentPicks[want + 'System'];
+          const key = `${sys.eco}|${want}`;
+          if (cards[key]) { cards[key].firstRun = Math.min(cards[key].firstRun, run); continue; }
+          const pool = notableGmPool(sys.eco, want), approved = pool ? eligibleNotableGms(pool) : [];
+          cards[key] = {
+            eco: sys.eco, side: want, firstRun: run, firstSeen: `${arch}|${lvl}|${strong ? 'strong' : 'normal'} run ${run}`,
+            cardSide: handSide.has(key) ? want : (ecoVault.find(e => e.eco === sys.eco) || {}).side,
+            handWritten: handSide.has(key), summary: sys.summary, comments: (ecoVaultData[sys.eco] || {}).commentary || [],
+            moves: sys.variations[0].moves.map(m => m.move), gm: sys.notableGm || null,
+            gmOk: sys.notableGm ? approved.includes(sys.notableGm) : !approved.length
+          };
+        }
+        if (now === prev) break;
+        prev = now;
+      }
+      combos[`${arch}|${lvl}|${strong ? 'strong' : 'normal'}`] = run;
+    }
+    localStorage.removeItem(PICKS_KEY); localStorage.removeItem(GM_ROTATION_KEY); currentPicks = null;
+    return { cards, combos };
   });
   // Notable GM pools: data checks, fair round-robin, stability on re-render and reload, women's representation
   const rotation = await page.evaluate(() => {
@@ -257,7 +308,7 @@ async function runSurvey(browser, file, seed) {
   const notableGm = {};
   for (const [cfg, runs] of Object.entries(res)) picks[cfg] = runs.map(([w, b]) => `${w ? w.eco : '-'}/${b ? b.eco : '-'}`).join(' ');
   for (const [cfg, runs] of Object.entries(res)) notableGm[cfg] = runs.map(([w, b]) => `${(w && w.gm) || '-'} / ${(b && b.gm) || '-'}`).join(' | ');
-  return { res, picks, notableGm, labs, rotation, bank, errors, blocked: [...blocked] };
+  return { res, picks, notableGm, labs, rotation, bank, reach, errors, blocked: [...blocked] };
 }
 
 (async () => {
@@ -268,13 +319,40 @@ async function runSurvey(browser, file, seed) {
   for (let i = 0; i < repeat; i++) runs.push(await runSurvey(browser, htmlPath, SEED));
   const otherSeed = await runSurvey(browser, htmlPath, OTHER_SEED);
   await browser.close();
-  const { res, picks, bank, notableGm, labs, rotation } = runs[0];
+  const { res, picks, bank, notableGm, labs, rotation, reach } = runs[0];
   const gmNow = { notableGm, handWritten: labs.handWritten, labsDrill: labs.drill };
   const errors = [...new Set([...runs, otherSeed].flatMap(r => r.errors))];
   const blocked = [...new Set([...runs, otherSeed].flatMap(r => r.blocked))].sort();
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res) && same(r.labs, labs) && same(r.rotation, rotation));
-  const seedOk = same(otherSeed.picks, picks) && same(otherSeed.notableGm, notableGm) && same(otherSeed.labs, labs) && same(otherSeed.rotation, rotation);
+  const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res) && same(r.labs, labs) && same(r.rotation, rotation) && same(r.reach, reach));
+  const seedOk = same(otherSeed.picks, picks) && same(otherSeed.notableGm, notableGm) && same(otherSeed.labs, labs) && same(otherSeed.rotation, rotation) && same(otherSeed.reach, reach);
+
+  // Every reachable card (check 11)
+  const reachCards = Object.values(reach.cards);
+  const reachFails = [], cardFound = {};
+  for (const c of reachCards) {
+    const key = `${c.eco}|${c.side}`;
+    if (c.cardSide !== c.side && c.cardSide !== 'either') reachFails.push(`card ${key} (${c.firstSeen}) is a ${c.cardSide} card`);
+    if (!c.gmOk) reachFails.push(`card ${key} (${c.firstSeen}) shows Notable GM "${c.gm || '-'}", not from its approved pool`);
+    const g = new Chess();
+    for (const san of c.moves) if (!g.move(san)) { reachFails.push(`card ${key} (${c.firstSeen}) illegal at ${san}`); break; }
+    const issues = cardChecks.summaryIssues(c);
+    if (issues.length) cardFound[key] = issues;
+  }
+  const cardCmp = cardChecks.compareKnown(cardFound, { strict: strictCards, checkedAll: true, types: cardChecks.SUMMARY_TYPES });
+  if (args.includes('--init-known-card-issues')) {
+    // One-off: creates the list from today's issues; refuses to overwrite it (use the prune option)
+    if (fs.existsSync(cardChecks.KNOWN_PATH)) { console.error(`${cardChecks.KNOWN_PATH} exists; it is only created once. Use --prune-known-card-issues.`); process.exit(1); }
+    cardChecks.writeKnown(cardFound);
+    console.log(`Created ${path.relative(process.cwd(), cardChecks.KNOWN_PATH)} with ${Object.keys(cardFound).length} cards.`);
+    return;
+  }
+  if (pruneKnown) {
+    if (strictCards) { console.error('--prune-known-card-issues cannot be combined with --strict-cards.'); process.exit(1); }
+    const removed = cardChecks.pruneKnown(cardFound, cardChecks.SUMMARY_TYPES);
+    console.log(`Removed ${removed} summary entries that no longer occur from ${path.relative(process.cwd(), cardChecks.KNOWN_PATH)}; nothing was added. (Notable GM line entries are pruned by clickthrough.js --prune-known-card-issues.)`);
+    return;
+  }
 
   const sideIssues = new Set(), illegal = [];
   for (const [cfg, runs] of Object.entries(res)) for (const pair of runs) for (const c of pair) {
@@ -338,6 +416,7 @@ async function runSurvey(browser, file, seed) {
     if (!handOk) fails.push(`hand-written notableGm names changed: ${labs.handWritten.filter(x => !(gmExp.handWritten || []).includes(x)).join('; ') || 'order changed'}`);
   }
   fails.push(...rotation.issues.map(i => `Notable GM pools: ${i}`));
+  fails.push(...reachFails, ...cardCmp.fails);
   const shownGms = new Set(Object.values(res).flat().flat().filter(c => c && c.gm).map(c => c.gm));
   const names = new Set(labs.names);
   const noRecord = [...shownGms].filter(g => !names.has(g)).sort();
@@ -364,6 +443,12 @@ async function runSurvey(browser, file, seed) {
   console.log(`  women: ${rp.womenEntries} of ${rp.entries} pool entries (${Math.round(100 * rp.womenEntries / rp.entries)}%), ${rp.womenInPools} of ${rp.women} female GM records in a pool; ${shownList.filter(g => womenSet.has(g)).length} of ${shownList.length} Notable GMs shown in the snapshot are women (reported, not a quota)`);
   console.log(`  pools with no women: ${rp.noWomen.join(', ') || 'none'}; most pools: ${rp.mostPools.join(', ')}`);
   for (const w of rotation.warnings) console.log(`  warning: ${w}`);
+  const bySide = s => reachCards.filter(c => c.side === s);
+  const early = reachCards.filter(c => c.firstRun <= 5);
+  const runsTaken = Object.values(reach.combos);
+  console.log(`Every reachable card: ${Object.keys(reach.combos).length} combinations retaken until their lists end (${Math.min(...runsTaken)}-${Math.max(...runsTaken)} surveys); ${bySide('white').length} White and ${bySide('black').length} Black cards (${early.length} reachable within 5 surveys); ${reachFails.length} side/legality/Notable GM issues`);
+  console.log(`  summaries: ${cardChecks.countLine(cardFound)}; ${Object.keys(cardFound).filter(k => reach.cards[k].firstRun <= 5).length} of the cards are reachable within 5 surveys`);
+  console.log(`  known-card-issues.json: ${strictCards ? 'ignored (--strict-cards)' : `${cardCmp.listed.length} findings listed, ${cardCmp.fails.length} not listed or stale`}`);
   console.log(`Page and console errors: ${errors.length}`);
   if (fails.length) {
     console.log(`\nFAIL (${fails.length})`);
