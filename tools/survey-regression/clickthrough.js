@@ -158,8 +158,9 @@ async function openPage(browser, label) {
     try { resp = await page.goto(target, { timeout: 60000 }); } catch (e) { problem = e.message.split('\n')[0]; }
     if (!problem && resp && resp.status() >= 500) problem = `HTTP ${resp.status()}`;
     if (!problem) break;
-    diag.retries.push(`${label}: page load attempt ${attempt} failed: ${problem}`);
-    if (attempt < 3 && url) await page.waitForTimeout(10000 * attempt);
+    diag.retries.push(`${label}: page load attempt ${attempt} failed: ${problem}${errors.length ? ` (${errors.join('; ')})` : ''}`);
+    // Errors of an attempt that is retried are kept in the retry line only, so a retry that works passes
+    if (attempt < 3 && url) { errors.length = 0; await page.waitForTimeout(10000 * attempt); }
   }
   if (problem) throw new Error(`${target} did not load (${problem})`);
   if (url && resp && resp.status() >= 400) throw new Error(`${target} answered HTTP ${resp.status()}`);
@@ -383,11 +384,22 @@ async function runEditor(browser) {
   if (info.erased) fails.push(`erasing d4 left ${info.erased}`);
   // (editing a piece clears the castling rights in the FEN, so compare the piece placement only)
   if ((await page.evaluate(() => labsEditorBuildFen())).split(' ')[0] !== info.startFen.split(' ')[0]) fails.push('position not back to the start after erasing');
-  // Play mode: an illegal move (e2-e5) must be refused, then 1.e4, then the evaluation bar must update
+  // Play mode: an illegal move (e2-e5) must be refused, leaving the whole position and the side to move
+  // unchanged (FEN and on-screen pieces); then 1.e4, then the evaluation bar must update
   await page.click('#labs-editor-mode-btn');
-  await page.click('#labs-editor-board [data-square="e2"]'); await page.click('#labs-editor-board [data-square="e5"]');
-  info.illegal = await page.evaluate(() => ({ e2: labsEditorPieces.e2 || null, e5: labsEditorPieces.e5 || null, status: document.getElementById('labs-editor-status').textContent.trim() }));
-  if (info.illegal.e2 !== 'P' || info.illegal.e5) fails.push(`illegal move e2-e5 was not refused: ${JSON.stringify(info.illegal)}`);
+  const editorState = () => page.evaluate(() => ({ fen: labsEditorBuildFen(), squares: [...document.querySelectorAll('#labs-editor-board [data-square]')].map(e => e.dataset.square + ':' + e.innerHTML.length).join(','), status: document.getElementById('labs-editor-status').textContent.trim(), playMode: labsEditorPlayMode }));
+  const beforeIllegal = await editorState();
+  await page.click('#labs-editor-board [data-square="e2"]');
+  info.selected = (await editorState()).status;
+  await page.click('#labs-editor-board [data-square="e5"]');
+  const afterIllegal = await editorState();
+  info.illegal = { e5: await page.evaluate(() => labsEditorPieces.e5 || null), status: afterIllegal.status, fenUnchanged: afterIllegal.fen === beforeIllegal.fen };
+  if (!beforeIllegal.playMode) fails.push('play mode did not turn on, so the illegal move was not attempted');
+  if (info.selected !== 'Selected e2. Choose a destination square.') fails.push(`clicking e2 in play mode did not select it ("${info.selected}"), so the illegal move was not attempted`);
+  if (afterIllegal.fen !== beforeIllegal.fen) fails.push(`illegal move e2-e5 changed the position: ${beforeIllegal.fen} -> ${afterIllegal.fen}`);
+  if (afterIllegal.squares !== beforeIllegal.squares) fails.push('illegal move e2-e5 changed the pieces shown on the board');
+  if (info.illegal.e5) fails.push(`illegal move e2-e5 put ${info.illegal.e5} on e5`);
+  if (!/illegal/i.test(afterIllegal.status)) fails.push(`no illegal-move message after e2-e5 ("${afterIllegal.status}")`);
   await page.click('#labs-editor-board [data-square="e4"]');
   info.afterMove = await page.evaluate(() => ({ e2: labsEditorPieces.e2 || null, e4: labsEditorPieces.e4 || null }));
   if (info.afterMove.e4 !== 'P' || info.afterMove.e2) fails.push(`1.e4 not played: ${JSON.stringify(info.afterMove)}`);
@@ -480,7 +492,7 @@ function writeReport(status, checks, extra) {
   checks.push({ name: 'labs-editor', status: efails.length ? 'FAIL' : 'PASS', fails: efails });
   const ei = editor.info, ev = x => x ? `${x.score}, ${x.depth} (${x.bar})` : 'not reached';
   console.log(`\nLabs board editor -> ${efails.length ? 'FAIL' : 'PASS'}`);
-  console.log(`  place N on d4: ${ei.placed}; erase: ${ei.erased || 'empty'}; illegal e2-e5: ${ei.illegal ? (ei.illegal.e5 ? 'played' : `refused ("${ei.illegal.status}")`) : 'not reached'}; 1.e4 played: e4=${ei.afterMove && ei.afterMove.e4}`);
+  console.log(`  place N on d4: ${ei.placed}; erase: ${ei.erased || 'empty'}; illegal e2-e5: ${ei.illegal ? `${ei.illegal.fenUnchanged && !ei.illegal.e5 ? 'refused, position unchanged' : 'NOT refused'} ("${ei.illegal.status}")` : 'not reached'}; 1.e4 played: e4=${ei.afterMove && ei.afterMove.e4}`);
   console.log(`  eval bar: ${ev(ei.evalStart)} -> ${ev(ei.evalAfter)}`);
   for (const f of efails) console.log('  - ' + f);
   const nfails = [...nav.fails, ...nav.errors];

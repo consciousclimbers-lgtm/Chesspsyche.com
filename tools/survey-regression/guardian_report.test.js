@@ -4,6 +4,7 @@ const assert = require('assert');
 const { build } = require('./guardian_report');
 
 const rep = (browser, viewport, status, checks) => ({ tool: 'clickthrough.js', browser, viewport, status, checks });
+const live = (r, sha) => ({ ...r, live: true, expectSha256: sha });
 const pass = (b, v) => rep(b, v, 'PASS', [{ name: 'white-B12', status: 'PASS', fails: [] }]);
 const expect = ['chromium-desktop', 'firefox-desktop'];
 const cases = [
@@ -15,6 +16,10 @@ const cases = [
   ['site serves another commit', { reports: [pass('chromium', 'desktop'), pass('firefox', 'desktop')], deployment: 'mismatch' }, 'FAIL'],
   ['site unreachable', { reports: [], deployment: 'unreachable' }, 'FAIL'],
   ['newer commit on main', { reports: [], deployment: 'superseded' }, 'NOT TESTED'],
+  ['deployment check did not finish', { reports: [pass('chromium', 'desktop'), pass('firefox', 'desktop')], deployment: 'skipped' }, 'NOT TESTED'],
+  ['live reports match the expected sha256', { reports: [live(pass('chromium', 'desktop'), 'abc'), live(pass('firefox', 'desktop'), 'abc')], deployment: 'match', sha256: 'abc' }, 'PASS'],
+  ['a report tested another index.html', { reports: [live(pass('chromium', 'desktop'), 'abc'), live(pass('firefox', 'desktop'), 'old')], deployment: 'match', sha256: 'abc' }, 'NOT TESTED'],
+  ['a report did not test the live site', { reports: [live(pass('chromium', 'desktop'), 'abc'), pass('firefox', 'desktop')], deployment: 'match', sha256: 'abc' }, 'NOT TESTED'],
 ];
 let failed = 0;
 for (const [name, input, want] of cases) {

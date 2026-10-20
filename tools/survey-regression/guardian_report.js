@@ -7,10 +7,12 @@
 //   NOT TESTED  the browser could not be started, its job did not run, or it left no report.
 // The overall verdict is PASS only when the deployment check found the expected commit live AND every
 // expected browser/viewport is PASS. Anything else exits 1, so the run never reads as a success.
+// With --sha256, a report counts only if it tested the live site with that exact index.html sha256
+// (clickthrough.js --url --expect-sha256); any other report is NOT TESTED.
 //
 // Usage: node guardian_report.js --reports DIR --expect chromium-desktop,firefox-desktop,...
 //          --deployment match|mismatch|superseded|unreachable|skipped [--deployment-note TEXT]
-//          [--commit SHA] [--site URL]
+//          [--commit SHA] [--sha256 HASH] [--site URL]
 const fs = require('fs');
 const path = require('path');
 
@@ -30,11 +32,12 @@ function readReports(dir) {
   return out;
 }
 
-function build({ reports, expect, deployment, note, commit, site }) {
+function build({ reports, expect, deployment, note, commit, site, sha256 }) {
   const rows = expect.map(key => {
     const [browser, viewport] = key.split('-');
     const r = reports.find(x => x.browser === browser && x.viewport === viewport);
     if (!r) return { browser, viewport, status: 'NOT TESTED', detail: deployment === 'match' ? 'no report: the job did not run or stopped before writing one' : 'not run: the deployment check did not pass' };
+    if (sha256 && (r.live !== true || r.expectSha256 !== sha256)) return { browser, viewport, status: 'NOT TESTED', detail: `report did not check the live site against index.html sha256 ${sha256.slice(0, 12)}` };
     if (r.status === 'NOT_TESTED') return { browser, viewport, status: 'NOT TESTED', detail: r.reason || 'browser could not be started' };
     const failed = (r.checks || []).filter(c => c.status !== 'PASS');
     // A report that claims PASS must contain checks that all passed; anything else is not a pass
@@ -69,7 +72,7 @@ if (require.main === module) {
   const opt = n => args.includes(n) ? args[args.indexOf(n) + 1] : null;
   const expect = (opt('--expect') || '').split(',').filter(Boolean);
   if (!expect.length || !opt('--deployment')) { console.error('Usage: see the top of guardian_report.js'); process.exit(2); }
-  const out = build({ reports: readReports(opt('--reports') || 'reports'), expect, deployment: opt('--deployment'), note: opt('--deployment-note'), commit: opt('--commit'), site: opt('--site') });
+  const out = build({ reports: readReports(opt('--reports') || 'reports'), expect, deployment: opt('--deployment'), note: opt('--deployment-note'), commit: opt('--commit'), site: opt('--site'), sha256: opt('--sha256') });
   console.log(out.markdown);
   process.exit(out.verdict === 'PASS' ? 0 : 1);
 }

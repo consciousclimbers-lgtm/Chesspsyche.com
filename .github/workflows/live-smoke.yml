@@ -211,9 +211,10 @@ jobs:
           DEPLOY_STATUS: ${{ needs.deployment.outputs.status || 'skipped' }}
           DEPLOY_NOTE: ${{ needs.deployment.outputs.note || 'the deployment check did not finish' }}
           COMMIT: ${{ needs.deployment.outputs.commit }}
+          WANT_SHA256: ${{ needs.deployment.outputs.sha256 }}
         run: |
           node guardian_report.js --reports reports --expect "$EXPECTED_RUNS" --deployment "$DEPLOY_STATUS" \
-            --deployment-note "$DEPLOY_NOTE" --commit "$COMMIT" --site "$SITE_URL" | tee guardian-report.md
+            --deployment-note "$DEPLOY_NOTE" --commit "$COMMIT" --sha256 "$WANT_SHA256" --site "$SITE_URL" | tee guardian-report.md
           code=${PIPESTATUS[0]}
           cat guardian-report.md >> "$GITHUB_STEP_SUMMARY"
           exit $code
