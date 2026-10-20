@@ -4188,7 +4188,7 @@ function renderResultsDashboard(archKey, arch) {
                     </div>
                     <h3 class="text-xl font-bold gradient-text">${arch.whiteSystem.name}</h3>
                     <p class="text-slate-400 text-sm">${arch.whiteSystem.summary}</p>
-                    ${arch.whiteSystem.notableGm ? `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span onclick="openGmModal('${arch.whiteSystem.notableGm.replace(/'/g, "\\'")}')" class="text-sm gradient-text font-bold cursor-pointer hover:underline">${arch.whiteSystem.notableGm}</span></div>` : ''}
+                    ${arch.whiteSystem.notableGm ? `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span onclick="openGmModal('${arch.whiteSystem.notableGm.replace(/'/g, "\\'")}')" class="text-sm gradient-text font-bold cursor-pointer hover:underline">${arch.whiteSystem.notableGm}</span></div>` : `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span class="text-sm text-slate-500">None approved for this opening yet.</span></div>`}
                 </div>
 
                 <div class="bg-slate900 border border-slate-700 rounded-xl p-6 space-y-4">
@@ -4198,7 +4198,7 @@ function renderResultsDashboard(archKey, arch) {
                     </div>
                     <h3 class="text-xl font-bold gradient-text">${arch.blackSystem.name}</h3>
                     <p class="text-slate-400 text-sm">${arch.blackSystem.summary}</p>
-                    ${arch.blackSystem.notableGm ? `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span onclick="openGmModal('${arch.blackSystem.notableGm.replace(/'/g, "\\'")}')" class="text-sm gradient-text font-bold cursor-pointer hover:underline">${arch.blackSystem.notableGm}</span></div>` : ''}
+                    ${arch.blackSystem.notableGm ? `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span onclick="openGmModal('${arch.blackSystem.notableGm.replace(/'/g, "\\'")}')" class="text-sm gradient-text font-bold cursor-pointer hover:underline">${arch.blackSystem.notableGm}</span></div>` : `<div class="flex items-center gap-2 pt-1"><span class="text-sm text-slate-400 font-semibold">Notable GM: </span><span class="text-sm text-slate-500">None approved for this opening yet.</span></div>`}
                 </div>
             </div>
 
