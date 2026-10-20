@@ -37,6 +37,10 @@ on:
       - .github/workflows/live-smoke.yml
       - tools/survey-regression/clickthrough.js
       - tools/survey-regression/guardian_report.js
+      - tools/survey-regression/card_checks.js
+      - tools/survey-regression/known-card-issues.json
+      - tools/survey-regression/package.json
+      - tools/survey-regression/package-lock.json
 
 permissions:
   contents: read

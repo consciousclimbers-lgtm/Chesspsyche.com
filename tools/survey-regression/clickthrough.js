@@ -89,6 +89,7 @@ const diag = { failedRequests: [], httpErrors: [], blockedWrites: [], allowedRea
 // Third-party services that read with POST and store nothing for the site; allowed and listed. The Google
 // Maps embed on the Clubs tab asks for viewport information this way (seen in WebKit at phone size).
 const READ_ONLY_POSTS = [/^https:\/\/maps\.googleapis\.com\/\$rpc\/google\.internal\.maps\.mapsjs\.v1\.MapsJsInternalService\/GetViewportInfo$/];
+const checks = []; // the report's checks, also written if the run stops with an error
 let current = null; // page of the check that is running, for a screenshot if it stops with an error
 
 // strong = 4 or more of the 5 answers are the strongest or mildest choice (lastExtremeCount >= 4)
@@ -476,7 +477,6 @@ function writeReport(status, checks, extra) {
   let failed = 0;
   console.log(url ? `URL: ${url} (live: only GET/HEAD/OPTIONS requests allowed, all console errors count)` : `File: ${htmlPath} (offline)`);
   console.log(`Browser: ${browserName} ${browserVersion}, ${viewportName} viewport ${JSON.stringify(VIEWPORTS[viewportName].viewport)}${expectSha ? `; expected index.html sha256 ${expectSha.slice(0, 12)}` : ''}`);
-  const checks = [];
   for (const r of results) {
     const fails = [...r.fails, ...r.errors];
     failed += fails.length;
@@ -507,6 +507,13 @@ function writeReport(status, checks, extra) {
   failed += stale.length;
   checks.push({ name: 'known-card-issues', status: stale.length ? 'FAIL' : 'PASS', fails: stale });
   for (const f of stale) console.log('  - ' + f);
+  // Live site: any blocked write fails, including one in a page load that was retried (whose errors are
+  // otherwise kept in the retry line only)
+  if (url) {
+    failed += diag.blockedWrites.length;
+    checks.push({ name: 'read-only-guard', status: diag.blockedWrites.length ? 'FAIL' : 'PASS', fails: diag.blockedWrites.map(w => `blocked write request: ${w}`) });
+    console.log(`\nRead-only guard -> ${diag.blockedWrites.length ? 'FAIL' : 'PASS'}`);
+  }
   // Diagnostics: shown for every run, they only fail a check through the errors they cause
   for (const [key, title] of [['retries', 'Page load retries'], ['blockedWrites', 'Blocked write requests'], ['allowedReadPosts', 'Allowed read-only POSTs (Google Maps)'], ['failedRequests', 'Failed requests'], ['httpErrors', 'HTTP errors']]) {
     const lines = diag[key];
@@ -518,4 +525,9 @@ function writeReport(status, checks, extra) {
   writeReport(failed ? 'FAIL' : 'PASS', checks, { browserVersion });
   console.log(failed ? `\nFAIL (${failed})` : '\nPASS');
   process.exit(failed ? 1 : 0);
-})().catch(e => { console.error(e); process.exit(1); });
+})().catch(e => {
+  // The run itself stopped: write a FAIL report so the verdict says why rather than "no report"
+  console.error(e);
+  try { writeReport('FAIL', [...checks, { name: 'run', status: 'FAIL', fails: [`the click-through stopped with an error: ${e.message.split('\n')[0]}`] }]); } catch (_) {}
+  process.exit(1);
+});
