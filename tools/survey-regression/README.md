@@ -50,7 +50,7 @@ If an owner-approved change is meant to alter picks, scoring or protected code, 
 
 ## Results-page click-through
 
-`npm run clickthrough` (`clickthrough.js`) is a separate browser test of the results page. It takes the survey by clicking, the way a visitor does, for nine cases: a White B12 pick, a Black B40 pick, a White D85 pick (with B82 on the Black card), a White D00 pick, a White E06 (Catalan) pick that is taken twice, and the cards reported in issue #24: Black A40, Black D07 (2nd survey), Black A86 (5th survey) and the White D35 control (2nd survey). For each it checks:
+`npm run clickthrough` (`clickthrough.js`) is a separate browser test of the results page. It takes the survey by clicking, the way a visitor does, for ten cases: a White B12 pick, a Black B40 pick, a White D85 pick (with B82 on the Black card), a White D00 pick, a White E06 (Catalan) pick that is taken twice, and the cards reported in issue #24: Black B82 (the same survey as White D85, played as Black), Black A40, Black D07 (2nd survey), Black A86 (5th survey) and the White D35 control (2nd survey). For each it checks:
 - both cards show the expected opening, each from its own side;
 - the board puts the chosen side at the bottom;
 - stepping through the demo moves the pieces as the line says, square by square, until the counter reaches the last move;
@@ -58,7 +58,7 @@ If an owner-approved change is meant to alter picks, scoring or protected code, 
 - switching to another tab and back keeps the same Notable GM;
 - for the Catalan case, taking the survey again shows the next GM in the Catalan pool;
 - each card's summary, as rendered, passes the card summary rules below;
-- each card's Notable GM is one of the approved GMs for that exact ECO code and side (none when it has no pool), and the "Notable GM:" line is on the card exactly when there is a GM.
+- each card's Notable GM is one of the approved GMs for that exact ECO code and side (none when it has no pool), and both cards always show the "Notable GM:" line: "Notable GM: <name>", or "Notable GM: None approved for this opening yet." when the card has no approved GM (owner decision, 2026-10-20). A card with no GM and without that line is a `no-gm-heading` issue (see below).
 
 A case for a later survey starts from **saved state** instead of clicking through the earlier surveys: `preload` holds the saved picks (`chesspsyche_opening_picks_v1`) and Notable GM rotation (`chesspsyche_notable_gm_rotation_v1`) that the earlier surveys leave. Before using it, the test replays those earlier surveys in the page and fails if they would save anything different, so a fixture cannot drift from real behaviour. A86 is the 5th survey of `aggressiveVanguard` / no experience / normal answers (the 5th or 6th for other levels), which is why the 3-survey baseline never showed it.
 
@@ -71,12 +71,18 @@ It also opens the Labs board editor, places and erases a piece, plays 1.e4 and c
 `card_checks.js` holds the rules both tests use. A card's summary must not be:
 - `empty`;
 - `fallback`: the generic "Starts with <moves>" text `ecoToSystem` uses when it has nothing better;
-- `move-comment`: copied from a move comment in `ecoVaultData` (the text after " — "), such as "English" or "Queen's Pawn";
+- `move-comment`: a move comment from `ecoVaultData` (the text after " — "), such as "English" or "Queen's Pawn". Reformatting does not hide it: case, punctuation and a leading move label such as "2...Nc6:" are ignored, and a summary made of move comments plus fewer than 4 other words also counts;
 - `wrong-side`: a Black card summarised by the comment on a White move (or the other way round).
 
-Today 457 reachable cards break these rules, almost all because only the 36 hand-written systems have real summaries. They are listed, one card per line, in `known-card-issues.json` (keyed `ECO|side`), so the checks can run in CI now. The list is **temporary and can only shrink**:
+`clickthrough.js` also checks, on the rendered cards of its cases:
+- `no-gm-heading`: a card with no approved Notable GM that does not show "Notable GM: None approved for this opening yet."
+
+Today **457 unique cards** (`ECO|side`: 176 White, 281 Black) break the summary rules, with **463 issue findings** between them: fallback 436, move-comment 21, wrong-side 6. The six extra findings are the six Black cards that are both `move-comment` and `wrong-side` (A11, A15, A16, A40, A41, B01). Almost all of them are cards without a hand-written system. In addition, 8 cards in the click-through cases are `no-gm-heading` (D85, D00, A10 and D03 White; B82, A16, A40 and D07 Black), because today's page hides the line when there is no GM. Both tests print cards and findings separately.
+
+All of these are listed, one card per line, in `known-card-issues.json` (keyed `ECO|side`, each with its issue types), so the checks can run in CI now. The list is **temporary and can only shrink**:
 - an issue that is not listed fails;
-- a listed issue that no longer occurs also fails, until its entry is removed with `npm run prune:known-card-issues` (which only removes, never adds);
+- a listed issue that no longer occurs also fails, until its entry is removed with `npm run prune:known-card-issues` (which only removes, never adds; summary entries are checked by `npm test` over every reachable card, Notable GM line entries by the click-through over its cases);
+- on a pull request, CI runs `check_known_shrink.js` against the base branch: it fails if the list has any card and issue type that the base branch's list does not have (so a new defect cannot be listed in the same PR that introduces it, and one issue type cannot be swapped for another). When the base branch has no list yet, it is only accepted with `index.html` identical to the base branch, so `npm test` proves the list matches the base site. Run it locally with `npm run check:known-shrink`;
 - each kind of entry says how it will be removed (the `removal` notes in the file): by the sourced family-and-side summary data planned in issue #24.
 
 `npm run test:strict-cards` and `npm run clickthrough:strict-cards` ignore the list and show every issue the checks catch. The list was created once with `--init-known-card-issues`, which refuses to run again. Never add entries to get a test to pass without the owner's approval.

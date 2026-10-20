@@ -12,7 +12,9 @@
 //     copied move comment, not a comment on the other side's move); issues listed in
 //     known-card-issues.json are reported, not failed (--strict-cards ignores that list);
 //   - each card's Notable GM comes from the approved pool for that exact ECO code and side (none when it
-//     has no pool), and the "Notable GM:" line is on the card exactly when there is a GM.
+//     has no pool); both cards always show the "Notable GM:" line, which reads "Notable GM: <name>" or,
+//     with no approved GM, "Notable GM: None approved for this opening yet." (owner decision 2026-10-20).
+//     A card without that line is a no-gm-heading issue (card_checks.js); listed ones are reported.
 // A case with "preload" starts from the saved picks and Notable GM rotation that earlier surveys leave in
 // localStorage, so a later survey (such as the 5th) is tested without clicking through the earlier ones.
 // The test first checks that the fixture is exactly what those earlier surveys save (preload.after).
@@ -29,7 +31,8 @@
 // every console error counts. A fresh browser context (empty localStorage) is used for every case, so
 // each case gets the first pick for its combination.
 //
-// Usage: node clickthrough.js [path/to/index.html] [--shots DIR] [--strict-cards]
+// Usage: node clickthrough.js [path/to/index.html] [--shots DIR] [--strict-cards] [--prune-known-card-issues]
+//   --prune-known-card-issues  removes no-gm-heading entries that no longer occur from known-card-issues.json
 //        node clickthrough.js --url https://www.chesspsyche.com/ [--shots DIR]
 const fs = require('fs');
 const path = require('path');
@@ -39,6 +42,7 @@ const cardChecks = require('./card_checks');
 
 const args = process.argv.slice(2);
 const strictCards = args.includes('--strict-cards');
+const pruneKnown = args.includes('--prune-known-card-issues');
 const shots = args.includes('--shots') ? path.resolve(args[args.indexOf('--shots') + 1]) : null;
 const url = args.includes('--url') ? args[args.indexOf('--url') + 1] : null;
 const positional = args.filter((a, i) => !a.startsWith('--') && !['--shots', '--url'].includes(args[i - 1]));
@@ -49,7 +53,7 @@ const chessLocal = require.resolve('chess.js');
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 
 // strong = 4 or more of the 5 answers are the strongest or mildest choice (lastExtremeCount >= 4)
-// gm: the Notable GM each card shows on a first survey (null = no Notable GM line): the starting GM of
+// gm: the Notable GM each card shows on a first survey (null = none approved): the starting GM of
 // the opening's approved pool. retake: the picks and Notable GMs after taking the same survey again,
 // where the pool's next GM must appear.
 const CASES = [
@@ -59,7 +63,8 @@ const CASES = [
   { name: 'white-D00', style: 'patientGrinder', level: 'none', strong: false, side: 'white', white: 'D00', black: 'C42', gm: { white: null, black: 'Yu Yangyi' } },
   { name: 'white-E06', style: 'flexibleChameleon', level: 'advanced', strong: true, side: 'white', white: 'E06', black: 'A16', gm: { white: 'Ding Liren', black: null },
     retake: { white: 'E07', black: 'D71', gm: { white: 'Aleksandra Goryachkina', black: null } } },
-  // Reported cards (issue #24). The white-D85 case above covers the B82 Black card.
+  // Reported cards (issue #24). black-B82 takes the same survey as white-D85, choosing Black on the board.
+  { name: 'black-B82', style: 'patientGrinder', level: 'advanced', strong: true, side: 'black', white: 'D85', black: 'B82', gm: { white: null, black: null } },
   { name: 'black-A40', style: 'strategicArchitect', level: 'none', strong: false, side: 'black', white: 'D06', black: 'A40', gm: { white: 'Levon Aronian', black: null } },
   { name: 'black-D07', style: 'strategicArchitect', level: 'none', strong: false, side: 'black', white: 'A10', black: 'D07', gm: { white: null, black: null },
     preload: { after: 1, picks: { 'strategicArchitect|white': 'D06', 'strategicArchitect|black': 'A40' }, rotation: { "Queen's Gambit / QGD Exchange|white": 1 } } },
@@ -201,7 +206,7 @@ async function runCase(browser, c) {
     return {
       eco: sys.eco, side, summary: (h.nextElementSibling && h.nextElementSibling.tagName === 'P') ? h.nextElementSibling.textContent.trim() : '',
       comments: (ecoVaultData[sys.eco] || {}).commentary || [],
-      gmLine: [...h.parentElement.querySelectorAll('span')].some(s => s.textContent.trim().startsWith('Notable GM')),
+      gmLine: (([...h.parentElement.querySelectorAll('span')].find(s => s.textContent.trim().startsWith('Notable GM')) || {}).parentElement || {}).textContent || '',
       pool: pool ? pool.key : null, approved: pool ? eligibleNotableGms(pool) : []
     };
   }));
@@ -209,12 +214,14 @@ async function runCase(browser, c) {
   info.text = [];
   for (const [i, t] of texts.entries()) {
     const gm = gmShown[i];
-    const issues = cardChecks.summaryIssues(t);
+    const line = t.gmLine.replace(/\s+/g, ' ').trim();
+    const issues = [...cardChecks.summaryIssues(t), ...cardChecks.gmHeadingIssues({ gm, line })];
     if (issues.length) found[`${t.eco}|${t.side}`] = issues;
-    info.text.push(`${t.side} ${t.eco}: "${t.summary}"${issues.length ? ` [${issues.join(', ')}]` : ''}; GM pool ${t.pool || 'none'}`);
+    info.text.push(`${t.side} ${t.eco}: "${t.summary}"${issues.length ? ` [${issues.join(', ')}]` : ''}; GM pool ${t.pool || 'none'}; line "${line}"`);
     if (gm ? !t.approved.includes(gm) : t.approved.length) fails.push(`${t.side} ${t.eco} Notable GM "${gm}" is not from the approved pool (${t.pool || 'none'}: ${t.approved.join(', ') || 'no GMs'})`);
-    if (t.gmLine !== !!gm) fails.push(`${t.side} ${t.eco} card ${t.gmLine ? 'shows' : 'has no'} a "Notable GM:" line, but its GM is ${gm || 'none'}`);
+    if (gm && line !== `Notable GM: ${gm}`) fails.push(`${t.side} ${t.eco} card's Notable GM line reads "${line}", expected "Notable GM: ${gm}"`);
   }
+  info.found = found;
   const cmp = cardChecks.compareKnown(found, { strict: strictCards });
   fails.push(...cmp.fails);
   info.knownText = cmp.listed;
@@ -334,6 +341,16 @@ async function runNav(browser) {
   const editor = await runEditor(browser);
   const nav = await runNav(browser);
   await browser.close();
+  // Notable GM line issues are only found here, so their listed entries are checked for staleness here
+  const allFound = {};
+  for (const r of results) for (const [k, codes] of Object.entries(r.info.found || {})) allFound[k] = [...new Set([...(allFound[k] || []), ...codes])];
+  if (pruneKnown) {
+    if (strictCards) { console.error('--prune-known-card-issues cannot be combined with --strict-cards.'); process.exit(1); }
+    const removed = cardChecks.pruneKnown(allFound, cardChecks.HEADING_TYPES);
+    console.log(`Removed ${removed} Notable GM line entries that no longer occur from known-card-issues.json; nothing was added.`);
+    process.exit(0);
+  }
+  const stale = strictCards ? [] : cardChecks.compareKnown(allFound, { checkedAll: true, types: cardChecks.HEADING_TYPES }).fails.filter(f => f.includes('no longer occurs'));
 
   let failed = 0;
   console.log(url ? `URL: ${url} (live: nothing blocked, all console errors count)` : `File: ${htmlPath} (offline)`);
@@ -359,6 +376,9 @@ async function runNav(browser) {
   console.log(`\nNavigation -> ${nfails.length ? 'FAIL' : 'PASS'}`);
   console.log('  ' + nav.steps.join('\n  '));
   for (const f of nfails) console.log('  - ' + f);
+  console.log(`\nCards in these cases: ${cardChecks.countLine(allFound)}`);
+  failed += stale.length;
+  for (const f of stale) console.log('  - ' + f);
   console.log(failed ? `\nFAIL (${failed})` : '\nPASS');
   process.exit(failed ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -339,7 +339,7 @@ async function runSurvey(browser, file, seed) {
     const issues = cardChecks.summaryIssues(c);
     if (issues.length) cardFound[key] = issues;
   }
-  const cardCmp = cardChecks.compareKnown(cardFound, { strict: strictCards, checkedAll: true });
+  const cardCmp = cardChecks.compareKnown(cardFound, { strict: strictCards, checkedAll: true, types: cardChecks.SUMMARY_TYPES });
   if (args.includes('--init-known-card-issues')) {
     // One-off: creates the list from today's issues; refuses to overwrite it (use the prune option)
     if (fs.existsSync(cardChecks.KNOWN_PATH)) { console.error(`${cardChecks.KNOWN_PATH} exists; it is only created once. Use --prune-known-card-issues.`); process.exit(1); }
@@ -349,15 +349,8 @@ async function runSurvey(browser, file, seed) {
   }
   if (pruneKnown) {
     if (strictCards) { console.error('--prune-known-card-issues cannot be combined with --strict-cards.'); process.exit(1); }
-    const issues = cardChecks.loadKnown();
-    let removed = 0;
-    for (const [key, codes] of Object.entries(issues)) {
-      const keep = codes.filter(code => (cardFound[key] || []).includes(code));
-      removed += codes.length - keep.length;
-      if (keep.length) issues[key] = keep; else delete issues[key];
-    }
-    cardChecks.writeKnown(issues);
-    console.log(`Removed ${removed} entries that no longer occur from ${path.relative(process.cwd(), cardChecks.KNOWN_PATH)}; nothing was added.`);
+    const removed = cardChecks.pruneKnown(cardFound, cardChecks.SUMMARY_TYPES);
+    console.log(`Removed ${removed} summary entries that no longer occur from ${path.relative(process.cwd(), cardChecks.KNOWN_PATH)}; nothing was added. (Notable GM line entries are pruned by clickthrough.js --prune-known-card-issues.)`);
     return;
   }
 
@@ -452,11 +445,10 @@ async function runSurvey(browser, file, seed) {
   for (const w of rotation.warnings) console.log(`  warning: ${w}`);
   const bySide = s => reachCards.filter(c => c.side === s);
   const early = reachCards.filter(c => c.firstRun <= 5);
-  const codeCount = {};
-  for (const codes of Object.values(cardFound)) for (const code of codes) codeCount[code] = (codeCount[code] || 0) + 1;
   const runsTaken = Object.values(reach.combos);
   console.log(`Every reachable card: ${Object.keys(reach.combos).length} combinations retaken until their lists end (${Math.min(...runsTaken)}-${Math.max(...runsTaken)} surveys); ${bySide('white').length} White and ${bySide('black').length} Black cards (${early.length} reachable within 5 surveys); ${reachFails.length} side/legality/Notable GM issues`);
-  console.log(`  summaries: ${Object.keys(cardFound).length} cards with issues (${Object.entries(codeCount).map(([k, n]) => `${k} ${n}`).join(', ') || 'none'}), ${Object.keys(cardFound).filter(k => reach.cards[k].firstRun <= 5).length} of them within 5 surveys; ${strictCards ? 'known-card-issues.json ignored (--strict-cards)' : `${cardCmp.listed.length} listed in known-card-issues.json, ${cardCmp.fails.length} not listed or stale`}`);
+  console.log(`  summaries: ${cardChecks.countLine(cardFound)}; ${Object.keys(cardFound).filter(k => reach.cards[k].firstRun <= 5).length} of the cards are reachable within 5 surveys`);
+  console.log(`  known-card-issues.json: ${strictCards ? 'ignored (--strict-cards)' : `${cardCmp.listed.length} findings listed, ${cardCmp.fails.length} not listed or stale`}`);
   console.log(`Page and console errors: ${errors.length}`);
   if (fails.length) {
     console.log(`\nFAIL (${fails.length})`);
