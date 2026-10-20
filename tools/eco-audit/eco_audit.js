@@ -15,6 +15,8 @@ const opt = name => (args.includes(name) ? args[args.indexOf(name) + 1] : null);
 const htmlPath = args.find((a, i) => !a.startsWith('--') && !['--json', '--markdown'].includes(args[i - 1])) || path.join(__dirname, '../../index.html');
 const refDir = path.join(__dirname, 'ref');
 const die = msg => { console.log(`AUDIT NOT RUN: ${msg}`); process.exit(2); };
+// Malformed site data (for example a vault entry without moves) also means the audit did not run
+process.on('uncaughtException', e => die(`unexpected error (${e.message})`));
 
 // ---- Reference: pinned files, checked by sha256 before use ----
 let source;
@@ -143,15 +145,18 @@ for (const [eco, d] of Object.entries(vault.value)) {
   else if (!r.reachedAt) {
     if (prefixOfRef(sans, eco)) add('vault', eco, 'reaches its code', 'warn', `correct moves, but stops after ${sans.length} plies, before the position the reference gives ${eco}`, { line });
     else add('vault', eco, 'reaches its code', 'error', `follows a different line; ends in ${endsIn(r)}`, { line });
-  } else if (r.reachedAt > 10) add('vault', eco, 'card demo reaches its code', 'info', `a generated survey card plays the first 10 plies; ${eco} is reached at ply ${r.reachedAt}`, { line });
+  } else {
+    if (!r.last.some(c => c.eco === eco)) add('vault', eco, 'ends in its code', 'warn', `passes through ${eco} at ply ${r.reachedAt}, then continues; ends in ${endsIn(r)}`, { line });
+    if (r.reachedAt > 10) add('vault', eco, 'card demo reaches its code', 'info', `a generated survey card plays the first 10 plies; ${eco} is reached at ply ${r.reachedAt}`, { line });
+  }
   if (nm.verdict === 'differs' || nm.verdict === 'partial') add('vault', eco, nm.verdict === 'differs' ? 'name' : 'name (partly matches)', nm.verdict === 'differs' ? 'warn' : 'info', `"${name}" vs reference ${refList(nm)}`, { line });
   if (nm.verdict === 'no reference name') add('vault', eco, 'name', 'info', `the reference has no entry for ${eco}`, { line });
   if (heur && declared !== 'either' && declared !== heur) add('vault', eco, 'side (heuristic)', 'info', `ECO_SIDE says ${declared}; the reference's defining move is ${heur}'s`, { line });
   if ((d.commentary || []).length !== sans.length) add('vault', eco, 'commentary count', 'info', `${(d.commentary || []).length} comments for ${sans.length} plies`, { line });
-  (movesSeen[sans.join(' ')] ||= []).push(eco);
+  (movesSeen[sans.join(' ')] ||= []).push({ eco, line });
   vaultRows.push({ eco, line, name, moves: d.moves, plies: sans.length, side: declared, reaches: r.reachedAt ? `ply ${r.reachedAt}` : 'no', refNames: nm.refs.slice(0, 3) });
 }
-for (const [mv, codes] of Object.entries(movesSeen)) if (codes.length > 1) for (const eco of codes) add('vault', eco, 'duplicate line', 'warn', `same moves as ${codes.filter(c => c !== eco).join(', ')}: ${mv}`);
+for (const [mv, seen] of Object.entries(movesSeen)) if (seen.length > 1) for (const { eco, line } of seen) add('vault', eco, 'duplicate line', 'warn', `same moves as ${seen.filter(x => x.eco !== eco).map(x => x.eco).join(', ')}: ${mv}`, { line });
 for (const eco of Object.keys(side.value)) if (!(eco in vault.value)) add('vault', eco, 'orphan ECO_SIDE entry', 'info', 'ECO_SIDE has this code but ecoVaultData does not');
 for (const eco of Object.keys(names.value)) if (!(eco in vault.value)) add('vault', eco, 'orphan name', 'info', 'ecoNamesMap has this code but ecoVaultData does not');
 
@@ -172,6 +177,8 @@ for (const [arch, a] of Object.entries(archetypes.value)) {
       if (r.error) add('slot', sys.eco, 'legal moves', 'error', `${where}: ${r.error}`, { line });
       for (const m of r.mismatch) add('slot', sys.eco, 'from/to squares', 'error', `${where}: ${m}`, { line });
       if (!r.error && !r.reachedAt) add('slot', sys.eco, 'reaches its code', 'error', `${where}: ends in ${endsIn(r)}`, { line });
+      if (!r.error && r.reachedAt && !r.last.some(c => c.eco === sys.eco)) add('slot', sys.eco, 'ends in its code', 'warn', `${where}: passes through ${sys.eco} at ply ${r.reachedAt}, then continues; ends in ${endsIn(r)}`, { line });
+      if (!r.error && r.reachedAt > 10) add('slot', sys.eco, 'results demo reaches its code', 'info', `${where}: the results-board demo plays the first 10 plies; ${sys.eco} is reached at ply ${r.reachedAt}`, { line });
       const declared = side.value[sys.eco];
       if (declared && declared !== 'either' && declared !== slotSide) add('slot', sys.eco, 'side', 'warn', `${where} is a ${slotSide} card, but ECO_SIDE[${sys.eco}] = ${declared}, so the ECO list and Arena say "You play as ${declared}"`, { line });
       const nm = nameCheck(sys.name, sys.eco);
