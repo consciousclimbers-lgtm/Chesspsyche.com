@@ -84,8 +84,8 @@ const chessLocal = require.resolve('chess.js');
 // differently, but also start with "Failed to load resource")
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 const isBlockedLoad = t => browserName === 'chromium' ? t === BLOCKED_LOAD : t.startsWith('Failed to load resource');
-// The browser's console line for any resource that did not load; on a retried attempt it is replaced by the
-// response that caused it (see openPage), since the line alone does not say whether the cause was transient
+// The browser's console line for any resource that did not load. On a retried attempt it is dropped: the
+// line alone does not say whether the cause was transient, and an HTTP 4xx fails through the response itself
 const isLoadFailure = e => e.startsWith('console error: Failed to load resource');
 // Diagnostics for the whole run, each line prefixed with the check it came from
 const diag = { failedRequests: [], httpErrors: [], blockedWrites: [], allowedReadPosts: [], retries: [] };
@@ -154,10 +154,11 @@ async function openPage(browser, label) {
   page.on('pageerror', e => errors.push(`page error: ${e.message}`));
   page.on('console', m => { if (m.type() === 'error' && (url || !isBlockedLoad(m.text()))) errors.push(`console error: ${m.text()}`); });
   page.on('requestfailed', r => { if (!aborted.has(r.url())) diag.failedRequests.push(`${label}: ${r.method()} ${r.url()} (${(r.failure() || {}).errorText || 'failed'})`); });
-  const attempt4xx = []; // HTTP 4xx responses of the current page-load attempt (a missing asset is not transient)
   page.on('response', r => {
     if (r.status() >= 400) diag.httpErrors.push(`${label}: HTTP ${r.status()} ${r.url()}`);
-    if (r.status() < 500 && r.status() >= 400) attempt4xx.push(`HTTP ${r.status()} ${r.url()} (a missing or refused resource)`);
+    // Live site: any HTTP 4xx (a missing or refused resource) fails the check, on every page load, whether or
+    // not the browser logs a console error for it
+    if (url && r.status() >= 400 && r.status() < 500) errors.push(`HTTP ${r.status()} ${r.url()} (a missing or refused resource)`);
   });
   if (!url) await page.route('**/chess.js/0.10.3/chess.min.js', r => r.fulfill({ path: chessLocal, contentType: 'application/javascript' }));
   // The live site is retried twice (10 s, then 20 s later) when it does not load, answers with a server
@@ -169,7 +170,7 @@ async function openPage(browser, label) {
   let resp = null, problem = null;
   const carried = [];
   for (let attempt = 1; attempt <= (url ? 3 : 1); attempt++) {
-    problem = null; attempt4xx.length = 0;
+    problem = null;
     try { resp = await page.goto(target, { timeout: 60000 }); } catch (e) { problem = e.message.split('\n')[0]; }
     if (!problem && resp && resp.status() >= 500) problem = `HTTP ${resp.status()}`;
     if (!problem && url && resp && resp.status() >= 400) throw new Error(`${target} answered HTTP ${resp.status()}`);
@@ -183,8 +184,8 @@ async function openPage(browser, label) {
     if (!problem) break;
     diag.retries.push(`${label}: page load attempt ${attempt} failed: ${problem}${errors.length ? ` (${errors.join('; ')})` : ''}`);
     if (attempt < 3 && url) {
-      carried.push(...[...errors.filter(e => !isLoadFailure(e)), ...attempt4xx].map(e => `page load attempt ${attempt} (retried): ${e}`));
-      errors.length = 0; attempt4xx.length = 0; await page.waitForTimeout(10000 * attempt);
+      carried.push(...errors.filter(e => !isLoadFailure(e)).map(e => `page load attempt ${attempt} (retried): ${e}`));
+      errors.length = 0; await page.waitForTimeout(10000 * attempt);
     }
   }
   errors.unshift(...carried);
