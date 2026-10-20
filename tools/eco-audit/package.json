@@ -1,10 +1,9 @@
 {
   "name": "chesspsyche-eco-audit",
   "private": true,
-  "description": "Read-only audit of ECO codes, names, sides and move lines in index.html",
+  "description": "Report-only audit of ECO codes, names, sides and move lines in index.html against a pinned lichess-org/chess-openings copy",
   "scripts": {
-    "fetch-ref": "mkdir -p ref && for x in a b c d e; do curl -sSfo ref/$x.tsv https://raw.githubusercontent.com/lichess-org/chess-openings/master/$x.tsv; done",
-    "audit": "node eco_audit.js ../../index.html ref"
+    "audit": "node eco_audit.js ../../index.html --json eco-audit.json --markdown eco-audit.md"
   },
   "dependencies": {
     "chess.js": "1.0.0"

@@ -1,0 +1,58 @@
+# Report-only ECO audit: compares the site's opening data with a pinned lichess-org/chess-openings copy.
+# It never fails on findings and is not a required check; the report is in the job summary and the artifact.
+# The job is red only if the audit could not run (for example, a reference file changed).
+name: ECO audit (report only)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eco-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eco-audit:
+    name: ECO audit (report only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tools/eco-audit
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/eco-audit/package-lock.json
+
+      - name: Install audit dependencies
+        run: npm ci
+
+      - name: Audit ECO data against the pinned reference
+        run: npm run audit 2>&1 | tee eco-audit.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f eco-audit.md ]; then cat eco-audit.md >> "$GITHUB_STEP_SUMMARY"; else { echo '## ECO audit did not run'; echo '```'; cat eco-audit.txt 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - name: Upload the full report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eco-audit
+          path: |
+            tools/eco-audit/eco-audit.txt
+            tools/eco-audit/eco-audit.json
+            tools/eco-audit/eco-audit.md
+          if-no-files-found: ignore
