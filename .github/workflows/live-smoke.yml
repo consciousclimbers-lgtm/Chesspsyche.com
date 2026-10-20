@@ -41,7 +41,9 @@ on:
 permissions:
   contents: read
 
-# One live run at a time against the production site; a newer run waits instead of overlapping
+# One live run at a time for deployments, daily and manual runs (a newer run waits; if a third arrives, the
+# waiting one is cancelled and the newest, which tests the head of main, runs). Pull-request runs have their
+# own group, so they can run at the same time as a production run; both only read the site.
 concurrency:
   group: live-guardian-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
   cancel-in-progress: false
@@ -88,17 +90,21 @@ jobs:
           want=$(git show "$commit:index.html" | sha256sum | cut -d' ' -f1)
           echo "sha256=$want" >> "$GITHUB_OUTPUT"
           echo "Expected commit ${commit:0:12}, index.html sha256 ${want:0:12}"
-          reached=0
+          reached=0; got=unreachable; i=0
           # Pages can take a few minutes to serve a new deployment; the query string avoids cached copies.
-          # curl retries brief network failures itself; 40 attempts 15 s apart allow 10 minutes in total.
-          for i in $(seq 1 40); do
-            if body=$(curl -fsSL --retry 3 --retry-all-errors --retry-delay 5 --max-time 60 "${SITE_URL}?guardian=${GITHUB_RUN_ID}-$i" | sha256sum); then
+          # curl retries brief network failures itself (at most about 70 s per attempt); attempts 15 s apart
+          # stop after 10 minutes, well inside the job's 15-minute limit, so the result is always written.
+          deadline=$((SECONDS + 600))
+          while [ $SECONDS -lt $deadline ]; do
+            i=$((i + 1))
+            if body=$(curl -fsSL --retry 2 --retry-all-errors --retry-delay 3 --max-time 20 "${SITE_URL}?guardian=${GITHUB_RUN_ID}-$i" | sha256sum); then
               reached=1; got=$(echo "$body" | cut -d' ' -f1)
             else
               got=unreachable
             fi
             if [ "$got" = "$want" ]; then
-              headers=$(curl -fsSI --max-time 30 "${SITE_URL}?guardian=${GITHUB_RUN_ID}-h" | tr -d '\r' | grep -iE '^(last-modified|etag|age|x-cache):' | paste -sd ';' -)
+              # Cache headers are diagnostics only; failing to read them does not change the result
+              headers=$(curl -fsSI --max-time 20 "${SITE_URL}?guardian=${GITHUB_RUN_ID}-h" | tr -d '\r' | grep -iE '^(last-modified|etag|age|x-cache):' | paste -sd ';' -) || headers=
               note="site serves commit ${commit:0:12} (index.html sha256 ${want:0:12}); ${headers:-no cache headers}"
               echo "status=match" >> "$GITHUB_OUTPUT"; echo "note=$note" >> "$GITHUB_OUTPUT"
               echo "$note"; exit 0
@@ -106,7 +112,7 @@ jobs:
             echo "Attempt $i: the site serves ${got:0:12}, waiting for ${want:0:12}"; sleep 15
           done
           if [ "$reached" = 0 ]; then
-            note="the site could not be reached in 10 minutes"; echo "status=unreachable" >> "$GITHUB_OUTPUT"
+            note="the site gave no successful response in 10 minutes ($i attempts)"; echo "status=unreachable" >> "$GITHUB_OUTPUT"
           else
             note="after 10 minutes the site still serves ${got:0:12}, not commit ${commit:0:12} (${want:0:12})"; echo "status=mismatch" >> "$GITHUB_OUTPUT"
           fi
@@ -198,7 +204,9 @@ jobs:
         with:
           node-version: 22
 
+      # No artifacts when the browser jobs did not run; the verdict then reports them NOT TESTED
       - uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           pattern: guardian-*
           path: tools/survey-regression/reports

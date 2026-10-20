@@ -45,6 +45,12 @@ function build({ reports, expect, deployment, note, commit, site, sha256 }) {
     if (r.status === 'PASS') return { browser, viewport, status: 'NOT TESTED', detail: 'report has no checks' };
     return { browser, viewport, status: 'FAIL', detail: failed.map(c => `${c.name}: ${(c.fails || [])[0] || 'failed'}${(c.fails || []).length > 1 ? ` (+${c.fails.length - 1} more)` : ''}`).join('; ') || 'failed' };
   });
+  // A report for a browser/viewport that is not in the expected list (a matrix entry added without updating
+  // the list) is never ignored: it is shown, and it fails the verdict
+  for (const r of reports) {
+    if (expect.includes(`${r.browser}-${r.viewport}`)) continue;
+    rows.push({ browser: r.browser, viewport: r.viewport, status: 'FAIL', detail: 'report for a browser/viewport missing from the expected list (EXPECTED_RUNS)' });
+  }
   const deployOk = deployment === 'match';
   const verdict = !deployOk ? (deployment === 'mismatch' || deployment === 'unreachable' ? 'FAIL' : 'NOT TESTED')
     : rows.some(r => r.status === 'FAIL') ? 'FAIL' : rows.some(r => r.status === 'NOT TESTED') ? 'NOT TESTED' : 'PASS';

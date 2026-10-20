@@ -87,5 +87,8 @@ check itself is broken). Only the owner does this, and only for the revert pull 
    the live smoke test.
 6. Fix the broken check through a normal pull request before the next release.
 
+After a rollback to a commit from before the Live Guardian existed, the Guardian's browser jobs use that
+commit's older test tools and report NOT TESTED; run the manual check above instead.
+
 After a rollback, find the cause on a branch and fix it through a normal pull request; do not mix unrelated
 fixes into the rollback.

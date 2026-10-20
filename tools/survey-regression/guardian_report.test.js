@@ -16,6 +16,7 @@ const cases = [
   ['site serves another commit', { reports: [pass('chromium', 'desktop'), pass('firefox', 'desktop')], deployment: 'mismatch' }, 'FAIL'],
   ['site unreachable', { reports: [], deployment: 'unreachable' }, 'FAIL'],
   ['newer commit on main', { reports: [], deployment: 'superseded' }, 'NOT TESTED'],
+  ['a report not in the expected list', { reports: [pass('chromium', 'desktop'), pass('firefox', 'desktop'), pass('firefox', 'mobile')], deployment: 'match' }, 'FAIL'],
   ['deployment check did not finish', { reports: [pass('chromium', 'desktop'), pass('firefox', 'desktop')], deployment: 'skipped' }, 'NOT TESTED'],
   ['live reports match the expected sha256', { reports: [live(pass('chromium', 'desktop'), 'abc'), live(pass('firefox', 'desktop'), 'abc')], deployment: 'match', sha256: 'abc' }, 'PASS'],
   ['a report tested another index.html', { reports: [live(pass('chromium', 'desktop'), 'abc'), live(pass('firefox', 'desktop'), 'old')], deployment: 'match', sha256: 'abc' }, 'NOT TESTED'],

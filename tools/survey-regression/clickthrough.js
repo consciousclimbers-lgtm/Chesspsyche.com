@@ -130,7 +130,8 @@ async function takeSurvey(page, label, vec) {
 const gmLineTexts = page => page.locator('#results-container span[onclick^="openGmModal"]').allTextContents().then(t => t.map(x => x.trim()));
 
 async function openPage(browser, label) {
-  const context = await browser.newContext(VIEWPORTS[viewportName]);
+  // Live site: service workers are blocked, so every request goes through the read-only guard below
+  const context = await browser.newContext({ ...VIEWPORTS[viewportName], ...(url ? { serviceWorkers: 'block' } : {}) });
   const errors = [], aborted = new Set();
   if (!url) await context.route(/^https?:\/\//, r => { aborted.add(r.request().url()); return r.abort(); });
   // Live site: read-only, so only reading requests go out
@@ -151,26 +152,27 @@ async function openPage(browser, label) {
   page.on('requestfailed', r => { if (!aborted.has(r.url())) diag.failedRequests.push(`${label}: ${r.method()} ${r.url()} (${(r.failure() || {}).errorText || 'failed'})`); });
   page.on('response', r => { if (r.status() >= 400) diag.httpErrors.push(`${label}: HTTP ${r.status()} ${r.url()}`); });
   if (!url) await page.route('**/chess.js/0.10.3/chess.min.js', r => r.fulfill({ path: chessLocal, contentType: 'application/javascript' }));
-  // The live site is retried twice (10 s, then 20 s later) when it does not load or answers with a server error
+  // The live site is retried twice (10 s, then 20 s later) when it does not load, answers with a server
+  // error, or its scripts (chess.js from cdnjs) do not load within 30 s
   let resp = null, problem = null;
   for (let attempt = 1; attempt <= (url ? 3 : 1); attempt++) {
     problem = null;
     try { resp = await page.goto(target, { timeout: 60000 }); } catch (e) { problem = e.message.split('\n')[0]; }
     if (!problem && resp && resp.status() >= 500) problem = `HTTP ${resp.status()}`;
+    if (!problem && url && resp && resp.status() >= 400) throw new Error(`${target} answered HTTP ${resp.status()}`);
+    // The page under test must be the expected commit's index.html, on every load (not retried: a FAIL)
+    if (!problem && url && expectSha) {
+      const got = crypto.createHash('sha256').update(await resp.body()).digest('hex');
+      if (got !== expectSha) throw new Error(`the site served an index.html with sha256 ${got.slice(0, 12)}, expected ${expectSha.slice(0, 12)} (not the expected commit)`);
+    }
+    if (!problem && !await page.waitForFunction(() => typeof window.Chess === 'function' && typeof archetypes === 'object', null, { timeout: 30000 }).then(() => true, () => false))
+      problem = 'chess.js and the page scripts did not load within 30 s';
     if (!problem) break;
     diag.retries.push(`${label}: page load attempt ${attempt} failed: ${problem}${errors.length ? ` (${errors.join('; ')})` : ''}`);
     // Errors of an attempt that is retried are kept in the retry line only, so a retry that works passes
     if (attempt < 3 && url) { errors.length = 0; await page.waitForTimeout(10000 * attempt); }
   }
-  if (problem) throw new Error(`${target} did not load (${problem})`);
-  if (url && resp && resp.status() >= 400) throw new Error(`${target} answered HTTP ${resp.status()}`);
-  // The page under test must be the expected commit's index.html, on every load
-  if (url && expectSha) {
-    const got = crypto.createHash('sha256').update(await resp.body()).digest('hex');
-    if (got !== expectSha) throw new Error(`the site served an index.html with sha256 ${got.slice(0, 12)}, expected ${expectSha.slice(0, 12)} (not the expected commit)`);
-  }
-  const ready = await page.waitForFunction(() => typeof window.Chess === 'function' && typeof archetypes === 'object', null, { timeout: 30000 }).then(() => true, () => false);
-  if (!ready) throw new Error(`${target} did not load chess.js and the page scripts within 30 s. Errors: ${errors.join('; ') || 'none'}`);
+  if (problem) throw new Error(`${target} did not load (${problem}). Errors: ${errors.join('; ') || 'none'}`);
   return { context, page, errors };
 }
 
@@ -387,7 +389,7 @@ async function runEditor(browser) {
   // Play mode: an illegal move (e2-e5) must be refused, leaving the whole position and the side to move
   // unchanged (FEN and on-screen pieces); then 1.e4, then the evaluation bar must update
   await page.click('#labs-editor-mode-btn');
-  const editorState = () => page.evaluate(() => ({ fen: labsEditorBuildFen(), squares: [...document.querySelectorAll('#labs-editor-board [data-square]')].map(e => e.dataset.square + ':' + e.innerHTML.length).join(','), status: document.getElementById('labs-editor-status').textContent.trim(), playMode: labsEditorPlayMode }));
+  const editorState = () => page.evaluate(() => ({ fen: labsEditorBuildFen(), squares: [...document.querySelectorAll('#labs-editor-board [data-square]')].map(e => e.dataset.square + ':' + e.innerHTML).join(','), status: document.getElementById('labs-editor-status').textContent.trim(), playMode: labsEditorPlayMode }));
   const beforeIllegal = await editorState();
   await page.click('#labs-editor-board [data-square="e2"]');
   info.selected = (await editorState()).status;
