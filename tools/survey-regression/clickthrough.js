@@ -32,7 +32,8 @@
 // every console error counts. A fresh browser context (empty localStorage) is used for every case, so
 // each case gets the first pick for its combination.
 // With --url the test is read-only: any request other than GET, HEAD or OPTIONS is blocked and fails the
-// check it happens in (the site sends none today), and a page that does not load is retried twice.
+// check it happens in (the site sends none; the only exception, listed in READ_ONLY_POSTS, is the Google
+// Maps embed reading viewport information), and a page that does not load is retried twice.
 //
 // Diagnostics: failed requests and HTTP errors are listed for every run. With --shots, a check that fails
 // also saves a full-page screenshot (<check>-FAILED.png), and with --trace a Playwright trace
@@ -84,7 +85,10 @@ const chessLocal = require.resolve('chess.js');
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 const isBlockedLoad = t => browserName === 'chromium' ? t === BLOCKED_LOAD : t.startsWith('Failed to load resource');
 // Diagnostics for the whole run, each line prefixed with the check it came from
-const diag = { failedRequests: [], httpErrors: [], blockedWrites: [], retries: [] };
+const diag = { failedRequests: [], httpErrors: [], blockedWrites: [], allowedReadPosts: [], retries: [] };
+// Third-party services that read with POST and store nothing for the site; allowed and listed. The Google
+// Maps embed on the Clubs tab asks for viewport information this way (seen in WebKit at phone size).
+const READ_ONLY_POSTS = [/^https:\/\/maps\.googleapis\.com\/\$rpc\/google\.internal\.maps\.mapsjs\.v1\.MapsJsInternalService\/GetViewportInfo$/];
 let current = null; // page of the check that is running, for a screenshot if it stops with an error
 
 // strong = 4 or more of the 5 answers are the strongest or mildest choice (lastExtremeCount >= 4)
@@ -133,6 +137,7 @@ async function openPage(browser, label) {
   else await context.route('**/*', r => {
     const req = r.request();
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method())) return r.continue();
+    if (READ_ONLY_POSTS.some(re => re.test(req.url()))) { diag.allowedReadPosts.push(`${label}: ${req.method()} ${req.url()}`); return r.continue(); }
     aborted.add(req.url());
     diag.blockedWrites.push(`${label}: ${req.method()} ${req.url()}`);
     errors.push(`blocked a ${req.method()} request to ${req.url()} (the live test is read-only)`);
@@ -489,7 +494,7 @@ function writeReport(status, checks, extra) {
   checks.push({ name: 'known-card-issues', status: stale.length ? 'FAIL' : 'PASS', fails: stale });
   for (const f of stale) console.log('  - ' + f);
   // Diagnostics: shown for every run, they only fail a check through the errors they cause
-  for (const [key, title] of [['retries', 'Page load retries'], ['blockedWrites', 'Blocked write requests'], ['failedRequests', 'Failed requests'], ['httpErrors', 'HTTP errors']]) {
+  for (const [key, title] of [['retries', 'Page load retries'], ['blockedWrites', 'Blocked write requests'], ['allowedReadPosts', 'Allowed read-only POSTs (Google Maps)'], ['failedRequests', 'Failed requests'], ['httpErrors', 'HTTP errors']]) {
     const lines = diag[key];
     if (!lines.length) { console.log(`${title}: none`); continue; }
     console.log(`${title}: ${lines.length}`);
