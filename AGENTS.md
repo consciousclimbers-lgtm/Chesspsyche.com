@@ -19,7 +19,9 @@ Release, smoke-test and rollback steps are in [`RELEASE.md`](RELEASE.md).
 - `tools/survey-regression/`: the automated tests (see its README).
 - `.github/workflows/regression.yml`: runs the tests on every pull request to `main` (check name
   **Regression tests**).
-- `.github/workflows/live-smoke.yml`: runs the browser test against the live site after each deployment.
+- `.github/workflows/live-smoke.yml`: the **Live Guardian** (live smoke test): after each deployment and daily, checks
+  that the site serves the expected commit, then runs the browser test against it in Chromium, Firefox and
+  WebKit, desktop and phone size. Read-only; reports PASS, FAIL or NOT TESTED.
 - `.github/pull_request_template.md`: the required PR description.
 
 Because everything is in one file, two changes to `index.html` at the same time will conflict. Keep one

@@ -1,17 +1,31 @@
-# Live smoke test: runs the browser click-through against the deployed site, with nothing blocked.
-# Runs after every GitHub Pages deployment, on demand (Actions tab -> Live smoke test -> Run workflow),
-# and on pull requests that change this file. It only reads the public website; it changes nothing.
-# It first waits until the site serves the same index.html as the commit being tested, so it never
-# passes by testing an older, cached copy of the page.
-name: Live smoke test
+# Live Guardian (formerly "Live smoke test"): tests the published website, www.chesspsyche.com.
+# Runs after every GitHub Pages deployment, once a day, on demand (Actions tab -> Live Guardian -> Run
+# workflow), and on pull requests that change this file or the test tools it runs.
+#
+# It is read-only. It reads the public website and changes nothing: no source edits, no merges, no
+# deployments, no issues or comments (permissions: contents: read). The browser test only lets GET, HEAD and
+# OPTIONS requests through; the survey runs in a fresh browser with empty storage and sends nothing anywhere.
+#
+# 1. Deployment check: works out the expected commit (the deployed commit after a deployment, otherwise the
+#    head of main) and waits until the site serves exactly that commit's index.html (sha256). If main has a
+#    newer commit than the one deployed, this run is NOT TESTED: the newer deployment gets its own run.
+# 2. Browser checks: the click-through (survey, scoring, cards, White/Black, Notable GM, navigation, demo
+#    board, board editor, legal moves, evaluation bar) in Chromium, Firefox and WebKit, desktop and phone
+#    sizes. Every page load must serve the expected index.html again. A browser that cannot be installed or
+#    started is NOT TESTED, never PASS.
+# 3. Report: one verdict, PASS only if the deployment check passed and every browser/viewport ran and passed.
+#    Screenshots, traces of failed checks, logs and the JSON reports are attached to the run.
+name: Live Guardian
 
 on:
   # GitHub's built-in Pages workflow. It is listed as "pages build and deployment" in the Actions tab
   # and as pages-build-deployment in its path; both names are given, an unmatched name is ignored.
-  # workflow_run triggers are read from the default branch only, so this one takes effect once merged.
+  # workflow_run and schedule triggers are read from the default branch only, so they take effect once merged.
   workflow_run:
     workflows: [pages build and deployment, pages-build-deployment]
     types: [completed]
+  schedule:
+    - cron: '23 7 * * *'   # daily, 07:23 UTC
   workflow_dispatch:
     inputs:
       url:
@@ -19,25 +33,106 @@ on:
         default: https://www.chesspsyche.com/
   pull_request:
     branches: [main]
-    paths: [.github/workflows/live-smoke.yml]
+    paths:
+      - .github/workflows/live-smoke.yml
+      - tools/survey-regression/clickthrough.js
+      - tools/survey-regression/guardian_report.js
 
 permissions:
   contents: read
 
+# One live run at a time against the production site; a newer run waits instead of overlapping
+concurrency:
+  group: live-guardian-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+  cancel-in-progress: false
+
+env:
+  SITE_URL: ${{ github.event.inputs.url || 'https://www.chesspsyche.com/' }}
+  # Every browser/viewport the verdict expects; keep in step with the matrix below
+  EXPECTED_RUNS: chromium-desktop,chromium-mobile,firefox-desktop,webkit-desktop,webkit-mobile
+
 jobs:
-  live-smoke:
-    name: Live smoke test
+  deployment:
+    name: Deployment check
     # After a deployment, only when the deployment succeeded
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      status: ${{ steps.check.outputs.status }}
+      commit: ${{ steps.check.outputs.commit }}
+      sha256: ${{ steps.check.outputs.sha256 }}
+      note: ${{ steps.check.outputs.note }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Wait until the site serves the expected commit's index.html
+        id: check
+        shell: bash
+        env:
+          DEPLOYED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -u
+          main_head=$(git ls-remote origin refs/heads/main | cut -f1)
+          # After a deployment the expected commit is the deployed one; otherwise the head of main
+          commit=${DEPLOYED_SHA:-$main_head}
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          if [ -n "$DEPLOYED_SHA" ] && [ "$DEPLOYED_SHA" != "$main_head" ]; then
+            note="deployed ${DEPLOYED_SHA:0:12} but main is now ${main_head:0:12}; the run for the newer deployment tests it"
+            echo "status=superseded" >> "$GITHUB_OUTPUT"; echo "note=$note" >> "$GITHUB_OUTPUT"
+            echo "::notice title=NOT TESTED::$note"; exit 0
+          fi
+          git fetch --no-tags --depth=1 origin "$commit"
+          want=$(git show "$commit:index.html" | sha256sum | cut -d' ' -f1)
+          echo "sha256=$want" >> "$GITHUB_OUTPUT"
+          echo "Expected commit ${commit:0:12}, index.html sha256 ${want:0:12}"
+          reached=0
+          # Pages can take a few minutes to serve a new deployment; the query string avoids cached copies.
+          # curl retries brief network failures itself; 40 attempts 15 s apart allow 10 minutes in total.
+          for i in $(seq 1 40); do
+            if body=$(curl -fsSL --retry 3 --retry-all-errors --retry-delay 5 --max-time 60 "${SITE_URL}?guardian=${GITHUB_RUN_ID}-$i" | sha256sum); then
+              reached=1; got=$(echo "$body" | cut -d' ' -f1)
+            else
+              got=unreachable
+            fi
+            if [ "$got" = "$want" ]; then
+              headers=$(curl -fsSI --max-time 30 "${SITE_URL}?guardian=${GITHUB_RUN_ID}-h" | tr -d '\r' | grep -iE '^(last-modified|etag|age|x-cache):' | paste -sd ';' -)
+              note="site serves commit ${commit:0:12} (index.html sha256 ${want:0:12}); ${headers:-no cache headers}"
+              echo "status=match" >> "$GITHUB_OUTPUT"; echo "note=$note" >> "$GITHUB_OUTPUT"
+              echo "$note"; exit 0
+            fi
+            echo "Attempt $i: the site serves ${got:0:12}, waiting for ${want:0:12}"; sleep 15
+          done
+          if [ "$reached" = 0 ]; then
+            note="the site could not be reached in 10 minutes"; echo "status=unreachable" >> "$GITHUB_OUTPUT"
+          else
+            note="after 10 minutes the site still serves ${got:0:12}, not commit ${commit:0:12} (${want:0:12})"; echo "status=mismatch" >> "$GITHUB_OUTPUT"
+          fi
+          echo "note=$note" >> "$GITHUB_OUTPUT"
+          echo "::error title=FAIL::$note"; exit 1
+
+  browsers:
+    name: Live ${{ matrix.browser }} ${{ matrix.viewport }}
+    needs: deployment
+    if: needs.deployment.outputs.status == 'match'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { browser: chromium, viewport: desktop }
+          - { browser: chromium, viewport: mobile }
+          - { browser: firefox, viewport: desktop }
+          - { browser: webkit, viewport: desktop }
+          - { browser: webkit, viewport: mobile }
     defaults:
       run:
         working-directory: tools/survey-regression
-    env:
-      SITE_URL: ${{ github.event.inputs.url || 'https://www.chesspsyche.com/' }}
     steps:
-      # After a deployment, test the commit that was deployed
+      # The test tools of the commit being tested (after a deployment, the deployed commit)
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
@@ -50,37 +145,82 @@ jobs:
 
       - run: npm ci
 
-      - run: npx playwright install --with-deps chromium
-
-      # Pages can take a few minutes to serve a new deployment; the query string avoids cached copies
-      - name: Wait until the site serves this commit's index.html
-        run: |
-          want=$(sha256sum ../../index.html | cut -d' ' -f1)
-          for i in $(seq 1 40); do
-            got=$(curl -fsSL "${SITE_URL}?smoke=${GITHUB_RUN_ID}-$i" | sha256sum | cut -d' ' -f1) || got=unreachable
-            if [ "$got" = "$want" ]; then echo "The site serves this commit's index.html (sha256 ${want:0:12})"; exit 0; fi
-            echo "Attempt $i: the site serves ${got:0:12}, waiting for ${want:0:12}"; sleep 15
-          done
-          echo "::error::After 10 minutes the site still does not serve this commit's index.html"; exit 1
-        shell: bash
+      # If the browser cannot be installed, the next step reports NOT TESTED (not PASS)
+      - name: Install ${{ matrix.browser }}
+        continue-on-error: true
+        run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Click-through against the live site
-        run: node clickthrough.js --url "${SITE_URL}?smoke=${GITHUB_RUN_ID}" --shots out/screens 2>&1 | tee live-smoke.txt; exit ${PIPESTATUS[0]}
         shell: bash
+        env:
+          WANT_SHA256: ${{ needs.deployment.outputs.sha256 }}
+        run: |
+          mkdir -p out
+          node clickthrough.js --url "${SITE_URL}?guardian=${GITHUB_RUN_ID}" --expect-sha256 "$WANT_SHA256" \
+            --browser ${{ matrix.browser }} --viewport ${{ matrix.viewport }} \
+            --report out/report.json --shots out/screens --trace 2>&1 | tee out/clickthrough.txt
+          code=${PIPESTATUS[0]}
+          if [ "$code" = 3 ]; then echo "::error title=NOT TESTED::${{ matrix.browser }} ${{ matrix.viewport }} could not be started; nothing was tested"; fi
+          exit $code
 
       - name: Summary
         if: always()
+        shell: bash
         run: |
           {
-            echo "## Live smoke test of $SITE_URL"
-            echo '```'; cat live-smoke.txt 2>/dev/null; echo '```'
+            echo "## Live ${{ matrix.browser }} ${{ matrix.viewport }}"
+            echo '```'; cat out/clickthrough.txt 2>/dev/null || echo 'NOT TESTED: the click-through did not start'; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: live-smoke-results
-          path: |
-            tools/survey-regression/live-smoke.txt
-            tools/survey-regression/out/
+          name: guardian-${{ matrix.browser }}-${{ matrix.viewport }}
+          path: tools/survey-regression/out/
+          if-no-files-found: ignore
+
+  report:
+    name: Live Guardian report
+    needs: [deployment, browsers]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: tools/survey-regression
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          sparse-checkout: tools/survey-regression
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: guardian-*
+          path: tools/survey-regression/reports
+
+      # PASS only if the expected commit is live and every browser/viewport ran and passed; otherwise this
+      # job fails, so the run never reads as a success
+      - name: Verdict
+        shell: bash
+        env:
+          DEPLOY_STATUS: ${{ needs.deployment.outputs.status || 'skipped' }}
+          DEPLOY_NOTE: ${{ needs.deployment.outputs.note || 'the deployment check did not finish' }}
+          COMMIT: ${{ needs.deployment.outputs.commit }}
+        run: |
+          node guardian_report.js --reports reports --expect "$EXPECTED_RUNS" --deployment "$DEPLOY_STATUS" \
+            --deployment-note "$DEPLOY_NOTE" --commit "$COMMIT" --site "$SITE_URL" | tee guardian-report.md
+          code=${PIPESTATUS[0]}
+          cat guardian-report.md >> "$GITHUB_STEP_SUMMARY"
+          exit $code
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-guardian-report
+          path: tools/survey-regression/guardian-report.md
           if-no-files-found: ignore

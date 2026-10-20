@@ -11,13 +11,20 @@ live about a minute later. The rules for who may merge are in [`AGENTS.md`](AGEN
 4. Merge with **Create a merge commit** (not squash or rebase), so the release is one commit that can be
    reverted.
 
-## After merging: live smoke test
+## After merging: Live Guardian (live smoke test)
 1. Actions tab → **pages-build-deployment**: the run for the merge commit must succeed.
-2. Actions tab → **Live smoke test**: it starts automatically after a successful deployment (listed with
-   the event `workflow_run`). It waits until the site serves the merged `index.html`, then runs the browser
-   click-through against www.chesspsyche.com with nothing blocked. It must be green. If no run appears
-   within a few minutes of the deployment, start it by hand: Live smoke test → Run workflow (branch
-   `main`). From a computer with the repository checked out:
+2. Actions tab → **Live Guardian** (formerly Live smoke test): it starts automatically after a successful
+   deployment (listed with the event `workflow_run`), and also runs once a day. Its **Deployment check**
+   waits until the site serves exactly the merged commit's `index.html` (sha256), then the browser
+   click-through runs against www.chesspsyche.com in Chromium, Firefox and WebKit, desktop and phone
+   size, with only reading requests allowed. The **Live Guardian report** job gives one verdict:
+   **PASS** only when the merged commit is live and every browser and size ran and passed; **FAIL** when a
+   check failed or the site serves another commit; **NOT TESTED** when a browser could not run or a newer
+   commit on `main` superseded this run (its own run tests it). Only PASS counts. Screenshots, traces of
+   failed checks and logs are in the run's artifacts. The Guardian never edits, merges or deploys
+   anything; a failure is fixed through a normal pull request (or a rollback, below).
+   If no run appears within a few minutes of the deployment, start it by hand: Live Guardian → Run
+   workflow (branch `main`). From a computer with the repository checked out:
 
    ```
    cd tools/survey-regression && npm ci && npx playwright install chromium
@@ -34,8 +41,8 @@ live about a minute later. The rules for who may merge are in [`AGENTS.md`](AGEN
      number change.
    - The browser console (F12 → Console) shows no red errors.
 
-Report each item as PASS, FAIL or NOT RUN. The automated test runs desktop Chromium only; Safari, Firefox
-and real phones are checked only by hand.
+Report each item as PASS, FAIL or NOT RUN. The Live Guardian emulates phone-sized screens in Chromium and
+WebKit (the engine behind Safari) on Linux; real phones and real Safari are checked only by hand.
 
 ## If the live site breaks: roll back
 Stop all other releases first. Then undo the release with a revert pull request, which keeps the history
@@ -43,8 +50,8 @@ and goes through the same checks:
 
 **On GitHub (no tools needed):** open the merged pull request → **Revert** button (near the bottom) →
 this creates a branch and a revert pull request → wait for **Regression tests** to pass → merge it with
-**Create a merge commit**. Pages redeploys the previous version in about a minute. Re-run the live smoke
-test.
+**Create a merge commit**. Pages redeploys the previous version in about a minute. Re-run the Live
+Guardian.
 
 **From the command line:**
 

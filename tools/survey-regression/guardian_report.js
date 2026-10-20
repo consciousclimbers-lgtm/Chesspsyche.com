@@ -1,0 +1,75 @@
+// Live Guardian report: combines the JSON reports that `clickthrough.js --report` writes (one per browser
+// and viewport) with the deployment check into one verdict, printed as Markdown.
+//
+// Every expected browser/viewport gets exactly one label:
+//   PASS        its report exists, every check ran and passed;
+//   FAIL        its report lists a failed check;
+//   NOT TESTED  the browser could not be started, its job did not run, or it left no report.
+// The overall verdict is PASS only when the deployment check found the expected commit live AND every
+// expected browser/viewport is PASS. Anything else exits 1, so the run never reads as a success.
+//
+// Usage: node guardian_report.js --reports DIR --expect chromium-desktop,firefox-desktop,...
+//          --deployment match|mismatch|superseded|unreachable|skipped [--deployment-note TEXT]
+//          [--commit SHA] [--site URL]
+const fs = require('fs');
+const path = require('path');
+
+function readReports(dir) {
+  const out = [];
+  const walk = d => {
+    if (!fs.existsSync(d)) return;
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.json')) {
+        try { const r = JSON.parse(fs.readFileSync(p, 'utf8')); if (r.tool === 'clickthrough.js') out.push(r); } catch (_) { /* not a report */ }
+      }
+    }
+  };
+  walk(dir);
+  return out;
+}
+
+function build({ reports, expect, deployment, note, commit, site }) {
+  const rows = expect.map(key => {
+    const [browser, viewport] = key.split('-');
+    const r = reports.find(x => x.browser === browser && x.viewport === viewport);
+    if (!r) return { browser, viewport, status: 'NOT TESTED', detail: deployment === 'match' ? 'no report: the job did not run or stopped before writing one' : 'not run: the deployment check did not pass' };
+    if (r.status === 'NOT_TESTED') return { browser, viewport, status: 'NOT TESTED', detail: r.reason || 'browser could not be started' };
+    const failed = (r.checks || []).filter(c => c.status !== 'PASS');
+    // A report that claims PASS must contain checks that all passed; anything else is not a pass
+    if (r.status === 'PASS' && (r.checks || []).length && !failed.length) return { browser, viewport, status: 'PASS', detail: `${r.checks.length} checks passed (${r.browserVersion || 'version unknown'})` };
+    if (r.status === 'PASS') return { browser, viewport, status: 'NOT TESTED', detail: 'report has no checks' };
+    return { browser, viewport, status: 'FAIL', detail: failed.map(c => `${c.name}: ${(c.fails || [])[0] || 'failed'}${(c.fails || []).length > 1 ? ` (+${c.fails.length - 1} more)` : ''}`).join('; ') || 'failed' };
+  });
+  const deployOk = deployment === 'match';
+  const verdict = !deployOk ? (deployment === 'mismatch' || deployment === 'unreachable' ? 'FAIL' : 'NOT TESTED')
+    : rows.some(r => r.status === 'FAIL') ? 'FAIL' : rows.some(r => r.status === 'NOT TESTED') ? 'NOT TESTED' : 'PASS';
+  const lines = [
+    `## Live Guardian: ${verdict}`,
+    '',
+    `Site: ${site || 'unknown'}  `,
+    `Expected commit: ${commit ? '`' + commit.slice(0, 12) + '`' : 'unknown'}  `,
+    `Deployment check: ${deployOk ? 'PASS' : deployment === 'mismatch' || deployment === 'unreachable' ? 'FAIL' : 'NOT TESTED'} (${deployment}${note ? `: ${note}` : ''})`,
+    '',
+    '| Browser | Viewport | Result | Details |',
+    '|---|---|---|---|',
+    ...rows.map(r => `| ${r.browser} | ${r.viewport} | **${r.status}** | ${r.detail.replace(/\|/g, '\\|')} |`),
+    '',
+    verdict === 'PASS' ? 'Every expected browser and viewport ran against the expected commit and passed.'
+      : 'Not a successful live check. Screenshots, traces and logs are in the run\'s artifacts. The Guardian changes nothing: fixes go through a normal pull request (AGENTS.md, RELEASE.md).',
+  ];
+  return { verdict, rows, markdown: lines.join('\n') };
+}
+
+module.exports = { build, readReports };
+
+if (require.main === module) {
+  const args = process.argv.slice(2);
+  const opt = n => args.includes(n) ? args[args.indexOf(n) + 1] : null;
+  const expect = (opt('--expect') || '').split(',').filter(Boolean);
+  if (!expect.length || !opt('--deployment')) { console.error('Usage: see the top of guardian_report.js'); process.exit(2); }
+  const out = build({ reports: readReports(opt('--reports') || 'reports'), expect, deployment: opt('--deployment'), note: opt('--deployment-note'), commit: opt('--commit'), site: opt('--site') });
+  console.log(out.markdown);
+  process.exit(out.verdict === 'PASS' ? 0 : 1);
+}
