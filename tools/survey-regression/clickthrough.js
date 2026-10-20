@@ -84,6 +84,8 @@ const chessLocal = require.resolve('chess.js');
 // differently, but also start with "Failed to load resource")
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 const isBlockedLoad = t => browserName === 'chromium' ? t === BLOCKED_LOAD : t.startsWith('Failed to load resource');
+// A resource that did not load (network failure or HTTP error): recoverable when the page load is retried
+const isLoadFailure = e => e.startsWith('console error: Failed to load resource');
 // Diagnostics for the whole run, each line prefixed with the check it came from
 const diag = { failedRequests: [], httpErrors: [], blockedWrites: [], allowedReadPosts: [], retries: [] };
 // Third-party services that read with POST and store nothing for the site; allowed and listed. The Google
@@ -154,8 +156,12 @@ async function openPage(browser, label) {
   page.on('response', r => { if (r.status() >= 400) diag.httpErrors.push(`${label}: HTTP ${r.status()} ${r.url()}`); });
   if (!url) await page.route('**/chess.js/0.10.3/chess.min.js', r => r.fulfill({ path: chessLocal, contentType: 'application/javascript' }));
   // The live site is retried twice (10 s, then 20 s later) when it does not load, answers with a server
-  // error, or its scripts (chess.js from cdnjs) do not load within 30 s
+  // error, or its scripts (chess.js from cdnjs) do not load within 30 s. Only network failures are
+  // recoverable: a "Failed to load resource" console error of a retried attempt is kept in the retry line
+  // only; any other error of a retried attempt (a JavaScript error, another console error, a blocked write)
+  // is carried over and fails the check even when a later attempt loads cleanly.
   let resp = null, problem = null;
+  const carried = [];
   for (let attempt = 1; attempt <= (url ? 3 : 1); attempt++) {
     problem = null;
     try { resp = await page.goto(target, { timeout: 60000 }); } catch (e) { problem = e.message.split('\n')[0]; }
@@ -170,9 +176,12 @@ async function openPage(browser, label) {
       problem = 'chess.js and the page scripts did not load within 30 s';
     if (!problem) break;
     diag.retries.push(`${label}: page load attempt ${attempt} failed: ${problem}${errors.length ? ` (${errors.join('; ')})` : ''}`);
-    // Errors of an attempt that is retried are kept in the retry line only, so a retry that works passes
-    if (attempt < 3 && url) { errors.length = 0; await page.waitForTimeout(10000 * attempt); }
+    if (attempt < 3 && url) {
+      carried.push(...errors.filter(e => !isLoadFailure(e)).map(e => `page load attempt ${attempt} (retried): ${e}`));
+      errors.length = 0; await page.waitForTimeout(10000 * attempt);
+    }
   }
+  errors.unshift(...carried);
   if (problem) throw new Error(`${target} did not load (${problem}). Errors: ${errors.join('; ') || 'none'}`);
   return { context, page, errors };
 }

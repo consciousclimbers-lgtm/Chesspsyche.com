@@ -13,6 +13,7 @@
     "test:known-shrink": "node check_known_shrink.test.js",
     "clickthrough:strict-cards": "node clickthrough.js ../../index.html --strict-cards",
     "test:guardian-report": "node guardian_report.test.js",
+    "test:retries": "node clickthrough_retry.test.js",
     "clickthrough:mobile": "node clickthrough.js ../../index.html --viewport mobile"
   },
   "dependencies": {
