@@ -47,6 +47,11 @@ jobs:
         run: npm test 2>&1 | tee survey-regression.txt; exit ${PIPESTATUS[0]}
         shell: bash
 
+      - name: Repaired ECO lines reach their code; PR #13 lines unchanged
+        if: success() || failure()
+        run: npm run test:eco-lines 2>&1 | tee eco-lines.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
       - name: Browser click-through (cards, demo board, pieces, board editor, evaluation bar, navigation)
         if: success() || failure()
         run: npm run clickthrough -- --shots out/screens 2>&1 | tee clickthrough.txt; exit ${PIPESTATUS[0]}
@@ -79,7 +84,7 @@ jobs:
         run: |
           {
             echo "## Regression tests on \`${GITHUB_SHA::7}\`"
-            for f in survey-regression.txt clickthrough.txt known-shrink.txt known-shrink-selftest.txt guardian-report-selftest.txt retry-selftest.txt; do
+            for f in survey-regression.txt eco-lines.txt clickthrough.txt known-shrink.txt known-shrink-selftest.txt guardian-report-selftest.txt retry-selftest.txt; do
               [ -f "$f" ] || continue
               echo "### $f"; echo '```'; cat "$f"; echo '```'
             done
@@ -92,6 +97,7 @@ jobs:
           name: regression-results
           path: |
             tools/survey-regression/survey-regression.txt
+            tools/survey-regression/eco-lines.txt
             tools/survey-regression/clickthrough.txt
             tools/survey-regression/known-shrink.txt
             tools/survey-regression/known-shrink-selftest.txt
