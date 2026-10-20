@@ -10,6 +10,7 @@
     "test:strict-cards": "node survey_regression.js ../../index.html --strict-cards",
     "prune:known-card-issues": "node survey_regression.js ../../index.html --prune-known-card-issues && node clickthrough.js ../../index.html --prune-known-card-issues",
     "check:known-shrink": "node check_known_shrink.js --base origin/main",
+    "test:known-shrink": "node check_known_shrink.test.js",
     "clickthrough:strict-cards": "node clickthrough.js ../../index.html --strict-cards"
   },
   "dependencies": {

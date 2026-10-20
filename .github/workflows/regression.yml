@@ -57,12 +57,17 @@ jobs:
           node check_known_shrink.js --base FETCH_HEAD 2>&1 | tee known-shrink.txt; exit ${PIPESTATUS[0]}
         shell: bash
 
+      - name: Shrink check fails closed on a missing or malformed list (tests the check itself)
+        if: success() || failure()
+        run: npm run test:known-shrink 2>&1 | tee known-shrink-selftest.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
       - name: Summary
         if: always()
         run: |
           {
             echo "## Regression tests on \`${GITHUB_SHA::7}\`"
-            for f in survey-regression.txt clickthrough.txt known-shrink.txt; do
+            for f in survey-regression.txt clickthrough.txt known-shrink.txt known-shrink-selftest.txt; do
               [ -f "$f" ] || continue
               echo "### $f"; echo '```'; cat "$f"; echo '```'
             done
@@ -77,5 +82,6 @@ jobs:
             tools/survey-regression/survey-regression.txt
             tools/survey-regression/clickthrough.txt
             tools/survey-regression/known-shrink.txt
+            tools/survey-regression/known-shrink-selftest.txt
             tools/survey-regression/out/
           if-no-files-found: ignore
