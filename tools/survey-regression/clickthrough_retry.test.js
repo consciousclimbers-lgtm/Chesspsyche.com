@@ -2,7 +2,8 @@
 // first page load badly, then serves index.html normally, and the click-through report must say:
 //   JavaScript and console errors on the first attempt -> FAIL (a retry that works does not hide them)
 //   a blocked write request on the first attempt       -> FAIL (read-only guard)
-//   HTTP 503 on the first attempt                      -> PASS (a network failure is recoverable)
+//   HTTP 503 and a missing image (HTTP 404) on it     -> FAIL (a missing asset is not transient)
+//   HTTP 503 on the first attempt                      -> PASS (a server error is recoverable)
 // The served index.html loads chess.js locally and has its fonts, icons and map replaced by empty files, so
 // the test needs no network. Run: npm run test:retries (about 3 minutes)
 const fs = require('fs'), http = require('http'), os = require('os'), path = require('path');
@@ -18,6 +19,7 @@ const chess = fs.readFileSync(require.resolve('chess.js'));
 const FIRST = {
   'js-error': [200, '<html><body><script>console.error("console error on attempt 1"); throw new Error("JavaScript error on attempt 1")</script></body></html>'],
   'blocked-write': [200, '<html><body><script>fetch("/collect", { method: "POST", body: "x" }).catch(() => {})</script></body></html>'],
+  'http-503-and-404': [503, '<html><body>busy<img src="/missing-asset.png"></body></html>'],
   'http-503': [503, 'busy'],
 };
 const SCENARIOS = [
@@ -25,6 +27,8 @@ const SCENARIOS = [
     && r.checks.some(c => c.fails.some(f => f.includes('console error on attempt 1')))],
   ['blocked-write', 'FAIL', r => r.checks.some(c => c.name === 'read-only-guard' && c.status === 'FAIL')
     && r.checks.some(c => c.name !== 'read-only-guard' && c.fails.some(f => f.includes('blocked a POST')))],
+  ['http-503-and-404', 'FAIL', r => r.diagnostics.retries.some(l => l.includes('HTTP 503'))
+    && r.checks.some(c => c.status === 'FAIL' && c.fails.some(f => f.includes('attempt 1 (retried): HTTP 404') && f.includes('/missing-asset.png')))],
   ['http-503', 'PASS', r => r.diagnostics.retries.some(l => l.includes('HTTP 503'))],
 ];
 
