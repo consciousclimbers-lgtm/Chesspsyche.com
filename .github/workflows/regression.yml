@@ -52,6 +52,16 @@ jobs:
         run: npm run test:eco-lines 2>&1 | tee eco-lines.txt; exit ${PIPESTATUS[0]}
         shell: bash
 
+      - name: Results cards agree (name, ECO, side, Notable GM, demo board up to 20 plies, short-line note)
+        if: success() || failure()
+        run: npm run test:results-identity 2>&1 | tee results-identity.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Results identity test catches the old 10-ply board limit (tests the test itself)
+        if: success() || failure()
+        run: npm run test:results-identity-selftest 2>&1 | tee results-identity-selftest.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
       - name: Browser click-through (cards, demo board, pieces, board editor, evaluation bar, navigation)
         if: success() || failure()
         run: npm run clickthrough -- --shots out/screens 2>&1 | tee clickthrough.txt; exit ${PIPESTATUS[0]}
@@ -84,7 +94,7 @@ jobs:
         run: |
           {
             echo "## Regression tests on \`${GITHUB_SHA::7}\`"
-            for f in survey-regression.txt eco-lines.txt clickthrough.txt known-shrink.txt known-shrink-selftest.txt guardian-report-selftest.txt retry-selftest.txt; do
+            for f in survey-regression.txt eco-lines.txt results-identity.txt results-identity-selftest.txt clickthrough.txt known-shrink.txt known-shrink-selftest.txt guardian-report-selftest.txt retry-selftest.txt; do
               [ -f "$f" ] || continue
               echo "### $f"; echo '```'; cat "$f"; echo '```'
             done
@@ -98,6 +108,8 @@ jobs:
           path: |
             tools/survey-regression/survey-regression.txt
             tools/survey-regression/eco-lines.txt
+            tools/survey-regression/results-identity.txt
+            tools/survey-regression/results-identity-selftest.txt
             tools/survey-regression/clickthrough.txt
             tools/survey-regression/known-shrink.txt
             tools/survey-regression/known-shrink-selftest.txt

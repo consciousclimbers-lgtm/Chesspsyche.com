@@ -15,7 +15,9 @@
     "test:guardian-report": "node guardian_report.test.js",
     "test:retries": "node clickthrough_retry.test.js",
     "test:eco-lines": "node eco_lines.test.js ../../index.html",
-    "clickthrough:mobile": "node clickthrough.js ../../index.html --viewport mobile"
+    "clickthrough:mobile": "node clickthrough.js ../../index.html --viewport mobile",
+    "test:results-identity": "node results_identity.js ../../index.html",
+    "test:results-identity-selftest": "node results_identity.js ../../index.html --self-test"
   },
   "dependencies": {
     "chess.js": "0.10.3",

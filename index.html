@@ -3708,6 +3708,14 @@ function pickEcoCode(archKey, side, advance) {
     return list[idx].eco;
 }
 
+// The Results board shows up to ten full moves (20 plies) of the card's line, never more than the line has
+const DEMO_MAX_PLIES = 20;
+// Honest note under the board when the line is shorter than ten full moves; '' when it is complete
+function demoLineNote(plies) {
+    if (plies >= DEMO_MAX_PLIES) return '';
+    return `This line shows ${plies} of ${DEMO_MAX_PLIES} half-moves (to move ${Math.ceil(plies / 2)}). A verified line to move 10 is not in our data yet.`;
+}
+
 function ecoToSystem(code, side) {
     // Reuse the hand-written system (with its summary and notable GM) when this opening has one for this side
     for (const a of Object.values(archetypes)) for (const s of Object.values(a.systems)) {
@@ -3716,10 +3724,12 @@ function ecoToSystem(code, side) {
     }
     const e = ecoVault.find(x => x.eco === code);
     const g = createChessInstance(), moves = [];
-    e.moves.split(/\s+/).filter(x => x && !/^\d+\./.test(x)).slice(0, 10).forEach(san => {
+    // Up to ten full moves of the vault line; stop at a move the engine rejects rather than skip it
+    for (const san of e.moves.split(/\s+/).filter(x => x && !/^\d+\./.test(x)).slice(0, DEMO_MAX_PLIES)) {
         const m = g.move(san);
-        if (m) moves.push({ move: san, from: m.from, to: m.to });
-    });
+        if (!m) break;
+        moves.push({ move: san, from: m.from, to: m.to });
+    }
     const first = (e.commentary && e.commentary[0]) ? String(e.commentary[0]).split(' — ').slice(1).join(' — ') : '';
     return { name: e.name, eco: e.eco, summary: first || ('Starts with ' + e.moves.split(/\s+/).slice(0, 9).join(' ') + (e.moves.split(/\s+/).length > 9 ? ' ...' : '') + '.'), variations: [{ moves }] };
 }
@@ -4216,6 +4226,7 @@ function renderResultsDashboard(archKey, arch) {
                         <span id="results-system-title" class="text-sm font-bold text-accentGold">Opening: White Main Line</span>
                         <button onclick="startPracticeMode()" id="btn-practice-toggle" class="px-3.5 py-1.5 gradient-btn text-white rounded-xl text-xs font-bold shadow-md">Practice This Line</button>
                     </div>
+                    <p id="results-line-note" class="hidden text-[11px] text-slate-400 leading-snug"></p>
                     <!-- Move blurb -->
                     <div id="board-move-notation" class="min-h-[44px] flex items-center justify-center px-3 py-2 rounded-xl bg-slate800/60 border border-slate-700/50 text-xs text-slate-300 text-center leading-snug"></div>
                 </div>
@@ -4261,8 +4272,10 @@ function initResultsBoard(arch) {
     currentActiveArch = arch; demoGame = createChessInstance(); demoMoveIndex = 0; isPracticeMode = false; practiceStepIndex = 0; practiceSelectedSquare = null;
     demoLastMove = null; demoHintActive = false;
     const systemObj = resultsRepertoireSide === 'white' ? arch.whiteSystem : arch.blackSystem;
-    activeDemoMoves = (systemObj.variations[0].moves || []).slice(0, 10);
+    activeDemoMoves = (systemObj.variations[0].moves || []).slice(0, DEMO_MAX_PLIES);
     document.getElementById('results-system-title').textContent = `Opening: ${systemObj.name} (${resultsRepertoireSide.toUpperCase()})`;
+    const lineNote = document.getElementById('results-line-note');
+    if (lineNote) { lineNote.textContent = demoLineNote(activeDemoMoves.length); lineNote.classList.toggle('hidden', !lineNote.textContent); }
     document.getElementById('btn-practice-toggle').onclick = startPracticeMode;
     document.getElementById('btn-practice-toggle').textContent = 'Practice This Line';
     // Clear blurb on reset
