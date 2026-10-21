@@ -28,7 +28,7 @@ The source URLs below are reproduced from the candidate records in the PR. They 
 | Candidate | Submitted source | Audit |
 |---|---|---|
 | Bobby Fischer | [Wikipedia: Najdorf Variation](https://en.wikipedia.org/wiki/Sicilian_Defence,_Najdorf_Variation) | Pending. The article identifies Fischer as a notable Najdorf player and lists notable games, but the specific game/side should be recorded explicitly in the evidence. |
-| Maxime Vachier-Lagrave | [Wikipedia: Najdorf Variation](https://en.wikipedia.org/wiki/Sicilian_Defence,_Najdorf_Variation) | Pending. Opening-level association is plausible; record a Black-side game or repertoire evidence. |
+| Maxime Vachier-Lagrave | [PGNBase player/opening database](https://www.pgnbase.com/players/maxime-vachier-lagrave) | Strong evidence located: the database reports 291 B90 Najdorf games as Black and includes game records; inspect a representative game/PGN and confirm the target pool's code range before final approval. |
 | Boris Gelfand | [My Most Memorable Games — book listing](https://reado.app/en/book/my-most-memorable-games-boris-gelfand/9783283004538) | Insufficient as cited: a book listing does not identify a Najdorf game or side. |
 | Veselin Topalov | [ChessBase: Najdorf article](https://en.chessbase.com/newsroom/post/robert-ris-fast-and-furious-najdorf-be3-ng4) | Pending. The URL's title/topic does not by itself establish a Topalov Black-side game. |
 | Viswanathan Anand | [Playing the Najdorf — product listing](https://www.caissa-chess.com/openings/1402-david-vigorito-playing-the-najdorf-k-5747-9781907982651.html) | Insufficient as cited: product page; verify the GM's relevant Black-side record. |
@@ -112,7 +112,7 @@ Independent contextual leads (not a substitute for a game record): [ChessLab Aca
 #### Nimzowitsch–Larsen Attack — White — A01
 | Candidate | Submitted source | Audit |
 |---|---|---|
-| Richárd Rapport | [Chess.com player profile](https://www.chess.com/players/Richard-Rapport) | Partial supporting lead: profile lists Nimzowitsch–Larsen games as White; attach an exact game/PGN before approving. |
+| Richárd Rapport | [365Chess player database](https://www.365chess.com/players/Richard_Rapport) · [Chess.ceo player database](https://chess.ceo/player/richard-rapport-738590) | Strong evidence located: the databases list dozens of A01 Nimzowitsch–Larsen games as White (47 in 365Chess; 58 in Chess.ceo). Attach a representative direct game/PGN and confirm the position before final approval. |
 | Wesley So | [ChessBase: Wesley So — My Secret Weapon](https://shop.chessbase.com/en/products/wesley_so_my_secret_weapon_1b3) | Insufficient as cited: product page does not establish a specific A01 White-side game. |
 
 #### London System — White — D00
@@ -157,3 +157,14 @@ For each candidate, replace the pending note with one or more direct records con
 Also add the candidates considered but excluded, with reason (insufficient evidence, wrong side/variation, duplicate, pool cap, or family threshold). Keep the existing 19 Batch 1 pools and round-robin behavior unchanged.
 
 **Do not merge or deploy on the strength of this document alone.** It records the gap and makes the submitted citations auditable; it does not certify the pending candidates.
+
+
+## Follow-up evidence search (20 October 2026)
+
+A targeted follow-up located stronger, player-specific game-database evidence for three candidates. This narrows the audit gap but does not finish the full 47-entry audit.
+
+- **Bobby Fischer — Najdorf as Black:** Chessgames identifies *Sidney Bernstein vs Bobby Fischer*, US Championship 1957/58, round 4, as Sicilian Najdorf B99, with Fischer winning as Black. The Fischer repertoire archive also describes repeated use of the Najdorf as Black. This is materially stronger than a general Wikipedia opening link.
+- **Maxime Vachier-Lagrave — Najdorf as Black:** PGNBase's player database reports 291 Najdorf B90 games as Black and provides game records/PGN access. A representative game should be linked to the pool record, and the actual game moves checked.
+- **Richárd Rapport — Nimzowitsch–Larsen as White:** 365Chess lists 47 A01 games as White; Chess.ceo lists 58. These are player-specific opening statistics and game archives. Add a direct representative game/PGN for the final record.
+
+These entries are upgraded to **strong evidence located / final game-level confirmation required**, not silently labelled fully verified. The remaining candidates still need equivalent player + opening + side evidence and exclusion rationale.
