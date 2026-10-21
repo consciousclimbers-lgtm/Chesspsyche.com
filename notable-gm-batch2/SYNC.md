@@ -16,44 +16,44 @@ Owner decision on PR #23 (2026-10-21): the GM records behind the clickable GM po
 ## All 38 Batch 2 entries from the earlier draft (head 9ee6f77), against the GM records on main 3949b7d
 | Pool | GM | FIDE id | Old status | GM record system (this side) | Class | Draft status |
 |---|---|---|---|---|---|---|
-| Sicilian Najdorf|black | Bobby Fischer | 600041 | verified | King's Indian / Sicilian Najdorf / Grunfeld | DIRECT | verified |
-| Sicilian Najdorf|black | Maxime Vachier-Lagrave | 623539 | verified | Sicilian / Grunfeld / Sicilian Najdorf | DIRECT | verified |
-| Sicilian Najdorf|black | Boris Gelfand | 2805677 | verified | Sicilian / Sicilian Najdorf / Semi-Slav | DIRECT | verified |
-| Sicilian Najdorf|black | Veselin Topalov | 2900084 | verified | Sicilian / Ruy Lopez / Sicilian Najdorf | DIRECT | verified |
-| Sicilian Najdorf|black | Viswanathan Anand | 5000017 | pending | Sicilian / Ruy Lopez / Queen's Indian | FAMILY ONLY | pending |
-| Sicilian Najdorf|black | Ian Nepomniachtchi | 4168119 | verified | Sicilian / Grunfeld / Sicilian Najdorf | DIRECT | verified |
-| Sicilian Dragon|black | Gawain C B Maroroa Jones | 409561 | verified | King's Indian / Sicilian / Sicilian Dragon | DIRECT | verified |
-| Sicilian Dragon|black | Hikaru Nakamura | 2016192 | pending | Sicilian / Ruy Lopez / Queen's Gambit Declined | FAMILY ONLY | pending |
-| Grünfeld Defence|black | Maxime Vachier-Lagrave | 623539 | verified | Sicilian / Grunfeld / Sicilian Najdorf | DIRECT | verified |
-| Grünfeld Defence|black | Bobby Fischer | 600041 | verified | King's Indian / Sicilian Najdorf / Grunfeld | DIRECT | verified |
-| Grünfeld Defence|black | Peter Leko | 703303 | verified | Sicilian / Ruy Lopez / Queen's Indian | NOT ON CARD | pending |
-| Grünfeld Defence|black | Loek Van Wely | 1000268 | pending | Sicilian / King's Indian / Sicilian Scheveningen | NOT ON CARD | pending |
-| Grünfeld Defence|black | Gata Kamsky | 2000024 | pending | Slav / Sicilian / Ruy Lopez | NOT ON CARD | pending |
-| Berlin Defence|black | Levon Aronian | 13300474 | verified | Ruy Lopez / Queen's Gambit Declined / Sicilian | FAMILY ONLY | not in draft |
-| Berlin Defence|black | Ian Nepomniachtchi | 4168119 | pending | Sicilian / Grunfeld / Sicilian Najdorf | NOT ON CARD | not in draft |
-| Marshall Attack|black | Levon Aronian | 13300474 | verified | Ruy Lopez / Queen's Gambit Declined / Sicilian | FAMILY ONLY | not in draft |
-| Marshall Attack|black | Ding Liren | 8603677 | verified | Ruy Lopez / King's Indian / Queen's Pawn Game | FAMILY ONLY | not in draft |
-| Marshall Attack|black | Boris Spassky | 600057 | verified | King's Indian / Sicilian / Queen's Gambit Declined | NOT ON CARD | not in draft |
-| Marshall Attack|black | Michael Adams | 400041 | verified | Ruy Lopez / Ruy Lopez, Closed / Nimzo Indian | FAMILY ONLY | not in draft |
-| Marshall Attack|black | Peter Leko | 703303 | pending | Sicilian / Ruy Lopez / Queen's Indian | FAMILY ONLY | not in draft |
-| Semi-Slav Defence|black | Viswanathan Anand | 5000017 | verified | Sicilian / Ruy Lopez / Queen's Indian | NOT ON CARD | not in draft |
-| Semi-Slav Defence|black | Alexei Shirov | 2209390 | pending | Sicilian / Slav / Ruy Lopez | FAMILY ONLY | not in draft |
-| Semi-Slav Defence|black | Veselin Topalov | 2900084 | pending | Sicilian / Ruy Lopez / Sicilian Najdorf | NOT ON CARD | not in draft |
-| French Winawer|black | Alexander Morozevich | 4116992 | pending | French Defense / Sicilian / Slav | FAMILY ONLY | not in draft |
-| French Winawer|black | Wesley So | 5202213 | pending | Ruy Lopez / Sicilian / Queen's Pawn Game | NOT ON CARD | not in draft |
-| French Winawer|black | Ian Nepomniachtchi | 4168119 | verified | Sicilian / Grunfeld / Sicilian Najdorf | NOT ON CARD | not in draft |
-| English Opening|white | Magnus Carlsen | 1503014 | pending | A wide range of openings: most often 1.e4 or 1.d4, then 1.c4 and 1.Nf3 | NOT ON CARD (broad text) | not in draft |
-| English Opening|white | Ding Liren | 8603677 | verified | Queen's Gambit Declined / King's Indian / Slav | NOT ON CARD | not in draft |
-| Nimzowitsch-Larsen Attack|white | Richárd Rapport | 738590 | verified | Sicilian / Queen's Pawn Game / King's Indian Attack | NOT ON CARD | not in draft |
-| Nimzowitsch-Larsen Attack|white | Wesley So | 5202213 | verified | Sicilian / Ruy Lopez / Giuoco Piano | NOT ON CARD | not in draft |
-| London System|white | Gata Kamsky | 2000024 | verified | Queen's Pawn Game / Sicilian / Ruy Lopez | FAMILY ONLY | not in draft |
-| London System|white | Magnus Carlsen | 1503014 | verified | A wide range of openings: most often 1.e4 or 1.d4, then 1.c4 and 1.Nf3 | NOT ON CARD (broad text) | not in draft |
-| London System|white | Levon Aronian | 13300474 | pending | Sicilian / Queen's Pawn Game / English | FAMILY ONLY | not in draft |
-| London System|white | Alexander Grischuk | 4126025 | pending | Sicilian / Ruy Lopez / French Defense | NOT ON CARD | not in draft |
-| Grünfeld Exchange|white | Boris Gelfand | 2805677 | verified | Slav / Catalan / Queen's Indian | NOT ON CARD | not in draft |
-| Grünfeld Exchange|white | Viswanathan Anand | 5000017 | pending | Sicilian / Ruy Lopez / Ruy Lopez, Closed | NOT ON CARD | not in draft |
-| Two Knights / Fried Liver|white | Nigel Short | 400025 | verified | Sicilian / Ruy Lopez / French Defense | NOT ON CARD | not in draft |
-| Two Knights / Fried Liver|white | Alexander Morozevich | 4116992 | verified | Sicilian / Ruy Lopez / French Defense | NOT ON CARD | not in draft |
+| Sicilian Najdorf\|black | Bobby Fischer | 600041 | verified | King's Indian / Sicilian Najdorf / Grunfeld | DIRECT | verified |
+| Sicilian Najdorf\|black | Maxime Vachier-Lagrave | 623539 | verified | Sicilian / Grunfeld / Sicilian Najdorf | DIRECT | verified |
+| Sicilian Najdorf\|black | Boris Gelfand | 2805677 | verified | Sicilian / Sicilian Najdorf / Semi-Slav | DIRECT | verified |
+| Sicilian Najdorf\|black | Veselin Topalov | 2900084 | verified | Sicilian / Ruy Lopez / Sicilian Najdorf | DIRECT | verified |
+| Sicilian Najdorf\|black | Viswanathan Anand | 5000017 | pending | Sicilian / Ruy Lopez / Queen's Indian | FAMILY ONLY | pending |
+| Sicilian Najdorf\|black | Ian Nepomniachtchi | 4168119 | verified | Sicilian / Grunfeld / Sicilian Najdorf | DIRECT | verified |
+| Sicilian Dragon\|black | Gawain C B Maroroa Jones | 409561 | verified | King's Indian / Sicilian / Sicilian Dragon | DIRECT | verified |
+| Sicilian Dragon\|black | Hikaru Nakamura | 2016192 | pending | Sicilian / Ruy Lopez / Queen's Gambit Declined | FAMILY ONLY | pending |
+| Grünfeld Defence\|black | Maxime Vachier-Lagrave | 623539 | verified | Sicilian / Grunfeld / Sicilian Najdorf | DIRECT | verified |
+| Grünfeld Defence\|black | Bobby Fischer | 600041 | verified | King's Indian / Sicilian Najdorf / Grunfeld | DIRECT | verified |
+| Grünfeld Defence\|black | Peter Leko | 703303 | verified | Sicilian / Ruy Lopez / Queen's Indian | NOT ON CARD | pending |
+| Grünfeld Defence\|black | Loek Van Wely | 1000268 | pending | Sicilian / King's Indian / Sicilian Scheveningen | NOT ON CARD | pending |
+| Grünfeld Defence\|black | Gata Kamsky | 2000024 | pending | Slav / Sicilian / Ruy Lopez | NOT ON CARD | pending |
+| Berlin Defence\|black | Levon Aronian | 13300474 | verified | Ruy Lopez / Queen's Gambit Declined / Sicilian | FAMILY ONLY | not in draft |
+| Berlin Defence\|black | Ian Nepomniachtchi | 4168119 | pending | Sicilian / Grunfeld / Sicilian Najdorf | NOT ON CARD | not in draft |
+| Marshall Attack\|black | Levon Aronian | 13300474 | verified | Ruy Lopez / Queen's Gambit Declined / Sicilian | FAMILY ONLY | not in draft |
+| Marshall Attack\|black | Ding Liren | 8603677 | verified | Ruy Lopez / King's Indian / Queen's Pawn Game | FAMILY ONLY | not in draft |
+| Marshall Attack\|black | Boris Spassky | 600057 | verified | King's Indian / Sicilian / Queen's Gambit Declined | NOT ON CARD | not in draft |
+| Marshall Attack\|black | Michael Adams | 400041 | verified | Ruy Lopez / Ruy Lopez, Closed / Nimzo Indian | FAMILY ONLY | not in draft |
+| Marshall Attack\|black | Peter Leko | 703303 | pending | Sicilian / Ruy Lopez / Queen's Indian | FAMILY ONLY | not in draft |
+| Semi-Slav Defence\|black | Viswanathan Anand | 5000017 | verified | Sicilian / Ruy Lopez / Queen's Indian | NOT ON CARD | not in draft |
+| Semi-Slav Defence\|black | Alexei Shirov | 2209390 | pending | Sicilian / Slav / Ruy Lopez | FAMILY ONLY | not in draft |
+| Semi-Slav Defence\|black | Veselin Topalov | 2900084 | pending | Sicilian / Ruy Lopez / Sicilian Najdorf | NOT ON CARD | not in draft |
+| French Winawer\|black | Alexander Morozevich | 4116992 | pending | French Defense / Sicilian / Slav | FAMILY ONLY | not in draft |
+| French Winawer\|black | Wesley So | 5202213 | pending | Ruy Lopez / Sicilian / Queen's Pawn Game | NOT ON CARD | not in draft |
+| French Winawer\|black | Ian Nepomniachtchi | 4168119 | verified | Sicilian / Grunfeld / Sicilian Najdorf | NOT ON CARD | not in draft |
+| English Opening\|white | Magnus Carlsen | 1503014 | pending | A wide range of openings: most often 1.e4 or 1.d4, then 1.c4 and 1.Nf3 | NOT ON CARD (broad text) | not in draft |
+| English Opening\|white | Ding Liren | 8603677 | verified | Queen's Gambit Declined / King's Indian / Slav | NOT ON CARD | not in draft |
+| Nimzowitsch-Larsen Attack\|white | Richárd Rapport | 738590 | verified | Sicilian / Queen's Pawn Game / King's Indian Attack | NOT ON CARD | not in draft |
+| Nimzowitsch-Larsen Attack\|white | Wesley So | 5202213 | verified | Sicilian / Ruy Lopez / Giuoco Piano | NOT ON CARD | not in draft |
+| London System\|white | Gata Kamsky | 2000024 | verified | Queen's Pawn Game / Sicilian / Ruy Lopez | FAMILY ONLY | not in draft |
+| London System\|white | Magnus Carlsen | 1503014 | verified | A wide range of openings: most often 1.e4 or 1.d4, then 1.c4 and 1.Nf3 | NOT ON CARD (broad text) | not in draft |
+| London System\|white | Levon Aronian | 13300474 | pending | Sicilian / Queen's Pawn Game / English | FAMILY ONLY | not in draft |
+| London System\|white | Alexander Grischuk | 4126025 | pending | Sicilian / Ruy Lopez / French Defense | NOT ON CARD | not in draft |
+| Grünfeld Exchange\|white | Boris Gelfand | 2805677 | verified | Slav / Catalan / Queen's Indian | NOT ON CARD | not in draft |
+| Grünfeld Exchange\|white | Viswanathan Anand | 5000017 | pending | Sicilian / Ruy Lopez / Ruy Lopez, Closed | NOT ON CARD | not in draft |
+| Two Knights / Fried Liver\|white | Nigel Short | 400025 | verified | Sicilian / Ruy Lopez / French Defense | NOT ON CARD | not in draft |
+| Two Knights / Fried Liver\|white | Alexander Morozevich | 4116992 | verified | Sicilian / Ruy Lopez / French Defense | NOT ON CARD | not in draft |
 
 **Summary:** 24 entries were `verified` in the earlier draft. In this draft:
 - **8 are DIRECT** and stay verified, in 3 pools:
