@@ -7,7 +7,9 @@
 name: Agent monitoring bridge
 
 on:
-  pull_request:
+  # Use pull_request_target so this trusted base-branch workflow can receive secrets
+  # without executing workflow code supplied by the pull request head. Never checkout PR code here.
+  pull_request_target:
     branches: [main]
     types: [opened, reopened, synchronize, ready_for_review, converted_to_draft, closed]
   pull_request_review:
