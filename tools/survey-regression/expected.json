@@ -1,5 +1,5 @@
 {
- "protectedHash": "f10ddffe1a71eb77655e89074059c3fe94c6a2a199e76865b292f5ed8b34e95f",
+ "protectedHash": "6cf957c158bdf67185961b8bebda8ee2e7190da3c2dbe1d48c137a6ef9a7337f",
  "knownSideIssues": [],
  "picks": {
   "tacticalFirebrand|none|normal": "C29/A82 C30/A51 C27/C31",
@@ -50,8 +50,8 @@
   "flexibleChameleon|novice|strong": "E01/B08 A01/E02 A04/E04",
   "flexibleChameleon|intermediate|normal": "A09/B06 E01/A15 A01/A41",
   "flexibleChameleon|intermediate|strong": "E01/B08 A01/E02 A04/E04",
-  "flexibleChameleon|advanced|normal": "E01/B08 E00/E02 A12/E04",
-  "flexibleChameleon|advanced|strong": "E06/A16 E07/D71 E08/D80",
+  "flexibleChameleon|advanced|normal": "E01/B08 A12/E02 E00/E04",
+  "flexibleChameleon|advanced|strong": "E06/A16 E07/D80 E08/D71",
   "universalMaster|none|normal": "C45/B20 C23/B27 C25/B28",
   "universalMaster|none|strong": "C45/B20 C23/B27 C25/B28",
   "universalMaster|beginner|normal": "C45/B20 C23/B27 C25/B28",

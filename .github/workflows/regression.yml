@@ -1,6 +1,8 @@
 # Runs the survey regression test and the browser click-through on every pull request to main,
 # on every push to main, and on demand (Actions tab -> Regression tests -> Run workflow).
 # The job is called "Regression tests"; that is the name to require in the main branch ruleset.
+# The "Click-through ..." jobs repeat the click-through in other browsers and at phone size. They are
+# not required by the ruleset; a browser that cannot be started there is NOT TESTED and its job fails.
 name: Regression tests
 
 on:
@@ -45,9 +47,36 @@ jobs:
         run: npm test 2>&1 | tee survey-regression.txt; exit ${PIPESTATUS[0]}
         shell: bash
 
+      - name: Repaired ECO lines reach their code; PR #13 lines unchanged
+        if: success() || failure()
+        run: npm run test:eco-lines 2>&1 | tee eco-lines.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
       - name: Browser click-through (cards, demo board, pieces, board editor, evaluation bar, navigation)
         if: success() || failure()
         run: npm run clickthrough -- --shots out/screens 2>&1 | tee clickthrough.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Known card issues can only shrink (pull requests; compares with the base branch)
+        if: (success() || failure()) && github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags --depth=1 origin "$GITHUB_BASE_REF"
+          node check_known_shrink.js --base FETCH_HEAD 2>&1 | tee known-shrink.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Shrink check fails closed on a missing or malformed list (tests the check itself)
+        if: success() || failure()
+        run: npm run test:known-shrink 2>&1 | tee known-shrink-selftest.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Live Guardian report never passes what did not run (tests the report itself)
+        if: success() || failure()
+        run: npm run test:guardian-report 2>&1 | tee guardian-report-selftest.txt; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: A retried page load cannot hide an error (tests the live click-through's retries)
+        if: success() || failure()
+        run: npm run test:retries 2>&1 | tee retry-selftest.txt; exit ${PIPESTATUS[0]}
         shell: bash
 
       - name: Summary
@@ -55,7 +84,7 @@ jobs:
         run: |
           {
             echo "## Regression tests on \`${GITHUB_SHA::7}\`"
-            for f in survey-regression.txt clickthrough.txt; do
+            for f in survey-regression.txt eco-lines.txt clickthrough.txt known-shrink.txt known-shrink-selftest.txt guardian-report-selftest.txt retry-selftest.txt; do
               [ -f "$f" ] || continue
               echo "### $f"; echo '```'; cat "$f"; echo '```'
             done
@@ -68,6 +97,68 @@ jobs:
           name: regression-results
           path: |
             tools/survey-regression/survey-regression.txt
+            tools/survey-regression/eco-lines.txt
             tools/survey-regression/clickthrough.txt
+            tools/survey-regression/known-shrink.txt
+            tools/survey-regression/known-shrink-selftest.txt
+            tools/survey-regression/guardian-report-selftest.txt
+            tools/survey-regression/retry-selftest.txt
             tools/survey-regression/out/
+          if-no-files-found: ignore
+
+  browsers:
+    name: Click-through ${{ matrix.browser }} ${{ matrix.viewport }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { browser: chromium, viewport: mobile }
+          - { browser: firefox, viewport: desktop }
+          - { browser: webkit, viewport: desktop }
+          - { browser: webkit, viewport: mobile }
+    defaults:
+      run:
+        working-directory: tools/survey-regression
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/survey-regression/package-lock.json
+
+      - run: npm ci
+
+      # If the browser cannot be installed, the next step reports NOT TESTED (not PASS)
+      - name: Install ${{ matrix.browser }}
+        continue-on-error: true
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Browser click-through, ${{ matrix.browser }} ${{ matrix.viewport }} (offline)
+        run: |
+          mkdir -p out
+          node clickthrough.js ../../index.html --browser ${{ matrix.browser }} --viewport ${{ matrix.viewport }} \
+            --report out/report.json --shots out/screens --trace 2>&1 | tee out/clickthrough.txt
+          code=${PIPESTATUS[0]}
+          if [ "$code" = 3 ]; then echo "::error title=NOT TESTED::${{ matrix.browser }} ${{ matrix.viewport }} could not be started; nothing was tested"; fi
+          exit $code
+        shell: bash
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Click-through ${{ matrix.browser }} ${{ matrix.viewport }} on \`${GITHUB_SHA::7}\`"
+            echo '```'; cat out/clickthrough.txt 2>/dev/null || echo 'NOT TESTED: the click-through did not start'; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        shell: bash
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: clickthrough-${{ matrix.browser }}-${{ matrix.viewport }}
+          path: tools/survey-regression/out/
           if-no-files-found: ignore
