@@ -1,22 +1,12 @@
 {
- "about": "Every Results card the survey can show, keyed \"ECO|side\": its name, Notable GM pool, source line, and the ply and position at which the line first enters its ECO code in lichess-org/chess-openings (commit a6189a3). Written by node results_identity.js --update --ref <dir>; checked by npm run test:results-identity. \"known\" lists lines that never enter their own code, or enter it only after move 10; it may only shrink.",
+ "about": "Every Results card the survey can show, keyed \"ECO|side\": its name, Notable GM pool, source line, and the ply and position at which the line first enters its ECO code in lichess-org/chess-openings (commit a6189a3). Written by node results_identity.js --update --ref <dir>; checked by npm run test:results-identity. \"known\" lists lines that never enter their own code; it may only shrink.",
  "known": [
   "A55|black: line never enters A55 in the reference",
-  "A64|white: line enters A64 only at ply 22, after move 10",
   "A70|black: line never enters A70 in the reference",
-  "A79|black: line enters A79 only at ply 21, after move 10",
-  "B69|white: line enters B69 only at ply 21, after move 10",
   "B79|white: line never enters B79 in the reference",
-  "C98|black: line enters C98 only at ply 24, after move 10",
-  "C99|white: line enters C99 only at ply 25, after move 10",
-  "D49|black: line enters D49 only at ply 21, after move 10",
-  "D68|black: line enters D68 only at ply 24, after move 10",
-  "D69|black: line enters D69 only at ply 28, after move 10",
   "D77|black: line never enters D77 in the reference",
   "D78|black: line never enters D78 in the reference",
   "D87|white: line never enters D87 in the reference",
-  "D88|white: line enters D88 only at ply 21, after move 10",
-  "D89|white: line enters D89 only at ply 26, after move 10",
   "E77|white: line never enters E77 in the reference"
  ],
  "cards": {

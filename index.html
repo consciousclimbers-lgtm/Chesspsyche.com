@@ -3710,10 +3710,17 @@ function pickEcoCode(archKey, side, advance) {
 
 // The Results board shows up to ten full moves (20 plies) of the card's line, never more than the line has
 const DEMO_MAX_PLIES = 20;
-// Honest note under the board when the line is shorter than ten full moves; '' when it is complete
-function demoLineNote(plies) {
-    if (plies >= DEMO_MAX_PLIES) return '';
-    return `This line shows ${plies} of ${DEMO_MAX_PLIES} half-moves (to move ${Math.ceil(plies / 2)}). A verified line to move 10 is not in our data yet.`;
+// Cards ("ECO|side") whose line first reaches its named ECO position after the 20 plies shown: the half-move where it does
+// (lichess-org/chess-openings a6189a3; checked by tools/survey-regression/results_identity.js)
+const DEMO_NAMED_AFTER_CAP = {
+    'A64|white': 22, 'A79|black': 21, 'B69|white': 21, 'C98|black': 24, 'C99|white': 25,
+    'D49|black': 21, 'D68|black': 24, 'D69|black': 28, 'D88|white': 21, 'D89|white': 26
+};
+// Honest note under the board: a line shorter than ten full moves, or a named position that comes after them; '' otherwise
+function demoLineNote(plies, namedAtPly) {
+    if (plies < DEMO_MAX_PLIES) return `This line shows ${plies} of ${DEMO_MAX_PLIES} half-moves (to move ${Math.ceil(plies / 2)}). A verified line to move 10 is not in our data yet.`;
+    if (namedAtPly > DEMO_MAX_PLIES) return `The board is capped at ten full moves. The named opening position comes later in this line, at half-move ${namedAtPly} (move ${Math.ceil(namedAtPly / 2)}).`;
+    return '';
 }
 
 function ecoToSystem(code, side) {
@@ -4275,7 +4282,7 @@ function initResultsBoard(arch) {
     activeDemoMoves = (systemObj.variations[0].moves || []).slice(0, DEMO_MAX_PLIES);
     document.getElementById('results-system-title').textContent = `Opening: ${systemObj.name} (${resultsRepertoireSide.toUpperCase()})`;
     const lineNote = document.getElementById('results-line-note');
-    if (lineNote) { lineNote.textContent = demoLineNote(activeDemoMoves.length); lineNote.classList.toggle('hidden', !lineNote.textContent); }
+    if (lineNote) { lineNote.textContent = demoLineNote(activeDemoMoves.length, DEMO_NAMED_AFTER_CAP[`${systemObj.eco}|${resultsRepertoireSide}`]); lineNote.classList.toggle('hidden', !lineNote.textContent); }
     document.getElementById('btn-practice-toggle').onclick = startPracticeMode;
     document.getElementById('btn-practice-toggle').textContent = 'Practice This Line';
     // Clear blurb on reset
