@@ -105,7 +105,7 @@ const CASES = [
   { name: 'white-D85', style: 'patientGrinder', level: 'advanced', strong: true, side: 'white', white: 'D85', black: 'B82', gm: { white: null, black: null } },
   { name: 'white-D00', style: 'patientGrinder', level: 'none', strong: false, side: 'white', white: 'D00', black: 'C42', gm: { white: null, black: 'Yu Yangyi' } },
   { name: 'white-E06', style: 'flexibleChameleon', level: 'advanced', strong: true, side: 'white', white: 'E06', black: 'A16', gm: { white: 'Ding Liren', black: null },
-    retake: { white: 'E07', black: 'D71', gm: { white: 'Aleksandra Goryachkina', black: null } } },
+    retake: { white: 'E07', black: 'D80', gm: { white: 'Aleksandra Goryachkina', black: null } } },
   // Reported cards (issue #24). black-B82 takes the same survey as white-D85, choosing Black on the board.
   { name: 'black-B82', style: 'patientGrinder', level: 'advanced', strong: true, side: 'black', white: 'D85', black: 'B82', gm: { white: null, black: null } },
   { name: 'black-A40', style: 'strategicArchitect', level: 'none', strong: false, side: 'black', white: 'D06', black: 'A40', gm: { white: 'Levon Aronian', black: null } },

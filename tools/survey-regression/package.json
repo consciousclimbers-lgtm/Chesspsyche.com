@@ -14,6 +14,7 @@
     "clickthrough:strict-cards": "node clickthrough.js ../../index.html --strict-cards",
     "test:guardian-report": "node guardian_report.test.js",
     "test:retries": "node clickthrough_retry.test.js",
+    "test:eco-lines": "node eco_lines.test.js ../../index.html",
     "clickthrough:mobile": "node clickthrough.js ../../index.html --viewport mobile"
   },
   "dependencies": {
