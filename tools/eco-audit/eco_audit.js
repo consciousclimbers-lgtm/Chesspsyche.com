@@ -56,14 +56,15 @@ const lineOf = idx => src.slice(0, idx).split('\n').length;
 function extractLiteral(name) {
   const start = src.indexOf(`const ${name} =`);
   if (start < 0) die(`const ${name} not found in ${htmlPath}`);
-  const open = src.indexOf('{', start);
+  const eq = src.indexOf('=', start);
+  const open = [src.indexOf('{', eq), src.indexOf('[', eq)].filter(x => x >= 0).reduce((a, b) => Math.min(a, b));
   let depth = 0, i = open, q = null;
   for (; i < src.length; i++) {
     const c = src[i];
     if (q) { if (c === '\\') i++; else if (c === q) q = null; continue; }
     if (c === '"' || c === "'" || c === '`') q = c;
-    else if (c === '{') depth++;
-    else if (c === '}' && --depth === 0) break;
+    else if (c === '{' || c === '[') depth++;
+    else if ((c === '}' || c === ']') && --depth === 0) break;
   }
   try { return { value: vm.runInNewContext('(' + src.slice(open, i + 1) + ')'), line: lineOf(start) }; } catch (e) { die(`const ${name} could not be read (${e.message})`); }
 }
@@ -71,6 +72,7 @@ const names = extractLiteral('ecoNamesMap');
 const vault = extractLiteral('ecoVaultData');
 const side = extractLiteral('ECO_SIDE');
 const archetypes = extractLiteral('archetypes');
+const gmPools = extractLiteral('NOTABLE_GM_POOLS');
 
 // Codes the survey picked in the committed regression baseline (first three surveys of every style, level and answer set)
 const picked = { white: new Set(), black: new Set() };
@@ -190,6 +192,44 @@ for (const [arch, a] of Object.entries(archetypes.value)) {
 }
 for (const [k, v] of Object.entries(slotEcos)) if (v.length > 1) add('slot', k.split('|')[0], 'duplicate slot code', 'info', `${k} is used by ${v.join(', ')}`);
 
+// ---- 3. Notable GM pools: the GM is looked up by (picked ECO code, card side), so that pair must name the opening shown ----
+// The card is the hand-written slot for that code and side if one exists, otherwise the vault entry (first 10 plies on
+// the board). The survey only picks vault codes whose ECO_SIDE is the card's side or "either".
+const poolRows = [];
+const poolKeys = {};
+const slotFor = (eco, sd) => { for (const a of Object.values(archetypes.value)) for (const s of Object.values(a.systems || {})) { const x = s[sd === 'white' ? 'whiteSystem' : 'blackSystem']; if (x && x.eco === eco) return x; } return null; };
+for (const p of gmPools.value) {
+  const verified = (p.pool || []).filter(e => e.status === 'verified').length;
+  const line = lineOf(src.indexOf(`key: ${JSON.stringify(p.key)}`));
+  for (const eco of p.codes || []) {
+    const sd = p.side;
+    (poolKeys[`${eco}|${sd}`] ||= []).push(p.key);
+    const slot = slotFor(eco, sd);
+    const v = vault.value[eco];
+    const declared = side.value[eco] || 'white';
+    const surveyCanPick = !!v && (declared === sd || declared === 'either');
+    const where = `${p.key} -> ${eco}|${sd}`;
+    const extra = { line, pool: p.key, verified };
+    let status = 'ok';
+    if (!slot && !v) { add('gm pool', eco, 'card exists', 'warn', `${where}: no vault entry or ${sd} slot has this code, so no card can show it`, extra); poolRows.push({ pool: p.key, eco, side: sd, card: 'none', status: 'no card' }); continue; }
+    if (!surveyCanPick && !slot) { add('gm pool', eco, 'reachable', 'warn', `${where}: ECO_SIDE[${eco}] = ${declared}, so the survey never picks it for a ${sd} card`, extra); status = 'unreachable'; }
+    else if (!surveyCanPick) add('gm pool', eco, 'reachable', 'info', `${where}: ECO_SIDE[${eco}] = ${declared}; only the hand-written ${sd} slot shows it`, extra);
+    const sans = slot ? (slot.variations?.[0]?.moves || []).map(m => m.move) : sanList(v.moves);
+    const shown = slot ? sans : sans.slice(0, 10);
+    const cardName = slot ? slot.name : (names.value[eco] || eco);
+    const r = play(sans, eco), rs = play(shown, eco);
+    if (r.error) { add('gm pool', eco, 'card line', 'error', `${where}: ${r.error}`, extra); status = 'line'; }
+    else if (!r.reachedAt) { add('gm pool', eco, 'card line', 'warn', `${where}: the ${slot ? 'slot' : 'vault'} line never reaches ${eco}; ends in ${endsIn(r)}`, extra); status = 'line'; }
+    else if (!r.last.some(c => c.eco === eco)) { add('gm pool', eco, 'card line', 'warn', `${where}: the line passes through ${eco}, then ends in ${endsIn(r)}`, extra); status = 'line'; }
+    else if (!rs.reachedAt) add('gm pool', eco, 'board demo', 'info', `${where}: the board shows ${shown.length} plies; ${eco} is reached at ply ${r.reachedAt}`, extra);
+    const nm = nameCheck(cardName, eco);
+    if (nm.verdict === 'differs') { add('gm pool', eco, 'card name', 'warn', `${where}: card says "${cardName}" vs reference ${refList(nm)}`, extra); if (status === 'ok') status = 'name'; }
+    if (slot && v && declared !== 'either' && declared !== sd) add('gm pool', eco, 'side label', 'warn', `${where}: the ${sd} card is right, but ECO_SIDE[${eco}] = ${declared}, so the ECO list and Arena show the other colour`, extra);
+    poolRows.push({ pool: p.key, eco, side: sd, card: slot ? 'slot' : 'vault', name: cardName, reaches: r.reachedAt ? `ply ${r.reachedAt}` : 'no', status });
+  }
+}
+for (const [k, v] of Object.entries(poolKeys)) if (v.length > 1) add('gm pool', k.split('|')[0], 'one pool per code and side', 'warn', `${k} is in ${v.join(', ')}; only the first is ever used`);
+
 // ---- Report ----
 const rank = { error: 0, warn: 1, info: 2 };
 findings.sort((a, b) => rank[a.level] - rank[b.level] || (b.surveyPick - a.surveyPick) || a.area.localeCompare(b.area) || a.eco.localeCompare(b.eco));
@@ -201,6 +241,7 @@ const totals = `${findings.length} findings: ${count(f => f.level === 'error')} 
 const head = [
   `Site: ${path.relative(process.cwd(), htmlPath) || htmlPath}; ecoNamesMap L${names.line}, ecoVaultData L${vault.line} (${Object.keys(vault.value).length} codes), ECO_SIDE L${side.line}, archetypes L${archetypes.line} (${slotRows.length} slots)`,
   `Reference: ${source.repo} at ${source.commit} (${source.license}); ${refRows} lines, ${ref.size} positions; sha256 of all five files verified`,
+  `Notable GM pools: L${gmPools.line}, ${gmPools.value.length} pools, ${poolRows.length} code|side keys, ${poolRows.filter(r => r.status === 'ok').length} with a clean card`,
   `Survey picks tagged from tools/survey-regression/expected.json: ${picked.white.size} White and ${picked.black.size} Black codes`,
   'Move counts are in plies (one ply is one side\'s move; 10 full moves = 20 plies). Classification is by position, so transpositions count.',
 ];
@@ -213,7 +254,7 @@ console.log('\nInfo:');
 for (const f of findings.filter(f => f.level === 'info')) console.log(`  [info] ${f.area} ${f.eco}${f.line ? ` L${f.line}` : ''} ${f.check}: ${f.detail}`);
 console.log('\nThis audit reports only; it does not fail on findings.');
 
-if (opt('--json')) fs.writeFileSync(opt('--json'), JSON.stringify({ source, html: htmlPath, counts: byCheck, findings, vault: vaultRows, slots: slotRows }, null, 2) + '\n');
+if (opt('--json')) fs.writeFileSync(opt('--json'), JSON.stringify({ source, html: htmlPath, counts: byCheck, findings, vault: vaultRows, slots: slotRows, gmPools: poolRows }, null, 2) + '\n');
 if (opt('--markdown')) {
   const cell = s => String(s).replace(/\|/g, '\\|');
   const md = ['## ECO audit (report only)', '', ...head.map(h => `- ${h}`), '', `**${totals}.**`, '',
