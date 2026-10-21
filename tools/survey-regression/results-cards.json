@@ -143,7 +143,7 @@
    "ecoName": "English Opening: Caro-Kann Defensive System"
   },
   "A12|white": {
-   "name": "English Opening (Hedgehog System)",
+   "name": "Réti Opening (Anglo-Slav, Bogoljubow Variation)",
    "snapshot": true,
    "handWritten": false,
    "pool": null,
@@ -385,7 +385,7 @@
    "ecoName": "Benoni Defense: Old Benoni"
   },
   "A45|white": {
-   "name": "Queen's Pawn Game (Trompowsky Attack)",
+   "name": "Indian Defense",
    "snapshot": true,
    "handWritten": false,
    "pool": null,
@@ -396,7 +396,7 @@
    "ecoName": "Indian Defense"
   },
   "A46|white": {
-   "name": "Queen's Pawn (Indian Defense, Torre Attack)",
+   "name": "Indian Defense (Knights Variation)",
    "snapshot": false,
    "handWritten": false,
    "pool": null,
@@ -814,7 +814,7 @@
    "ecoName": "Dutch Defense: Staunton Gambit"
   },
   "A84|black": {
-   "name": "Dutch Defense (Queens Bishop Development)",
+   "name": "Dutch Defense (2.c4)",
    "snapshot": true,
    "handWritten": false,
    "pool": "Dutch Defence|black",
@@ -1562,7 +1562,7 @@
    "ecoName": "Sicilian Defense: Moscow Variation"
   },
   "B52|white": {
-   "name": "Sicilian Defense (Rossolimo, 2...d6)",
+   "name": "Sicilian Defense (Moscow Variation, 3...Bd7)",
    "snapshot": true,
    "handWritten": false,
    "pool": null,
@@ -1925,7 +1925,7 @@
    "ecoName": "Sicilian Defense: Scheveningen Variation, Classical Variation"
   },
   "B85|white": {
-   "name": "Sicilian Defense (Scheveningen, Classical, English Attack)",
+   "name": "Sicilian Defense (Scheveningen, Classical, Paulsen Variation)",
    "snapshot": false,
    "handWritten": false,
    "pool": null,
@@ -2563,7 +2563,7 @@
    "ecoName": "Petrov's Defense: Modern Attack"
   },
   "C44|white": {
-   "name": "King's Pawn Game (Ponziani Opening)",
+   "name": "Scotch Game (3.d4)",
    "snapshot": true,
    "handWritten": false,
    "pool": null,
@@ -3201,7 +3201,7 @@
    "ecoName": "Richter-Veresov Attack"
   },
   "D02|white": {
-   "name": "Queen's Pawn Game (Colle System)",
+   "name": "Queen's Pawn Game (Zukertort Variation)",
    "snapshot": true,
    "handWritten": false,
    "pool": null,
@@ -4730,7 +4730,7 @@
    "ecoName": "Nimzo-Indian Defense: Rubinstein System"
   },
   "E42|black": {
-   "name": "Nimzo-Indian Defense (4.e3 c5, 5.Ne2 Panov Variation)",
+   "name": "Nimzo-Indian Defense (4.e3 c5 5.Ne2, Rubinstein Variation)",
    "snapshot": false,
    "handWritten": false,
    "pool": "Nimzo-Indian Defence|black",
