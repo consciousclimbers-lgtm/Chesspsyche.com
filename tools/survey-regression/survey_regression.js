@@ -119,11 +119,11 @@ function protectedHash(html) {
     }
     html = html.replace(changed, original);
   }
-  const lines = html.split('\\n');
+  const lines = html.split('\n');
   const start = lines.findIndex(l => l.startsWith('const ecoNamesMap = {'));
   const end = lines.findIndex(l => l.startsWith('// ---- Picks one White and one Black opening'));
   if (start < 0 || end < 0 || end < start) throw new Error('could not find the opening-data block markers');
-  const rest = lines.slice(0, start).concat(lines.slice(end)).join('\\n');
+  const rest = lines.slice(0, start).concat(lines.slice(end)).join('\n');
   return crypto.createHash('sha256').update(rest).digest('hex');
 }
 
