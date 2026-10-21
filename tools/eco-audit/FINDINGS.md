@@ -40,12 +40,12 @@ npm run audit        # writes eco-audit.txt (console), eco-audit.json and eco-au
 Findings on codes the survey picks in `tools/survey-regression/expected.json` are marked "survey pick" and listed first.
 
 ## Result on `3e27fc5`
-**871 findings: 0 errors, 17 warnings, 854 info.** 7 of the warnings are on survey-picked codes.
+**872 findings: 0 errors, 18 warnings, 854 info.** 7 of the warnings are on survey-picked codes.
 No move is illegal, and no from/to square is wrong. PR #30 and #31 fixed every earlier error and every line that
 stopped before its code (D71, E00 and A69, B56, C19, C77, C83, D56, D57, D68, D99, E19). D55/D56 are no longer duplicates.
 
-The 17 warnings fall into the six groups below. Each warning appears once, under the group it belongs to; the
-Notable GM ones are also counted in the GM section.
+14 of the 18 warnings are about the opening data and fall into the six groups below. The other 4 are Notable GM
+pool findings, in the GM section; 3 of those repeat a data problem from the groups (E44, E48, A04).
 
 ### 1. Confirmed code/line mismatches (4)
 Each line passes through its own code and then plays on into the next code, so the card shows the later opening.
@@ -56,26 +56,32 @@ The site's own name for each code agrees with the reference, so the fix is to st
 | B62 | vault L2847 | B63 "Richter-Rauzer, Classical" after 7.Qd2 Be7 | `1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 Nc6 6. Bg5 e6` (12 plies) | none |
 | D60 | vault L3045 | D63 "Orthodox Defense, Main Line" after 7.Rc1 | `1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 Nbd7` (12 plies) | none |
 | E44 | vault L3129, **Nimzo-Indian Black GM pool** | E45 "St. Petersburg, Fischer" after 5...Ba6 | `1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 b6 5. Ne2` (9 plies) | none |
+
+"Survey effect" is for the first three surveys of every combination (`expected.json`). Because candidate lists sort
+shorter lines first, a trimmed line can move earlier in the retake order after the third survey.
 | E48 | vault L3133, **Nimzo-Indian Black GM pool** | E49 "Botvinnik System" after 6.a3 Bxc3+ 7.bxc3 | `1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 O-O 5. Bd3 d5` (10 plies) | **changes one pick** (below) |
 
 Reference lines: d.tsv D60 (by transposition), b.tsv B62, e.tsv E44 and E48 at `a6189a3`.
 
 ### 2. Duplicates (1 pair)
 - **E44 and E45** have the same moves (`... 4. e3 b6 5. Ne2 Ba6`), which is E45. The E44 fix above ends the duplicate;
-  E45 itself is correct.
+  E45 itself is correct. E45's commentary has 9 entries for 10 plies and ends "Ne2 — Nimzo Ne2 b6", which suggests the
+  two entries' data were swapped at some point; the fix should rewrite E44's commentary, not copy E45's.
 
 ### 3. Side and colour mapping (4)
 A hand-written results slot shows the opening for one colour, but `ECO_SIDE` gives the other, so the ECO list and
 Arena say "You play as" the other colour. The card's Notable GM lookup uses the slot's colour and is not affected.
 
-| ECO | Slot | Card | `ECO_SIDE` | Survey pick |
+| ECO | Slot | Slot colour | `ECO_SIDE` | The survey picks it as |
 |---|---|---|---|---|
-| B12 | `patientGrinder.intermediate` | Black | white | yes |
-| B40 | `aggressiveVanguard.advancedGm` | White | black | yes |
-| D85 | `aggressiveVanguard.advancedGm` | Black | white | yes |
-| B80 | `tacticalFirebrand.advancedGm` | White | black | no |
+| B12 | `patientGrinder.intermediate` | Black | white | White (vault card) |
+| B40 | `aggressiveVanguard.advancedGm` | White | black | Black (vault card) |
+| D85 | `aggressiveVanguard.advancedGm` | Black | white | White (vault card) |
+| B80 | `tacticalFirebrand.advancedGm` | White | black | Black (vault card) |
 
-This is a product decision (for example, `either`), not a reference error.
+The survey only picks a code for its `ECO_SIDE` colour, so these slots of the other colour appear only on the safety-net
+path (`getScaledOpeningsForUser`, used if card building fails) and in the Labs GM drill. That makes them low impact.
+Changing it is a product decision, not a reference error.
 
 ### 4. Short or truncated lines
 - **No vault line stops before its code any more.**
@@ -88,27 +94,29 @@ This is a product decision (for example, `either`), not a reference error.
 | A04 | "Réti Opening" (also the Réti White GM pool) | "Zukertort Opening" | **Editorial.** Lichess names 1.Nf3 lines Zukertort; Réti is the usual ECO name. |
 | B06 | "Modern Defense (Robatsch Defense)" | "Modern Defense" | **Editorial.** Robatsch is a traditional alias. |
 | A12 | "English Opening (Hedgehog System)" | "Réti Opening: Anglo-Slav Variation" | **Real.** The line `1. c4 c6 2. Nf3 d5 3. b3` is not a Hedgehog. |
-| E10 | "Queen's pawn game" | "Indian Defense" / "Blumenfeld Countergambit" | **Real but minor.** The line `1. d4 Nf6 2. c4 e6 3. Nf3` is an Indian Defense. |
+| E10 | "Queen's pawn game" | "Indian Defense" / "Blumenfeld Countergambit" | **Editorial.** "Queen's pawn game" is the traditional ECO name for E10; the line `1. d4 Nf6 2. c4 e6 3. Nf3` is an Indian Defense. |
 
 248 more names partly match (info). Most are wording differences ("Nimzowitsch" vs "Nimzo", "Mar del Plata" vs
 "Orthodox Variation, Modern System").
 
 ### 6. Possible false positives and editorial choices
-- A04 and B06 names (above).
+- A04, B06 and E10 names (above).
 - Side heuristic (216 info): it only says whose move defines the code in the reference, not who usually chooses it.
 - Commentary count (133 info): the comment array is shorter or longer than the move list. This affects the move notes
   only, not the line.
 
 ## Notable GM pools: code and side behind each lookup
 The Results card looks up its GM by the picked ECO code and the card's side, so that pair must name the opening shown.
-All 148 code and side keys in the 19 pools resolve to a card, and the survey can pick every one for its side. No code
-and side is in two pools. **145 are clean.** The other 3:
+All 148 code and side keys in the 19 pools resolve to a card, and no code and side is in two pools. The audit simulates
+which codes the survey can pick for each side (`ecoCandidatesFor` and `pickEcoCode`; 190 White and 297 Black codes, the
+same counts as the regression suite's every-reachable-card sweep). **144 keys are clean.** The other 4:
 
 | Key | Card | Problem | Fix |
 |---|---|---|---|
 | E44 black (Nimzo-Indian) | vault | the line ends in E45 | group 1 |
 | E48 black (Nimzo-Indian) | vault | the line ends in E49 | group 1 |
 | A04 white (Réti) | vault | name differs from lichess | none needed (editorial) |
+| D34 black (QGD) | vault | never used: `ECO_SIDE.D34 = either`, and the survey only uses `either` codes when a style has no code for that side, which never happens | none needed; the key is harmless |
 
 The GM shown is from the right family in all three cases (E44, E45, E48 and E49 are all in the Nimzo-Indian pool),
 but the board and the code disagree for E44 and E48. 51 pool keys have a board that stops before the code (info).
@@ -136,5 +144,5 @@ Vasyl Ivanchuk to Alexandra Kosteniuk. That needs `npm run update` and your revi
 ## Proposed next steps (each needs the owner's approval)
 1. Approve Batch A, then decide on Batch B.
 2. Decide how to label the four slots whose colour differs from `ECO_SIDE` (group 3).
-3. Decide whether to rename A12 and E10.
+3. Decide whether to rename A12 (and E10, which is only editorial).
 4. Only after the review, consider a committed baseline so that new findings stand out.

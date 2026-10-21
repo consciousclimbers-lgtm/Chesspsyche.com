@@ -73,6 +73,10 @@ const vault = extractLiteral('ecoVaultData');
 const side = extractLiteral('ECO_SIDE');
 const archetypes = extractLiteral('archetypes');
 const gmPools = extractLiteral('NOTABLE_GM_POOLS');
+const profile = extractLiteral('ECO_PROFILE').value;
+const archOrder = extractLiteral('ARCHETYPE_ORDER').value;
+const bands = extractLiteral('LEVEL_BANDS').value;
+const styleFallback = extractLiteral('STYLE_FALLBACK').value;
 
 // Codes the survey picked in the committed regression baseline (first three surveys of every style, level and answer set)
 const picked = { white: new Set(), black: new Set() };
@@ -195,6 +199,26 @@ for (const [k, v] of Object.entries(slotEcos)) if (v.length > 1) add('slot', k.s
 // ---- 3. Notable GM pools: the GM is looked up by (picked ECO code, card side), so that pair must name the opening shown ----
 // The card is the hand-written slot for that code and side if one exists, otherwise the vault entry (first 10 plies on
 // the board). The survey only picks vault codes whose ECO_SIDE is the card's side or "either".
+// Codes the survey can ever pick for a side, mirroring ecoCandidatesFor and pickEcoCode in index.html: for each
+// style, level band and "strong" stretch, the first non-empty list of the style and its fallbacks, side-only codes
+// first and "either" codes only when there are none; retakes walk the whole list, so every listed code is reachable.
+function pickableCodes(sd) {
+  const out = new Set();
+  const candidates = (arch, lo, hi) => {
+    for (const st of [arch, ...(styleFallback[arch] || [])]) for (const sides of [[sd], [sd, 'either']]) {
+      const list = Object.keys(vault.value).filter(c => profile[c] && archOrder[profile[c][0]] === st && sides.includes(side.value[c] || 'white') && profile[c][1] >= lo && profile[c][1] <= hi);
+      if (list.length) return list;
+    }
+    return [];
+  };
+  for (const arch of Object.keys(archetypes.value)) for (const band of Object.values(bands)) for (const strong of [0, 1]) {
+    let list = candidates(arch, band[0], Math.min(5, band[1] + strong));
+    if (!list.length) list = candidates(arch, 1, 5);
+    list.forEach(c => out.add(c));
+  }
+  return out;
+}
+const pickable = { white: pickableCodes('white'), black: pickableCodes('black') };
 const poolRows = [];
 const poolKeys = {};
 const slotFor = (eco, sd) => { for (const a of Object.values(archetypes.value)) for (const s of Object.values(a.systems || {})) { const x = s[sd === 'white' ? 'whiteSystem' : 'blackSystem']; if (x && x.eco === eco) return x; } return null; };
@@ -207,13 +231,13 @@ for (const p of gmPools.value) {
     const slot = slotFor(eco, sd);
     const v = vault.value[eco];
     const declared = side.value[eco] || 'white';
-    const surveyCanPick = !!v && (declared === sd || declared === 'either');
+    const surveyCanPick = pickable[sd].has(eco);
     const where = `${p.key} -> ${eco}|${sd}`;
     const extra = { line, pool: p.key, verified };
     let status = 'ok';
     if (!slot && !v) { add('gm pool', eco, 'card exists', 'warn', `${where}: no vault entry or ${sd} slot has this code, so no card can show it`, extra); poolRows.push({ pool: p.key, eco, side: sd, card: 'none', status: 'no card' }); continue; }
-    if (!surveyCanPick && !slot) { add('gm pool', eco, 'reachable', 'warn', `${where}: ECO_SIDE[${eco}] = ${declared}, so the survey never picks it for a ${sd} card`, extra); status = 'unreachable'; }
-    else if (!surveyCanPick) add('gm pool', eco, 'reachable', 'info', `${where}: ECO_SIDE[${eco}] = ${declared}; only the hand-written ${sd} slot shows it`, extra);
+    if (!surveyCanPick && !slot) { add('gm pool', eco, 'reachable', 'warn', `${where}: the survey never picks ${eco} for a ${sd} card (ECO_SIDE ${declared}${profile[eco] ? '' : ', no ECO_PROFILE entry'}), so this key is never used`, extra); status = 'unreachable'; }
+    else if (!surveyCanPick) add('gm pool', eco, 'reachable', 'info', `${where}: the survey never picks ${eco} for ${sd}; only the hand-written ${sd} slot on the safety-net path shows it`, extra);
     const sans = slot ? (slot.variations?.[0]?.moves || []).map(m => m.move) : sanList(v.moves);
     const shown = slot ? sans : sans.slice(0, 10);
     const cardName = slot ? slot.name : (names.value[eco] || eco);
@@ -241,6 +265,7 @@ const totals = `${findings.length} findings: ${count(f => f.level === 'error')} 
 const head = [
   `Site: ${path.relative(process.cwd(), htmlPath) || htmlPath}; ecoNamesMap L${names.line}, ecoVaultData L${vault.line} (${Object.keys(vault.value).length} codes), ECO_SIDE L${side.line}, archetypes L${archetypes.line} (${slotRows.length} slots)`,
   `Reference: ${source.repo} at ${source.commit} (${source.license}); ${refRows} lines, ${ref.size} positions; sha256 of all five files verified`,
+  `Survey-pickable codes (simulated): ${pickable.white.size} White, ${pickable.black.size} Black`,
   `Notable GM pools: L${gmPools.line}, ${gmPools.value.length} pools, ${poolRows.length} code|side keys, ${poolRows.filter(r => r.status === 'ok').length} with a clean card`,
   `Survey picks tagged from tools/survey-regression/expected.json: ${picked.white.size} White and ${picked.black.size} Black codes`,
   'Move counts are in plies (one ply is one side\'s move; 10 full moves = 20 plies). Classification is by position, so transpositions count.',
