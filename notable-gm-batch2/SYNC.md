@@ -90,13 +90,28 @@ These records already list the opening, so adding them would need no outside res
 - **Semi-Slav, Black:** Boris Gelfand, Ray Robson, Robert Hovhannisyan, Mariya Muzychuk, Vaclav Finek, Miguel Illescas Cordoba.
 - **No record label exists** for the Berlin, Marshall, Winawer, Nimzowitsch-Larsen, Grünfeld Exchange or Two Knights. These need targeted evidence or stay empty.
 
-## Coverage
-The count covers reachable Results cards whose (code, side) is in a pool with at least one verified entry. It is taken from `results-cards.json`, which lists all 487 cards the survey can reach.
+## Coverage: two different counts
+The PR reports two numbers that measure different things.
 
-| | Cards with a GM |
-|---|---|
-| Main 3949b7d | 147 of 487 |
-| This draft | 185 of 487 (+38: 10 Najdorf, 6 Dragon, 22 Grünfeld) |
-| Earlier draft 9ee6f77, for reference | 226 of 487, counted on base 3e27fc5 |
+1. **Reachable cards: 147 → 185 of 487 (+38).** These are the distinct Results cards (ECO code and side) that the survey can ever show. `results-cards.json` lists them: every style, level and answer combination, retaken until its list of openings runs out. A card counts as covered if its (code, side) is in a pool with at least one verified entry. The +38 are every code in the three pools (10 Najdorf, 6 Dragon, 22 Grünfeld), because each of them is reachable. This count measures breadth. It says nothing about how often a card appears.
+2. **Snapshot slots: 188 → 196 of 360 (+8).** `gm-baseline.json` records the GM shown on the White and Black card for 60 combinations over their first 3 surveys (60 × 3 × 2 = 360 slots). 8 slots that showed no GM now show one: Topalov ×2, Nepomniachtchi ×2, Gawain Jones ×2, Fischer and Vachier-Lagrave. No slot that already showed a GM changed. This count measures what users see in their first few surveys. (An earlier handoff said 9; the correct number is 8.)
 
-`gm-baseline.json`: 9 card slots that showed no GM now show one. No slot that already showed a GM changed.
+| | Reachable cards with a GM | Snapshot slots with a GM |
+|---|---|---|
+| Main | 147 of 487 | 188 of 360 |
+| This PR | 185 of 487 | 196 of 360 |
+| Earlier draft 9ee6f77, for reference | 226 of 487 (base 3e27fc5) | not recounted |
+
+## Why each pool covers these ECO codes
+A pool lists every code of its opening family that the site's opening vault assigns to the pool's side. `npm test` rejects a code that is on the other side or in two pools. Codes the vault assigns to White are left out, because a Black pool can never be shown on them.
+- **Sicilian Najdorf, Black: B90–B99.** All ten codes are Najdorf lines in the site's names, and all are Black in the vault.
+- **Sicilian Dragon, Black: B70–B74 and B77.**
+  - B75, B76, B78 and B79 are Yugoslav Attack lines that the vault assigns to White.
+  - B77 (Yugoslav Attack, 9.Bc4) is assigned to Black, so it stays in.
+- **Grünfeld Defence, Black: D71–D80, D82–D84 and D90–D98.**
+  - Left out as White in the vault:
+    - D70 (Neo-Grünfeld with 3.f3);
+    - D81 (Smyslov Variation);
+    - D85–D89 (Exchange Variation, which the dropped White-side Grünfeld Exchange pool covered);
+    - D99 (Russian Variation, Smyslov).
+  - D71–D79 are mostly Neo-Grünfeld lines in the site's names. They are included because the GM records' label is just "Grunfeld", with no split by variation; ChatGPT may want to check whether that is too broad.
