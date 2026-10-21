@@ -7,20 +7,35 @@
 
 ## Status after the 2026-10-21 re-check (Claude)
 
-- **41 verified, 6 pending, 0 removed** of the 47 entries. A `pending` entry stays in `index.html` but is never shown (only `status: "verified"` entries are eligible).
-- **Pending, because the evidence is one or two games, broad repertoire, the wrong side or not found:**
-  - Anand (Najdorf, Black);
-  - Movsesian (Scheveningen, Black);
-  - Shirov (Classical Sicilian, Black);
-  - Nepomniachtchi (Berlin, Black);
-  - Morozevich (French Winawer, Black);
-  - Carlsen (English, White).
-- **11 cited sources were replaced** with a URL whose search text names the GM with that system and side.
-- **Evidence and limits:**
-  - The per-entry evidence is in [RECHECK.md](RECHECK.md). It is search-result text; the pages were **not opened**, because the sandbox cannot reach chess sites.
-  - **No PGN was replayed.**
-  - The bar used is the owner's: a documented source for the specific system and side, not broad repertoire or one game.
-- **Original selection record:** [SELECTION.md](SELECTION.md) covers the families, the six-pool cap, the two-name family threshold, and every candidate left out with its reason.
+**Result:** 36 of the 47 entries are verified and 11 are pending. Two families (Sicilian Scheveningen and Sicilian Classical) were left with no verified GM, so their pools are removed. That leaves **13 Batch 2 pools**.
+
+A `pending` entry stays in `index.html` but is never shown: only `status: "verified"` entries are eligible.
+
+**The bar.** This is the owner's bar: a documented source for the specific system and side, not broad repertoire or one game.
+
+**Evidence.** The per-entry evidence is in [RECHECK.md](RECHECK.md). It comes from two independent search passes, the second by a reviewer.
+- It is search-result text only. The pages were **not opened**, because the sandbox cannot reach chess sites.
+- **No PGN was replayed.**
+
+**Pending entries and why:**
+
+| Family | Pending GM | Why |
+|---|---|---|
+| Najdorf, Black | Anand | One game; database rows show him as White |
+| Grünfeld, Black | Van Wely | An old wiki mirror only; elsewhere called his secondary choice |
+| Berlin, Black | Nepomniachtchi | One or two games |
+| French Winawer, Black | Morozevich | Not found; his French is the Classical or 3...Be7 |
+| English, White | Carlsen | Broad repertoire only |
+| Scheveningen, Black (pool removed) | Topalov | A name in a list only; mainly a Najdorf player |
+| Scheveningen, Black (pool removed) | Gelfand | A name in a list only; no games found |
+| Scheveningen, Black (pool removed) | Hou Yifan | Repertoire statistics only |
+| Scheveningen, Black (pool removed) | Movsesian | A name in a list; the only game found has him as White |
+| Classical Sicilian, Black (pool removed) | Anand | The quote is about the Richter-Rauzer (B6x), not B56 to B59 |
+| Classical Sicilian, Black (pool removed) | Shirov | A name in a list; his Sicilian is the Kalashnikov |
+
+**Sources replaced.** 11 cited sources were replaced with a URL whose search text names the GM with that system and side.
+
+**Original selection record.** [SELECTION.md](SELECTION.md) covers the families, the six-pool cap, the two-name family threshold, and every candidate left out with its reason. It describes the original 15-pool proposal.
 
 ## Why this file exists
 
