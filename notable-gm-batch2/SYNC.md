@@ -108,10 +108,11 @@ A pool lists every code of its opening family that the site's opening vault assi
 - **Sicilian Dragon, Black: B70–B74 and B77.**
   - B75, B76, B78 and B79 are Yugoslav Attack lines that the vault assigns to White.
   - B77 (Yugoslav Attack, 9.Bc4) is assigned to Black, so it stays in.
-- **Grünfeld Defence, Black: D71–D80, D82–D84 and D90–D98.**
+- **Grünfeld GM pool, Black: D80, D82–D84 and D90–D98 only.**
   - Left out as White in the vault:
     - D70 (Neo-Grünfeld with 3.f3);
     - D81 (Smyslov Variation);
     - D85–D89 (Exchange Variation, which the dropped White-side Grünfeld Exchange pool covered);
     - D99 (Russian Variation, Smyslov).
-  - D71–D79 are mostly Neo-Grünfeld lines in the site's names. They are included because the GM records' label is just "Grunfeld", with no split by variation; ChatGPT may want to check whether that is too broad.
+  - D71–D79 are excluded from the GM pool because they are generally classified as Neo-Grünfeld, and the generic GM-record label does not establish opening-specific evidence.
+  - The D71–D79 opening cards remain in the vault and survey-result matching; only their GM association is withheld.
