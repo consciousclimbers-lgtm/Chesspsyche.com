@@ -6729,11 +6729,19 @@ function filterOpeningEcoPicker() {
     renderOpeningEcoList(q);
 }
 
+function openingMovesToArray(moves) {
+    if (Array.isArray(moves)) return moves;
+    if (typeof moves !== 'string') return [];
+    // ECO vault entries store numbered SAN text (for example "1. e4 e5 2. Nf3").
+    // Strip move-number tokens before passing SAN moves to the chess engine.
+    return moves.replace(/\d+\.(?:\.\.)?/g, ' ').trim().split(/\s+/).filter(Boolean);
+}
+
 function renderOpeningEcoList(query) {
     const list = document.getElementById('labs-opening-eco-list'); if (!list) return;
     const entries = Object.entries(ECO_OPENINGS)
         .filter(([code, d]) => {
-            const ms = d.moves; if (!ms || ms.length < 2) return false;
+            const ms = openingMovesToArray(d.moves); if (ms.length < 2) return false;
             if (!query) return true;
             return code.toLowerCase().includes(query) || (d.name||'').toLowerCase().includes(query);
         })
@@ -6744,7 +6752,7 @@ function renderOpeningEcoList(query) {
             class="w-full px-4 py-2.5 bg-slate800 border border-slate-700 hover:border-accentPurple/70 hover:bg-accentPurple/5 hover:shadow-[0_0_10px_rgba(168,85,247,0.2)] rounded-xl text-left transition-all group">
             <span class="text-[10px] font-bold text-accentCyan mr-2">${code}</span>
             <span class="text-xs font-bold text-slate-200 group-hover:text-accentPurple transition-colors">${d.name || code}</span>
-            <span class="text-[10px] text-slate-500 ml-2">${(d.moves||[]).slice(0,5).join(' ')}&#8230;</span>
+            <span class="text-[10px] text-slate-500 ml-2">${openingMovesToArray(d.moves).slice(0,5).join(' ')}&#8230;</span>
         </button>`).join('');
 }
 
@@ -6753,7 +6761,7 @@ function startPlayOpeningFromEco(code) {
     document.getElementById('labs-opening-eco-picker').classList.add('hidden');
     document.getElementById('labs-board-area').classList.remove('hidden');
     labsGame = createChessInstance(); labsGmMoves = []; labsGmMoveIdx = 0;
-    const moves = (entry.moves || []).slice(0, 10);
+    const moves = openingMovesToArray(entry.moves).slice(0, 10);
     moves.forEach(m => { try { labsGame.move(m, {sloppy:true}); } catch(e) {} });
     labsHighlightSqs = [];
     const prompt = document.getElementById('labs-prompt');

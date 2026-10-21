@@ -67,6 +67,9 @@ const browserName = opt('--browser') || 'chromium';
 const viewportName = opt('--viewport') || 'desktop';
 const reportPath = opt('--report') ? path.resolve(opt('--report')) : null;
 const trace = args.includes('--trace') && !!shots;
+// On pull requests, this file tests deployed main, not the candidate index.html.
+// The feature-specific picker test runs offline against PR source and live after deployment.
+const skipLabsEcoPicker = args.includes('--skip-labs-eco-picker');
 const VALUE_FLAGS = ['--shots', '--url', '--expect-sha256', '--browser', '--viewport', '--report'];
 const positional = args.filter((a, i) => !a.startsWith('--') && !VALUE_FLAGS.includes(args[i - 1]));
 const VIEWPORTS = {
@@ -379,6 +382,37 @@ async function runCase(browser, c) {
   return { ...c, answers: vec, fails, info, errors };
 }
 
+async function runLabsEcoPicker(browser) {
+  const { context, page, errors } = await openPage(browser, 'labs-eco-picker');
+  const fails = [], info = {};
+  await page.evaluate(() => switchTab('labs'));
+  await page.waitForTimeout(250);
+  await page.evaluate(() => startLabsDrill('play-opening'));
+  await page.waitForTimeout(250);
+  info.pickerHidden = await page.locator('#labs-opening-eco-picker').evaluate(el => el.classList.contains('hidden'));
+  info.optionCount = await page.locator('#labs-opening-eco-list button').count();
+  if (info.pickerHidden) fails.push('Play Your Opening did not show the ECO picker');
+  if (!info.optionCount) fails.push('ECO picker rendered no opening options');
+  if (info.optionCount) {
+    const first = page.locator('#labs-opening-eco-list button').first();
+    info.firstCode = (await first.locator('span').first().textContent()).trim();
+    await first.click();
+    await page.waitForTimeout(200);
+    info.result = await page.evaluate(() => ({
+      pickerHidden: document.getElementById('labs-opening-eco-picker').classList.contains('hidden'),
+      boardVisible: !document.getElementById('labs-board-area').classList.contains('hidden'),
+      prompt: document.getElementById('labs-prompt').textContent.trim(),
+      history: labsGame ? labsGame.history() : []
+    }));
+    if (!info.result.pickerHidden) fails.push('selecting an ECO option did not close the picker');
+    if (!info.result.boardVisible) fails.push('selecting an ECO option did not show the practice board');
+    if (!info.result.prompt.includes(info.firstCode)) fails.push('selected opening ' + info.firstCode + ' is missing from the prompt');
+    if (!info.result.history.length) fails.push('selected opening ' + info.firstCode + ' did not load any legal moves');
+    if (info.result.history.length > 10) fails.push('selected opening loaded ' + info.result.history.length + ' moves, above the 10-move cap');
+  }
+  await finish('labs-eco-picker', page, context, fails.length + errors.length > 0);
+  return { fails, info, errors };
+}
 async function runEditor(browser) {
   const { context, page, errors } = await openPage(browser, 'labs-editor');
   const fails = [], info = {};
@@ -476,6 +510,8 @@ function writeReport(status, checks, extra) {
   const browserVersion = browser.version();
   const results = [];
   for (const c of CASES) results.push(await guarded(c.name, c, () => runCase(browser, c)));
+  const ecoPicker = skipLabsEcoPicker ? { fails: [], errors: [], info: { skipped: true } }
+    : await guarded('labs-eco-picker', {}, () => runLabsEcoPicker(browser));
   const editor = await guarded('labs-editor', {}, () => runEditor(browser));
   const nav = await guarded('navigation', {}, () => runNav(browser));
   await browser.close();
@@ -504,6 +540,16 @@ function writeReport(status, checks, extra) {
     if (r.info.text) console.log(`  Summary: ${r.info.text.join('\n           ')}${r.info.knownText.length ? `\n  (listed in known-card-issues.json: ${r.info.knownText.join('; ')})` : ''}`);
     if (r.info.title) console.log(`  Board: ${r.info.title}, ${r.info.orientation}; demo ${r.info.demoLine}; ${r.info.moveCounter}`);
     for (const f of fails) console.log('  - ' + f);
+  }
+  const pFails = [...ecoPicker.fails, ...ecoPicker.errors];
+  if (skipLabsEcoPicker) {
+    console.log('\nLabs ECO picker -> SKIPPED (PR checks candidate code offline; live site is still main)');
+  } else {
+    failed += pFails.length;
+    checks.push({ name: 'labs-eco-picker', status: pFails.length ? 'FAIL' : 'PASS', fails: pFails });
+    console.log('\nLabs ECO picker -> ' + (pFails.length ? 'FAIL' : 'PASS'));
+    console.log('  first option: ' + (ecoPicker.info.firstCode || 'not reached') + '; rendered options: ' + (ecoPicker.info.optionCount ?? 0) + '; loaded moves: ' + (ecoPicker.info.result?.history?.length ?? 0));
+    for (const f of pFails) console.log('  - ' + f);
   }
   const efails = [...editor.fails, ...editor.errors];
   failed += efails.length;
