@@ -129,8 +129,10 @@ area or dependency.
 1. Each assistant works on its own branch and opens a pull request using the PR template.
 2. CI runs the regression tests automatically; findings are compared through GitHub.
 3. The proposed change, evidence and any disagreements are presented to the owner.
-4. Nothing is merged or deployed until the owner explicitly approves. Merge with **Create a merge commit**,
-   so a release can be undone with a single revert (see `RELEASE.md`).
+4. Nothing is merged or deployed until the owner explicitly approves (rule 1). Merge only the pull request
+   the owner approved, with **Squash and merge** or **Create a merge commit**, never **Rebase and merge**, so
+   the release can be reverted as a single unit: revert the squash commit, or the merge commit with `-m 1`
+   (see `RELEASE.md`).
 5. After a merge, confirm the Pages deployment and the live smoke test, and report the results.
 
 Assistants should investigate, implement, test and prepare PRs without waiting for approval, and stop
