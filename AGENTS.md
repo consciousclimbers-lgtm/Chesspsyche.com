@@ -30,9 +30,15 @@ active change per area, based on the latest `main`.
 ## Rules
 1. **No direct changes to production.** Never push to `main`, upload files to `main` in the browser, merge a
    pull request or deploy without the owner's explicit approval for that specific change.
+   Approval covers only the action and the PR it names. A reviewer's GO recommendation is not approval, and
+   approval to merge does not authorize any other deployment action (a rollback, re-running a deployment,
+   a ruleset change or another PR). Because a merge is a deployment, a request to merge says that it
+   publishes the site.
 2. **Every change goes through a pull request.** Work on a separate branch (`claude/...`, `chatgpt/...`, or,
    for browser uploads, "Create a new branch for this commit and start a pull request"). One purpose per
    branch. Keep diffs narrow, with no unrelated fixes, refactoring or reformatting.
+   Never batch changes that touch a protected area (see the impact index below). Batch only related
+   low-risk work that shares one test and rollback boundary.
 3. **Protect the working features.** Every change must keep all of these working unless the owner
    explicitly approves changing one:
    1. existing website layout and navigation;
@@ -57,15 +63,28 @@ active change per area, based on the latest `main`.
    the exact commands and results in the PR, and ask the other assistant for an independent review.
    Label every check PASS, FAIL or NOT RUN. Never claim a test passed unless it was run, and never claim
    live-site, mobile or cross-browser verification that was not actually done.
+   Ask for one independent review per PR, naming the exact files, behaviour, risks and checks to look at;
+   after a material change, ask for a focused re-review of what changed. An assistant's review of its own
+   work is never called independent.
 7. **Keep CI green and the baseline honest.** A PR is mergeable only when the **Regression tests** check
    passes. Never skip, disable or weaken a test to get a green check. If an owner-approved change is meant
    to alter recommendations, scoring or protected code, run `npm run update` in `tools/survey-regression`
    and commit the new `expected.json` in the same PR, so the diff shows exactly what changed.
+   CI evidence belongs to one commit: a new head SHA invalidates earlier CI results as proof for the new
+   revision, and every applicable required check must pass on that exact head SHA before the PR is called
+   ready. Analysis of unchanged files may be reused; do not rerun checks locally when complete CI on the
+   current head already covers the change. `expected.json` and the protected-code hash are integrity
+   references, not proof that behaviour is correct, and never replace the functional tests.
 8. **Report blockers instead of guessing.** If a requirement cannot be implemented or verified, say so and
    explain why rather than calling it complete.
 
 ## Risk tiers
 When the tier is unclear, use the higher one.
+The impact index below sets each area's minimum tier. The actual impact can raise the tier but never lower
+it, so a data or configuration change that can affect a protected behaviour gets that behaviour's tier.
+Changes to `AGENTS.md`, `RELEASE.md`, the PR template, the protected features list or the impact index are
+policy changes: whatever their tier, they need a full policy review (every changed rule compared with the old
+text, confirming no safeguard is weakened) and the owner's approval.
 
 | Tier | Examples | Required checks |
 |---|---|---|
@@ -75,6 +94,19 @@ When the tier is unclear, use the higher one.
 
 Stacked PRs: keep the dependency order. Before retargeting or merging a dependent PR, inspect its updated
 diff and rerun the tests.
+
+### Impact index
+The areas where a mistake does the most damage. "Protected code" is everything in `index.html` outside the
+opening-data block (from `const ecoNamesMap = {` to the survey picker comment), which the protected-code
+hash in `npm test` covers. Add a row only when a real task exposes a missing area or dependency.
+
+| Area | Where | Protected features (rule 3) | Covering checks | Minimum tier |
+|---|---|---|---|---|
+| Board | Protected code: demo and results board, pieces, board editor, move playback, evaluation bar | 5–10 | `npm test` (protected-code hash), `npm run clickthrough`, `test:results-identity` | High |
+| Scoring and survey | Protected code: survey, scoring, picker; picks and scoring in `expected.json`; opening data that changes picks | 2–4 | `npm test` (checks 1–6, 11), `npm run clickthrough` | High for code, Medium for data |
+| GM data | `NOTABLE_GM_POOLS`, GM records and `notableGm` names; `gm-baseline.json` | 4, 5 | `npm test` (checks 7–11), `test:results-identity` | Medium; High if rotation or pop-up code changes |
+| Deployment workflows | `.github/workflows/`, `CNAME`, the **Protect main** ruleset | all, through CI and the Live Guardian | **Regression tests** on the PR itself; `test:known-shrink`, `test:guardian-report`, `test:retries`; Live Guardian after deployment | High, plus policy review |
+| Labs ECO picker | Protected code: Labs opening picker | not listed; shares Labs with 8 | `npm run clickthrough` (Labs ECO picker, offline on the PR, live in the Live Guardian) | High |
 
 ## ECO repair acceptance checklist
 - [ ] Inspect the current ECO data in `index.html`.
@@ -98,3 +130,7 @@ Assistants should investigate, implement, test and prepare PRs without waiting f
 before merging, deploying or making unrelated production changes. A finished task gets one concise report:
 what was fixed, files changed, tests passed or failed, whether the live site was checked, remaining risks,
 and the recommended next action.
+The report (one handoff per PR or task) also gives the raw head and base SHAs, each check with its link and
+result, NOT TESTED items, blockers and the decision needed, and keeps merged, deployed and production-verified
+separate. Anything missing, skipped or unconfirmed is reported as
+NOT RUN, NOT TESTED or NOT VERIFIED, never PASS.
