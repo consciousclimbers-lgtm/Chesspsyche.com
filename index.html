@@ -6749,7 +6749,7 @@ function renderOpeningEcoList(query) {
     if (!entries.length) { list.innerHTML = '<p class="text-slate-500 text-xs text-center py-4">No openings found.</p>'; return; }
     list.innerHTML = entries.map(([code, d]) => `
         <button onclick="startPlayOpeningFromEco('${code}')"
-            class="w-full px-4 py-2.5 bg-slate800 border border-slate-700 hover:border-accentPurple/70 hover:bg-accentPurple/5 hover:shadow-[0_0_10px_rgba(168,85,252,0.2)] rounded-xl text-left transition-all group">
+            class="w-full px-4 py-2.5 bg-slate800 border border-slate-700 hover:border-accentPurple/70 hover:bg-accentPurple/5 hover:shadow-[0_0_10px_rgba(168,85,247,0.2)] rounded-xl text-left transition-all group">
             <span class="text-[10px] font-bold text-accentCyan mr-2">${code}</span>
             <span class="text-xs font-bold text-slate-200 group-hover:text-accentPurple transition-colors">${d.name || code}</span>
             <span class="text-[10px] text-slate-500 ml-2">${openingMovesToArray(d.moves).slice(0,5).join(' ')}&#8230;</span>
@@ -6769,6 +6769,7 @@ function startPlayOpeningFromEco(code) {
     prompt.innerHTML = '<span class="font-bold text-accentCyan">' + code + ' — ' + (entry.name || code) + '</span><br><span class="text-slate-400 text-xs">' + moves.join(' ') + '</span><br><span class="text-slate-500 text-xs mt-1 block">Continue from this position or analyze freely.</span>';
     renderLabsBoard();
 }
+
 function startPlayOpeningFree() {
     document.getElementById('labs-opening-eco-picker').classList.add('hidden');
     document.getElementById('labs-board-area').classList.remove('hidden');
