@@ -53,6 +53,16 @@ const REPAIRED_VAULT_LINES = [
   { code: 'E19', name: 'Queen\'s Indian Defense: Classical Variation, Traditional Variation, Main Line',
     ref: '1. d4 Nf6 2. c4 e6 3. Nf3 b6 4. g3 Bb7 5. Bg2 Be7 6. O-O O-O 7. Nc3 Ne4 8. Qc2 Nxc3 9. Qxc3',
     wrong: { code: 'no entry', name: 'stops at 8...Nxc3, before 9.Qxc3', line: '1. d4 Nf6 2. c4 e6 3. Nf3 b6 4. g3 Bb7 5. Bg2 Be7 6. O-O O-O 7. Nc3 Ne4 8. Qc2 Nxc3' } },
+  // Overrun batch: each line ran past its code into the next code's position
+  { code: 'B62', name: 'Sicilian Defense: Richter-Rauzer Variation',
+    ref: '1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 Nc6 6. Bg5 e6',
+    wrong: { code: 'B63', name: 'Sicilian Defense: Richter-Rauzer Variation, Classical Variation', line: '1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 Nc6 6. Bg5 e6 7. Qd2 Be7' } },
+  { code: 'D60', name: 'Queen\'s Gambit Declined: Orthodox Defense',
+    ref: '1. d4 Nf6 2. c4 e6 3. Nf3 d5 4. Nc3 Be7 5. Bg5 O-O 6. e3 Nbd7',
+    wrong: { code: 'D63', name: 'Queen\'s Gambit Declined: Orthodox Defense, Main Line', line: '1. d4 Nf6 2. c4 e6 3. Nf3 d5 4. Nc3 Be7 5. Bg5 O-O 6. e3 Nbd7 7. Rc1' } },
+  { code: 'E44', name: 'Nimzo-Indian Defense: St. Petersburg Variation',
+    ref: '1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 b6 5. Ne2',
+    wrong: { code: 'E45', name: 'Nimzo-Indian Defense: St. Petersburg Variation, Fischer Variation', line: '1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 b6 5. Ne2 Ba6' } },
 ];
 
 // sha256 of each line PR #13 (merge fbcafc6) added to index.html
