@@ -30,10 +30,10 @@ active change per area, based on the latest `main`.
 ## Rules
 1. **No direct changes to production.** Never push to `main`, upload files to `main` in the browser, merge a
    pull request or deploy without the owner's explicit approval for that specific change.
-   Approval covers only the action and the PR it names. A reviewer's GO recommendation is not approval, and
-   approval to merge does not authorize any other deployment action (a rollback, re-running a deployment,
-   a ruleset change or another PR). Because a merge is a deployment, a request to merge says that it
-   publishes the site.
+   Explicit approval to merge a named PR authorizes that merge and its automatic GitHub Pages publication,
+   as one action. It does not authorize a separate manual deployment, a rollback, re-running a deployment,
+   a ruleset or settings change, or any action on another PR; each of those needs its own explicit approval.
+   A reviewer's GO recommendation is not the owner's approval.
 2. **Every change goes through a pull request.** Work on a separate branch (`claude/...`, `chatgpt/...`, or,
    for browser uploads, "Create a new branch for this commit and start a pull request"). One purpose per
    branch. Keep diffs narrow, with no unrelated fixes, refactoring or reformatting.
@@ -50,7 +50,8 @@ active change per area, based on the latest `main`.
    7. original chess-piece design;
    8. board editor;
    9. move playback and legal moves;
-   10. evaluation bar and numerical evaluation.
+   10. evaluation bar and numerical evaluation;
+   11. the Labs ECO opening picker ("Play opening from ECO").
 
    A fix is complete only when it works **and** these features still work.
 4. **Current priority: ECO-line repair.** Do not start unrelated checklist work until the owner confirms the
@@ -72,9 +73,11 @@ active change per area, based on the latest `main`.
    and commit the new `expected.json` in the same PR, so the diff shows exactly what changed.
    CI evidence belongs to one commit: a new head SHA invalidates earlier CI results as proof for the new
    revision, and every applicable required check must pass on that exact head SHA before the PR is called
-   ready. Analysis of unchanged files may be reused; do not rerun checks locally when complete CI on the
-   current head already covers the change. `expected.json` and the protected-code hash are integrity
-   references, not proof that behaviour is correct, and never replace the functional tests.
+   ready. Analysis of unchanged files may be reused. Completed CI on the exact current head replaces a
+   duplicate local run only of the automated checks that CI covers; it never replaces the manual browser
+   check a tier requires or the Live Guardian verification after deployment. `expected.json` and the
+   protected-code hash are integrity references, not proof that behaviour is correct, and never replace the
+   functional tests.
 8. **Report blockers instead of guessing.** If a requirement cannot be implemented or verified, say so and
    explain why rather than calling it complete.
 
@@ -96,9 +99,13 @@ Stacked PRs: keep the dependency order. Before retargeting or merging a dependen
 diff and rerun the tests.
 
 ### Impact index
-The areas where a mistake does the most damage. "Protected code" is everything in `index.html` outside the
-opening-data block (from `const ecoNamesMap = {` to the survey picker comment), which the protected-code
-hash in `npm test` covers. Add a row only when a real task exposes a missing area or dependency.
+A minimum-tier guide for the areas where a mistake does the most damage. It is not an exhaustive list of
+protected files: protection follows behaviour, so any file, data, configuration, workflow or dependency that
+can affect a protected feature (rule 3) is protected. If an area is not listed or its impact is uncertain, do
+not assume Low: use the higher plausible tier and flag the classification to the owner. "Protected code" is
+everything in `index.html` outside the opening-data block (from `const ecoNamesMap = {` to the survey picker
+comment), which the protected-code hash in `npm test` covers. Add a row when a real task exposes a missing
+area or dependency.
 
 | Area | Where | Protected features (rule 3) | Covering checks | Minimum tier |
 |---|---|---|---|---|
@@ -106,7 +113,7 @@ hash in `npm test` covers. Add a row only when a real task exposes a missing are
 | Scoring and survey | Protected code: survey, scoring, picker; picks and scoring in `expected.json`; opening data that changes picks | 2–4 | `npm test` (checks 1–6, 11), `npm run clickthrough` | High for code, Medium for data |
 | GM data | `NOTABLE_GM_POOLS`, GM records and `notableGm` names; `gm-baseline.json` | 4, 5 | `npm test` (checks 7–11), `test:results-identity` | Medium; High if rotation or pop-up code changes |
 | Deployment workflows | `.github/workflows/`, `CNAME`, the **Protect main** ruleset | all, through CI and the Live Guardian | **Regression tests** on the PR itself; `test:known-shrink`, `test:guardian-report`, `test:retries`; Live Guardian after deployment | High, plus policy review |
-| Labs ECO picker | Protected code: Labs opening picker | not listed; shares Labs with 8 | `npm run clickthrough` (Labs ECO picker, offline on the PR, live in the Live Guardian) | High |
+| Labs ECO picker | Protected code: Labs opening picker | 11 | `npm run clickthrough` (Labs ECO picker, offline on the PR, live in the Live Guardian) | High |
 
 ## ECO repair acceptance checklist
 - [ ] Inspect the current ECO data in `index.html`.
@@ -132,5 +139,5 @@ what was fixed, files changed, tests passed or failed, whether the live site was
 and the recommended next action.
 The report (one handoff per PR or task) also gives the raw head and base SHAs, each check with its link and
 result, NOT TESTED items, blockers and the decision needed, and keeps merged, deployed and production-verified
-separate. Anything missing, skipped or unconfirmed is reported as
-NOT RUN, NOT TESTED or NOT VERIFIED, never PASS.
+separate. Anything missing, skipped or unconfirmed is reported as NOT RUN, NOT TESTED or NOT VERIFIED, never
+PASS.
