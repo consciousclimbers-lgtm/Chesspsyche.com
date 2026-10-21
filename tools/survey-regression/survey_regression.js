@@ -83,42 +83,6 @@ const chessLocal = require.resolve('chess.js');
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 
 function protectedHash(html) {
-  // Normalize only the exact, reviewed Labs ECO picker patch before checking the
-  // protected-code fingerprint. Any drift in these hunks or any other protected
-  // code change still fails the hash check; survey code remains fully protected.
-  const allowedChanges = [
-    [
-      `function openingMovesToArray(moves) {
-    if (Array.isArray(moves)) return moves;
-    if (typeof moves !== 'string') return [];
-    // ECO vault entries store numbered SAN text (for example "1. e4 e5 2. Nf3").
-    // Strip move-number tokens before passing SAN moves to the chess engine.
-    return moves.replace(/\\d+\\.(?:\\.\\.)?/g, ' ').trim().split(/\\s+/).filter(Boolean);
-}
-
-`,
-      ''
-    ],
-    [
-      '            const ms = openingMovesToArray(d.moves); if (ms.length < 2) return false;',
-      '            const ms = d.moves; if (!ms || ms.length < 2) return false;'
-    ],
-    [
-      '            <span class="text-[10px] text-slate-500 ml-2">${openingMovesToArray(d.moves).slice(0,5).join(\' \')}&#8230;</span>',
-      '            <span class="text-[10px] text-slate-500 ml-2">${(d.moves||[]).slice(0,5).join(\' \')}&#8230;</span>'
-    ],
-    [
-      '    const moves = openingMovesToArray(entry.moves).slice(0, 10);',
-      '    const moves = (entry.moves || []).slice(0, 10);'
-    ]
-  ];
-  for (const [changed, original] of allowedChanges) {
-    const occurrences = html.split(changed).length - 1;
-    if (occurrences !== 1) {
-      throw new Error(`expected one exact Labs ECO picker patch hunk, found ${occurrences}`);
-    }
-    html = html.replace(changed, original);
-  }
   const lines = html.split('\n');
   const start = lines.findIndex(l => l.startsWith('const ecoNamesMap = {'));
   const end = lines.findIndex(l => l.startsWith('// ---- Picks one White and one Black opening'));
