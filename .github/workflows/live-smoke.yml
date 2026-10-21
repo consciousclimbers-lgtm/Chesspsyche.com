@@ -142,10 +142,23 @@ jobs:
       run:
         working-directory: tools/survey-regression
     steps:
-      # The test tools of the commit being tested (after a deployment, the deployed commit)
+      # The test tools of exactly the commit the deployment check resolved and found live, for every event.
+      # It is resolved once; nothing here reads main or the PR base again, so a newer main cannot mix in.
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ needs.deployment.outputs.commit }}
+
+      - name: Confirm the test tools are the resolved commit
+        shell: bash
+        working-directory: .
+        env:
+          COMMIT: ${{ needs.deployment.outputs.commit }}
+        run: |
+          head=$(git rev-parse HEAD)
+          if [ -z "$COMMIT" ] || [ "$head" != "$COMMIT" ]; then
+            echo "::error title=FAIL::test tools are ${head:0:12}, expected ${COMMIT:-nothing}"; exit 1
+          fi
+          echo "Test tools from ${head:0:12}, the commit the deployment check found live"
 
       - uses: actions/setup-node@v4
         with:
@@ -166,7 +179,7 @@ jobs:
           WANT_SHA256: ${{ needs.deployment.outputs.sha256 }}
         run: |
           mkdir -p out
-          # A PR's live check tests deployed main using the base branch's test definitions; regression.yml tests the candidate.
+          # A PR's live check tests deployed main with deployed main's test definitions; regression.yml tests the candidate.
           # Skip only the new feature-specific picker check here; Live Guardian tests it after deployment.
           labs_picker_args=()
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then labs_picker_args+=(--skip-labs-eco-picker); fi
@@ -203,9 +216,11 @@ jobs:
       run:
         working-directory: tools/survey-regression
     steps:
+      # The same resolved commit as the browser checks; github.sha only when the deployment check wrote none,
+      # and then the verdict cannot be PASS
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ needs.deployment.outputs.commit || github.sha }}
           sparse-checkout: tools/survey-regression
 
       - uses: actions/setup-node@v4
