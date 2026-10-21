@@ -1676,8 +1676,8 @@
    "snapshot": false,
    "handWritten": false,
    "pool": null,
-   "plies": 14,
-   "line": "e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 Nc6 Bg5 e6 Qd2 Be7",
+   "plies": 12,
+   "line": "e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 Nc6 Bg5 e6",
    "ecoPly": 12,
    "ecoFen": "r1bqkb1r/pp3ppp/2nppn2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq -",
    "ecoName": "Sicilian Defense: Richter-Rauzer Variation"
@@ -3832,8 +3832,8 @@
    "snapshot": false,
    "handWritten": false,
    "pool": null,
-   "plies": 13,
-   "line": "d4 d5 c4 e6 Nc3 Nf6 Bg5 Be7 e3 O-O Nf3 Nbd7 Rc1",
+   "plies": 12,
+   "line": "d4 d5 c4 e6 Nc3 Nf6 Bg5 Be7 e3 O-O Nf3 Nbd7",
    "ecoPly": 12,
    "ecoFen": "r1bq1rk1/pppnbppp/4pn2/3p2B1/2PP4/2N1PN2/PP3PPP/R2QKB1R w KQ -",
    "ecoName": "Queen's Gambit Declined: Orthodox Defense"
@@ -4756,8 +4756,8 @@
    "snapshot": false,
    "handWritten": false,
    "pool": "Nimzo-Indian Defence|black",
-   "plies": 10,
-   "line": "d4 Nf6 c4 e6 Nc3 Bb4 e3 b6 Ne2 Ba6",
+   "plies": 9,
+   "line": "d4 Nf6 c4 e6 Nc3 Bb4 e3 b6 Ne2",
    "ecoPly": 9,
    "ecoFen": "rnbqk2r/p1pp1ppp/1p2pn2/8/1bPP4/2N1P3/PP2NPPP/R1BQKB1R b KQkq -",
    "ecoName": "Nimzo-Indian Defense: St. Petersburg Variation"
