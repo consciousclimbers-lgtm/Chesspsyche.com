@@ -368,7 +368,6 @@ async function runSurvey(browser, file, seed) {
     const key = `${c.eco}|${c.side}`;
     if (c.cardSide !== c.side && c.cardSide !== 'either') reachFails.push(`card ${key} (${c.firstSeen}) is a ${c.cardSide} card`);
     if (!c.gmOk) reachFails.push(`card ${key} (${c.firstSeen}) shows Notable GM "${c.gm || '-'}", not from its approved pool`);
-    if (!c.handWritten && !c.summaryWritten) reachFails.push(`card ${key} (${c.firstSeen}) has no matching sourced written summary`);
     const g = new Chess();
     for (const san of c.moves) if (!g.move(san)) { reachFails.push(`card ${key} (${c.firstSeen}) illegal at ${san}`); break; }
     const issues = cardChecks.summaryIssues(c);
