@@ -4339,7 +4339,7 @@ function initResultsBoard(arch) {
     currentActiveArch = arch; demoGame = createChessInstance(); demoMoveIndex = 0; isPracticeMode = false; practiceStepIndex = 0; practiceSelectedSquare = null;
     demoLastMove = null; demoHintActive = false;
     const systemObj = resultsRepertoireSide === 'white' ? arch.whiteSystem : arch.blackSystem;
-    activeDemoMoves = (systemObj.variations[0].moves || []).slice(0, 10);
+    activeDemoMoves = (systemObj.variations[0].moves || []).slice(0, 20);
     document.getElementById('results-system-title').textContent = `Opening: ${systemObj.name} (${resultsRepertoireSide.toUpperCase()})`;
     document.getElementById('btn-practice-toggle').onclick = startPracticeMode;
     document.getElementById('btn-practice-toggle').textContent = 'Practice This Line';
