@@ -197,6 +197,14 @@ async function runSurvey(browser, file, seed) {
         seen.add(e.gm);
         if (e.status === 'verified' && !names.has(e.gm)) issues.push(`${p.key}: ${e.gm} has no GM record`);
         if (e.status === 'verified') poolsPerGm[e.gm] = (poolsPerGm[e.gm] || 0) + 1;
+        // Pools synchronized with the GM records: the entry's FIDE id must give the same name, and a verified
+        // entry's record must list one of the pool's recordLabels for this side (the pop-up's "system")
+        if (p.recordLabels) {
+          const g = grandmastersList.find(r => r.id === e.id);
+          if (!g || g.name !== e.gm) issues.push(`${p.key}: ${e.gm} (id ${e.id}) does not match a GM record`);
+          else if (e.status === 'verified' && !String((g.system || {})[p.side] || '').split(' / ').some(l => p.recordLabels.includes(l)))
+            issues.push(`${p.key}: ${e.gm} is verified, but the GM record's ${p.side} system "${(g.system || {})[p.side] || '-'}" lists none of ${p.recordLabels.join(', ')}`);
+        }
       }
     }
     for (const [g, n] of Object.entries(poolsPerGm)) if (n > 6) warnings.push(`${g} is in ${n} pools (more than 6)`);

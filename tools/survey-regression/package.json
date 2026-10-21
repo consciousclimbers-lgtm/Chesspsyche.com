@@ -17,7 +17,8 @@
     "test:eco-lines": "node eco_lines.test.js ../../index.html",
     "clickthrough:mobile": "node clickthrough.js ../../index.html --viewport mobile",
     "test:results-identity": "node results_identity.js ../../index.html",
-    "test:results-identity-selftest": "node results_identity.js ../../index.html --self-test"
+    "test:results-identity-selftest": "node results_identity.js ../../index.html --self-test",
+    "report:gm-sync": "node gm_sync_report.js ../../index.html"
   },
   "dependencies": {
     "chess.js": "0.10.3",
