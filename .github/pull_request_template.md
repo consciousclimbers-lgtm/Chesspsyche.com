@@ -7,6 +7,10 @@
 ## Before / After
 <!-- What a visitor (or the owner) sees before and after this change. -->
 
+## Revision and impact
+<!-- Head SHA and base SHA (main) that the results below apply to. CI results for an earlier head do not count
+     (AGENTS.md rule 7). Impact areas touched (impact index in AGENTS.md) and the minimum tier they set. -->
+
 ## Tests and results
 <!-- Risk tier (low / medium / high, see AGENTS.md). Each check with its exact result: PASS, FAIL or NOT RUN.
      Include the Regression tests CI result and, if expected.json changed, which recommendations changed. -->
