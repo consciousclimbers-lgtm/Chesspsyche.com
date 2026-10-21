@@ -9,7 +9,7 @@ live about a minute later. The rules for who may merge are in [`AGENTS.md`](AGEN
 2. Confirm the **Regression tests** check is green on the pull request's latest commit.
 3. Read the PR's "Files changed" tab: only the files the PR describes should change.
 4. Merge with **Squash and merge** or **Create a merge commit**, never **Rebase and merge**, so the release
-   is one commit on `main` that can be reverted.
+   can be reverted as a single unit: revert the squash commit, or the merge commit with `-m 1`.
 
 ## After merging: Live Guardian (live smoke test)
 1. Actions tab → **pages-build-deployment**: the run for the release commit (the commit the merge put on
