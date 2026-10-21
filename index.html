@@ -3606,6 +3606,29 @@ const NOTABLE_GM_POOLS = [
         { gm: "Alexander Morozevich", source: "https://shop.chessbase.com/en/products/ramirez_sicilian_tajmanov_scheveningen", status: "verified" },
         { gm: "Alexander Grischuk", source: "https://shop.chessbase.com/en/products/ramirez_sicilian_tajmanov_scheveningen", status: "verified" },
         { gm: "Veselin Topalov", source: "https://shop.chessbase.com/en/products/ramirez_sicilian_tajmanov_scheveningen", status: "verified" }
+    ] },
+    // Batch 2, synchronized with the GM records above (owner decision on PR #23, 2026-10-21): an entry is "verified" only when its
+    // GM record (matched by FIDE id) lists one of the pool's recordLabels in system[side]. Everything else stays "pending" and is not shown.
+    // npm test checks this; tools/survey-regression/gm_sync_report.js lists every entry and why (notable-gm-batch2/SYNC.md).
+    { key: "Sicilian Najdorf|black", side: "black", codes: ["B90", "B91", "B92", "B93", "B94", "B95", "B96", "B97", "B98", "B99"], recordLabels: ["Sicilian Najdorf"], familyLabels: ["Sicilian", "Sicilian Defense"], pool: [
+        { gm: "Bobby Fischer", id: "600041", source: "https://en.wikipedia.org/wiki/Sicilian_Defence,_Najdorf_Variation", status: "verified" },
+        { gm: "Maxime Vachier-Lagrave", id: "623539", source: "https://en.chessbase.com/post/biel-2018-round-7", status: "verified" },
+        { gm: "Boris Gelfand", id: "2805677", source: "https://www.365chess.com/eco/B90_Sicilian_Najdorf", status: "verified" },
+        { gm: "Veselin Topalov", id: "2900084", source: "https://en.chessbase.com/newsroom/post/robert-ris-fast-and-furious-najdorf-be3-ng4", status: "verified" },
+        { gm: "Viswanathan Anand", id: "5000017", source: "https://www.caissa-chess.com/openings/1402-david-vigorito-playing-the-najdorf-k-5747-9781907982651.html", status: "pending" },
+        { gm: "Ian Nepomniachtchi", id: "4168119", source: "https://en.chessbase.com/newsroom/post/bologan-the-complex-najdorf-eine-rezension", status: "verified" }
+    ] },
+    { key: "Sicilian Dragon|black", side: "black", codes: ["B70", "B71", "B72", "B73", "B74", "B77"], recordLabels: ["Sicilian Dragon"], familyLabels: ["Sicilian", "Sicilian Defense"], pool: [
+        { gm: "Gawain C B Maroroa Jones", id: "409561", source: "https://forwardchess.com/product/the-dragon-volume1", status: "verified" },
+        { gm: "Hikaru Nakamura", id: "2016192", source: "https://www.chess.com/lessons/the-fighting-dragon", status: "pending" }
+    ] },
+// D71-D79 (Neo-Grünfeld) remain valid survey opening cards, but are deliberately excluded from this GM pool until opening-specific GM evidence supports them.
+        { key: "Grünfeld Defence|black", side: "black", codes: ["D80", "D82", "D83", "D84", "D90", "D91", "D92", "D93", "D94", "D95", "D96", "D97", "D98"], recordLabels: ["Grunfeld", "Grünfeld"], familyLabels: [], pool: [
+        { gm: "Maxime Vachier-Lagrave", id: "623539", source: "https://www.fide.com/fide-grand-prix-hamburg-vachier-lagrave-is-the-only-winner-of-the-day/", status: "verified" },
+        { gm: "Bobby Fischer", id: "600041", source: "https://en.chessbase.com/newsroom/post/understanding-before-moving-170-chess-history-in-a-nutshell-4", status: "verified" },
+        { gm: "Peter Leko", id: "703303", source: "https://business-standard.com/amp/article/beyond-business/chess-591-109060600008_1.html", status: "pending" },
+        { gm: "Loek Van Wely", id: "1000268", source: "https://www.myschach.de/Gruenfeld_Defence_ChessWiki.htm", status: "pending" },
+        { gm: "Gata Kamsky", id: "2000024", source: "https://masterinchess.com/grunfeld-defence", status: "pending" }
     ] }
 ];
 // Every female GM record (gender "female") and the pools she is in, so none is overlooked. Not shown on the site.
