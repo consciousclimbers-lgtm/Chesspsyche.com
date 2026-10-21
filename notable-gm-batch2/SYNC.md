@@ -93,13 +93,13 @@ These records already list the opening, so adding them would need no outside res
 ## Coverage: two different counts
 The PR reports two numbers that measure different things.
 
-1. **Reachable cards: 147 → 185 of 487 (+38).** These are the distinct Results cards (ECO code and side) that the survey can ever show. `results-cards.json` lists them: every style, level and answer combination, retaken until its list of openings runs out. A card counts as covered if its (code, side) is in a pool with at least one verified entry. The +38 are every code in the three pools (10 Najdorf, 6 Dragon, 22 Grünfeld), because each of them is reachable. This count measures breadth. It says nothing about how often a card appears.
-2. **Snapshot slots: 188 → 196 of 360 (+8).** `gm-baseline.json` records the GM shown on the White and Black card for 60 combinations over their first 3 surveys (60 × 3 × 2 = 360 slots). 8 slots that showed no GM now show one: Topalov ×2, Nepomniachtchi ×2, Gawain Jones ×2, Fischer and Vachier-Lagrave. No slot that already showed a GM changed. This count measures what users see in their first few surveys. (An earlier handoff said 9; the correct number is 8.)
+1. **Reachable cards: 147 → 176 of 487 (+29).** These are the distinct Results cards (ECO code and side) that the survey can ever show. `results-cards.json` lists them: every style, level and answer combination, retaken until its list of openings runs out. A card counts as covered if its (code, side) is in a pool with at least one verified entry. The +29 are every code in the three pools (10 Najdorf, 6 Dragon, 13 Grünfeld), because each of them is reachable. (Before D71–D79 were withheld in 638cd12 this was 185, +38.) This count measures breadth. It says nothing about how often a card appears.
+2. **Snapshot slots: 188 → 195 of 360 (+7).** `gm-baseline.json` records the GM shown on the White and Black card for 60 combinations over their first 3 surveys (60 × 3 × 2 = 360 slots). 7 slots that showed no GM now show one: Topalov ×2, Nepomniachtchi ×2, Gawain Jones ×2 and Fischer. No slot that already showed a GM changed. This count measures what users see in their first few surveys. (Earlier handoffs said 9, then 8; the eighth, Vachier-Lagrave on a D7x card, went when D71–D79 were withheld in 638cd12.)
 
 | | Reachable cards with a GM | Snapshot slots with a GM |
 |---|---|---|
 | Main | 147 of 487 | 188 of 360 |
-| This PR | 185 of 487 | 196 of 360 |
+| This PR | 176 of 487 | 195 of 360 |
 | Earlier draft 9ee6f77, for reference | 226 of 487 (base 3e27fc5) | not recounted |
 
 ## Why each pool covers these ECO codes
