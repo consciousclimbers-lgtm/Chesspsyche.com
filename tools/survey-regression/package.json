@@ -11,7 +11,11 @@
     "prune:known-card-issues": "node survey_regression.js ../../index.html --prune-known-card-issues && node clickthrough.js ../../index.html --prune-known-card-issues",
     "check:known-shrink": "node check_known_shrink.js --base origin/main",
     "test:known-shrink": "node check_known_shrink.test.js",
-    "clickthrough:strict-cards": "node clickthrough.js ../../index.html --strict-cards"
+    "clickthrough:strict-cards": "node clickthrough.js ../../index.html --strict-cards",
+    "test:guardian-report": "node guardian_report.test.js",
+    "test:retries": "node clickthrough_retry.test.js",
+    "test:eco-lines": "node eco_lines.test.js ../../index.html",
+    "clickthrough:mobile": "node clickthrough.js ../../index.html --viewport mobile"
   },
   "dependencies": {
     "chess.js": "0.10.3",
