@@ -5,6 +5,23 @@
 - Scope: review the 15 proposed pools (47 entries) and the citations supplied in `index.html`.
 - Status: **audit in progress; this file does not certify the 47 entries as verified**.
 
+## Status after the 2026-10-21 re-check (Claude)
+
+- **41 verified, 6 pending, 0 removed** of the 47 entries. A `pending` entry stays in `index.html` but is never shown (only `status: "verified"` entries are eligible).
+- **Pending, because the evidence is one or two games, broad repertoire, the wrong side or not found:**
+  - Anand (Najdorf, Black);
+  - Movsesian (Scheveningen, Black);
+  - Shirov (Classical Sicilian, Black);
+  - Nepomniachtchi (Berlin, Black);
+  - Morozevich (French Winawer, Black);
+  - Carlsen (English, White).
+- **11 cited sources were replaced** with a URL whose search text names the GM with that system and side.
+- **Evidence and limits:**
+  - The per-entry evidence is in [RECHECK.md](RECHECK.md). It is search-result text; the pages were **not opened**, because the sandbox cannot reach chess sites.
+  - **No PGN was replayed.**
+  - The bar used is the owner's: a documented source for the specific system and side, not broad repertoire or one game.
+- **Original selection record:** [SELECTION.md](SELECTION.md) covers the families, the six-pool cap, the two-name family threshold, and every candidate left out with its reason.
+
 ## Why this file exists
 
 The PR description names this path as the home of the per-GM reasoning, sources, and candidates left out, but the file was absent from the PR branch. This document restores a transparent audit trail. It distinguishes (1) the URL currently attached to an entry, (2) what that URL appears intended to support, and (3) whether the available evidence is enough to substantiate the exact player + opening/variation + side.
