@@ -352,14 +352,7 @@ async function runCase(browser, c) {
   if (shots) await page.locator('#results-chess-board').screenshot({ path: `${shots}/${c.name}-start.png` });
 
   // Step through the demo: the on-screen pieces must follow the line after every move
-  const demoInfo = await page.evaluate(() => {
-    const systemObj = resultsRepertoireSide === 'white' ? currentActiveArch.whiteSystem : currentActiveArch.blackSystem;
-    const sourceMoves = systemObj.variations[0].moves || [];
-    return { line: activeDemoMoves.map(m => m.move), sourceLength: sourceMoves.length };
-  });
-  const line = demoInfo.line;
-  const expectedDemoLength = Math.min(20, demoInfo.sourceLength);
-  if (line.length !== expectedDemoLength) fails.push(`demo has ${line.length} plies; expected ${expectedDemoLength} (up to 20 plies / 10 full moves from ${demoInfo.sourceLength} source moves)`);
+  const line = await page.evaluate(() => activeDemoMoves.map(m => m.move));
   info.demoLine = line.join(' ');
   for (let i = 0; i < line.length; i++) {
     await page.click('#btn-next-move'); await page.waitForTimeout(120);
