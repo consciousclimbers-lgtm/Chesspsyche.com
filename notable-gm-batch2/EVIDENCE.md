@@ -3,39 +3,107 @@
 - PR: [#23 — Notable GM pools, Batch 2](https://github.com/consciousclimbers-lgtm/Chesspsyche.com/pull/23)
 - Initial audit target commit: `17c3fee9bad182791a47d6a0e6ae3188601c6aa8` (the audit and follow-up notes below were carried forward as the branch changed).
 - Scope: review the 15 proposed pools (47 entries) and the citations supplied in `index.html`.
-- Status: **audit in progress; this file does not certify the 47 entries as verified**.
+- Status: **reconciled 2026-10-21: 24 verified, 23 pending** (see the next section). All evidence is search-result text; no page was opened and no PGN replayed.
 
-## Status after the 2026-10-21 re-check (Claude)
+## Evidence reconciliation, 2026-10-21 (Claude, after the owner's review of `3f47eff`)
 
-**Result:** 36 of the 47 entries are verified and 11 are pending. Two families (Sicilian Scheveningen and Sicilian Classical) were left with no verified GM, so their pools are removed. That leaves **13 Batch 2 pools**.
+**Result:** 24 of the 47 entries are `verified` and 23 are `pending`. `index.html` holds **12 Batch 2 pools**, with 24 verified and 14 pending entries. Three families are not in `index.html` because no verified GM is left: Sicilian Scheveningen, Sicilian Classical and Vienna Game. Their 9 pending entries are recorded only here.
 
-A `pending` entry stays in `index.html` but is never shown: only `status: "verified"` entries are eligible.
+A `pending` entry is never shown: only `status: "verified"` entries are eligible.
 
-**The bar.** This is the owner's bar: a documented source for the specific system and side, not broad repertoire or one game.
+**How the evidence was gathered (applies to every row):**
+- Every quote below is **search-result text** (WebSearch snippets), copied as it appeared.
+- **No source page was opened.** The sandbox cannot reach chess sites or Wikipedia: the proxy refuses the connection. A page may say more or less than its snippet.
+- **No PGN was replayed.** Game references are as the snippet describes them.
 
-**Evidence.** The per-entry evidence is in [RECHECK.md](RECHECK.md). It comes from two independent search passes, the second by a reviewer.
-- It is search-result text only. The pages were **not opened**, because the sandbox cannot reach chess sites.
-- **No PGN was replayed.**
+**The bar for `verified`.** A source's own text must name this GM with this system and colour, and say one of these things:
+- he plays it regularly, as a favourite or main weapon;
+- he is a leading practitioner or expert;
+- he authored a work on it;
+- or the source gives a Black-side game count for this ECO family.
 
-**Pending entries and why:**
+**What is not enough on its own:**
+- a bare list of names;
+- a publisher blurb listing several names;
+- a broad-repertoire claim;
+- an isolated game;
+- a quote whose subject or colour the snippet does not make clear;
+- the wrong colour or a different variation.
 
-| Family | Pending GM | Why |
-|---|---|---|
-| Najdorf, Black | Anand | One game; database rows show him as White |
-| Grünfeld, Black | Van Wely | An old wiki mirror only; elsewhere called his secondary choice |
-| Berlin, Black | Nepomniachtchi | One or two games |
-| French Winawer, Black | Morozevich | Not found; his French is the Classical or 3...Be7 |
-| English, White | Carlsen | Broad repertoire only |
-| Scheveningen, Black (pool removed) | Topalov | A name in a list only; mainly a Najdorf player |
-| Scheveningen, Black (pool removed) | Gelfand | A name in a list only; no games found |
-| Scheveningen, Black (pool removed) | Hou Yifan | Repertoire statistics only |
-| Scheveningen, Black (pool removed) | Movsesian | A name in a list; the only game found has him as White |
-| Classical Sicilian, Black (pool removed) | Anand | The quote is about the Richter-Rauzer (B6x), not B56 to B59 |
-| Classical Sicilian, Black (pool removed) | Shirov | A name in a list; his Sicilian is the Kalashnikov |
+### Verified (24)
 
-**Sources replaced.** 11 cited sources were replaced with a URL whose search text names the GM with that system and side.
+| # | Family, colour (codes) | GM | Source in `index.html` | Specific text (snippet) | Kind |
+|---|---|---|---|---|---|
+| 1 | Sicilian Najdorf, Black (B90–B99) | Bobby Fischer | en.wikipedia.org Najdorf Variation | "This was the favourite of the American world champion Bobby Fischer" | favourite |
+| 2 | Sicilian Najdorf, Black | Maxime Vachier-Lagrave | en.chessbase.com/post/biel-2018-round-7 | one of the only top players who "play this line almost exclusively"; 365chess: top Black opening B90, 172 games | regular use plus game count |
+| 3 | Sicilian Najdorf, Black | Boris Gelfand | 365chess.com B90 | 257 B90 games as Black; ChessBase: "Sicilian Najdorf with which Gelfand has scored some great victories" | game count |
+| 4 | Sicilian Najdorf, Black | Veselin Topalov | chessbase.com Ris, Najdorf 6.Be3 Ng4 | "one of the favorite weapons of Topalov – the Sicilian Najdorf"; beat Svidler with Black in it | favourite |
+| 5 | Sicilian Najdorf, Black | Ian Nepomniachtchi | chessbase.com Bologan Najdorf review | "top players such as Maxime Vachier-Lagrave or Ian Nepomniachtchi win game after game with it" | regular use |
+| 6 | Sicilian Dragon, Black (B70–B77 subset) | Gawain C B Maroroa Jones | forwardchess.com *The Dragon: Volume 1* | author of the book; publisher: "the world's leading expert on the Sicilian Dragon" | author and expert |
+| 7 | Grünfeld Defence, Black (D71–D98 subset) | Maxime Vachier-Lagrave | fide.com Hamburg GP 2019 | "his beloved Grünfeld Defence opening" | favourite |
+| 8 | Grünfeld Defence, Black | Bobby Fischer | chessbase.com "Understanding before moving 170" | "the Grünfeld, Fischer's main weapon against 1.d4 at that time" | main weapon |
+| 9 | Grünfeld Defence, Black | Peter Leko | business-standard.com (2009) | Leko "used to be a regular Grunfeld player until about four years ago" | regular use |
+| 10 | Berlin Defence, Black (C65–C67) | Levon Aronian | chessiverse.com Berlin Defense | "On the Black side, notable exponents include ... Levon Aronian (133 games)" | Black-side game count |
+| 11 | Marshall Attack, Black (C89) | Levon Aronian | en.wikipedia.org Marshall Attack | "still seeing use today at the top level by players such as Levon Aronian and Ding Liren"; lichess video: "The biggest contemporary expert is Levon Aronian" | expert |
+| 12 | Marshall Attack, Black | Ding Liren | en.wikipedia.org Marshall Attack | Wikipedia quote as row 11; ChessBase: "Ding Liren ... is very well-versed in the Marshall Attack -- in fact, he reached the following position twice in the past" | expert |
+| 13 | Marshall Attack, Black | Boris Spassky | thinkerspublishing.com | "reinvented the opening in his match against Mikhail Tal in 1965" | developed it |
+| 14 | Marshall Attack, Black | Michael Adams | chess.com lesson, Marshall Attack | "one of the strongest and most frequent practitioners of the Marshall Attack with the black pieces" | leading practitioner |
+| 15 | Semi-Slav Defence, Black (D43–D49) | Viswanathan Anand | thechessworld.com Semi-Slav | "Anand still employs it quite often nowadays"; Wikipedia: embraced by World Champions "Vladimir Kramnik and Viswanathan Anand" | regular use |
+| 16 | French Winawer, Black (C15–C19) | Ian Nepomniachtchi | chesspublishing.com, April 2020 | "unleashed a surprise opening in the Candidates Tournament by using ... the Winawer Variation"; used twice there, and earlier up to 2013 | repeated use |
+| 17 | English Opening, White (A10–A39 subset) | Ding Liren | lichess.org Chess-Network blog, WCh 2023 Game 4 | "Ding Liren has used the English Opening (1.c4) repeatedly in his World Championship matches" | repeated use |
+| 18 | Nimzowitsch-Larsen Attack, White (A01) | Richárd Rapport | chesslab.academy Rapport openings | 1.b3 is his "signature" opening as White; ICC: "routinely starting games with 1.b3" | signature opening |
+| 19 | Nimzowitsch-Larsen Attack, White | Wesley So | shop.chessbase.com "My Secret Weapon: 1.b3" | author of the course on the Nimzowitsch-Larsen Attack, White's side | author |
+| 20 | London System, White (D00) | Gata Kamsky | en.wikipedia.org London System | Wikipedia: "more frequently by players such as Gata Kamsky ..."; Schmücker blurb: "The absolute guru of the London System ... is and remains GM Gata Kamsky" | leading practitioner |
+| 21 | London System, White | Magnus Carlsen | en.wikipedia.org London System | Wikipedia list as row 20; ChessBase product page: "Carlsen has started to play this opening regularly" | regular use |
+| 22 | Grünfeld Exchange, White (D85–D89) | Boris Gelfand | en.wikipedia.org Grünfeld Defence | "Vladimir Kramnik and Boris Gelfand are the leading practitioners as White" | leading practitioner |
+| 23 | Two Knights 4.Ng5, White (C58–C59) | Nigel Short | en.wikipedia.org Two Knights Defense | "4.Ng5 experienced a revival ... after being adopted in the 1990s by Alexander Morozevich and Nigel Short" | revived it |
+| 24 | Two Knights 4.Ng5, White | Alexander Morozevich | en.wikipedia.org Two Knights Defense | same sentence; a ChessBase review: "revitalized in the 1990s by players such as Morozevich and Short" | revived it |
+
+**Caveats on the verified rows:**
+- **Rows 23 and 24** support 4.Ng5 (C58 and C59), not the 6.Nxf7 Fried Liver. The pool's label "Two Knights / Fried Liver" is misleading; the codes are right.
+- **Row 16 (Nepomniachtchi, Winawer)** is the thinnest kept entry: a "surprise" weapon used repeatedly, not his main defence.
+- **Row 20 (Kamsky, London):** the Schmücker blurb has no URL on file.
+
+### Pending (23)
+
+| Family, colour | GM | Was | Why pending |
+|---|---|---|---|
+| Sicilian Najdorf, Black | Viswanathan Anand | pending | One game; the 365chess B90 rows show him as White |
+| Sicilian Dragon, Black | Hikaru Nakamura | **verified → pending** | A lesson names him generally as a Dragon player; one game found (vs MVL, London 2017); no game count |
+| Grünfeld Defence, Black | Gata Kamsky | **verified → pending** | A bare list (masterinchess) plus individual games (Karpov–Kamsky 1996, Kramnik–Kamsky 1993, Gelfand–Kamsky 1996); no source says he plays it regularly |
+| Grünfeld Defence, Black | Loek Van Wely | pending | A list on an old wiki mirror; elsewhere called his secondary choice |
+| Berlin Defence, Black | Ian Nepomniachtchi | pending | One or two games |
+| Marshall Attack, Black | Peter Leko | **verified → pending** | The "great Marshall practitioner" quote cannot be tied to a source; the games found include Kramnik–Leko 2004 |
+| Semi-Slav Defence, Black | Alexei Shirov | **verified → pending** | A passing list mention; the Botvinnik quote does not name him in the snippet |
+| Semi-Slav Defence, Black | Veselin Topalov | **verified → pending** | A passing list mention; the Ris quote is about the Anti-Moscow line, and the snippet does not make the colour clear |
+| French Winawer, Black | Alexander Morozevich | pending | Not found; his French is the Classical or 3...Be7 |
+| French Winawer, Black | Wesley So | **verified → pending** | "a lot of GMs -- Wesley So among them": a list mention |
+| English Opening, White | Magnus Carlsen | pending | Broad repertoire only |
+| London System, White | Levon Aronian | **verified → pending** | A Wikipedia name list plus one game (vs Nakamura 2020) |
+| London System, White | Alexander Grischuk | **verified → pending** | Publisher blurbs that list several names |
+| Grünfeld Exchange, White | Viswanathan Anand | **verified → pending** | A publisher blurb list plus one game (WCh 2014 Game 1) |
+| Vienna Game, White (pool removed) | Nigel Short | **verified → pending** | One publisher blurb listing three names; no games found |
+| Vienna Game, White (pool removed) | Michael Adams | **verified → pending** | Same blurb |
+| Vienna Game, White (pool removed) | Boris Spassky | **verified → pending** | Same blurb |
+| Sicilian Scheveningen, Black (pool removed) | Veselin Topalov | pending | A name in a list only |
+| Sicilian Scheveningen, Black (pool removed) | Boris Gelfand | pending | A name in a list only; no games found |
+| Sicilian Scheveningen, Black (pool removed) | Hou Yifan | pending | Repertoire statistics only |
+| Sicilian Scheveningen, Black (pool removed) | Sergei Movsesian | pending | A name in a list; the only game found has him as White |
+| Sicilian Classical, Black (pool removed) | Viswanathan Anand | pending | The quote is about the Richter-Rauzer (B6x), not B56–B59 |
+| Sicilian Classical, Black (pool removed) | Alexei Shirov | pending | A name in a list; his Sicilian is the Kalashnikov |
+
+**Changed on this pass:**
+- **12 entries** downgraded from verified to pending (marked in bold above).
+- **The Vienna pool** removed.
+- **7 sources** in `index.html` repointed to the URL whose snippet carries the quote: rows 2, 5, 6, 8, 16, 17 and 22.
+
+**Unchanged:**
+- **Batch 1 data:** 101 verified entries in 19 pools.
+- **No speculative GM** was added to fill an empty card.
 
 **Original selection record.** [SELECTION.md](SELECTION.md) covers the families, the six-pool cap, the two-name family threshold, and every candidate left out with its reason. It describes the original 15-pool proposal.
+
+**Earlier re-check.** [RECHECK.md](RECHECK.md) holds the raw search passes behind these rows. Its verdict column is superseded by this section.
 
 ## Why this file exists
 

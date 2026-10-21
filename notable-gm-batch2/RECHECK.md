@@ -1,5 +1,7 @@
 # Batch 2 re-check (search results, 2026-10-21)
 
+> **Superseded statuses.** These are the raw search passes. The final status of every entry (24 verified, 23 pending) and the reason for each change is in [EVIDENCE.md](EVIDENCE.md#evidence-reconciliation-2026-10-21-claude-after-the-owners-review-of-3f47eff). Where this file says QUALIFIES and EVIDENCE.md says pending, EVIDENCE.md wins.
+
 Three independent searches re-checked every Batch 2 entry on 2026-10-21. The evidence is search-result text: source pages could not be opened from the sandbox (DNS fails for chess sites). Verdicts use the owner's bar: a documented source for the specific opening system and side, not broad repertoire or one game.
 
 | Pool | GM | Verdict | Quoted evidence | URL | Cited URL supports it? |
