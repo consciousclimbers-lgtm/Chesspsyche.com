@@ -1,7 +1,7 @@
 # Batch 2 GM pools — evidence audit
 
 - PR: [#23 — Notable GM pools, Batch 2](https://github.com/consciousclimbers-lgtm/Chesspsyche.com/pull/23)
-- Audited branch head at time of review: `17c3fee9bad182791a47d6a0e6ae3188601c6aa8`
+- Initial audit target commit: `17c3fee9bad182791a47d6a0e6ae3188601c6aa8` (the audit and follow-up notes below were carried forward as the branch changed).
 - Scope: review the 15 proposed pools (47 entries) and the citations supplied in `index.html`.
 - Status: **audit in progress; this file does not certify the 47 entries as verified**.
 
@@ -135,9 +135,9 @@ Independent contextual leads (not a substitute for a game record): [ChessLab Aca
 | Nigel Short | [Wikipedia: Two Knights Defence](https://en.wikipedia.org/wiki/Two_Knights_Defense) | Insufficient as cited: general opening article; no exact Short White-side game identified. |
 | Alexander Morozevich | [Wikipedia: Two Knights Defence](https://en.wikipedia.org/wiki/Two_Knights_Defense) | Insufficient as cited: general opening article; no exact Morozevich White-side game identified. |
 
-## Sources independently opened during this audit
+## Source leads referenced during this audit
 
-These are useful starting points, not blanket approval for the proposed pools:
+These are useful starting points, not blanket approval for the proposed pools. The list records candidate sources and findings noted during review; it should not be read as confirmation that every page or every game record was independently re-opened and checked in this pass:
 
 - [ChessLab Academy — Najdorf guide](https://chesslab.academy/openings/sicilian-najdorf/): explains the Najdorf position and Black-side ECO family B90–B99; names Fischer and Vachier-Lagrave as players associated with the opening.
 - [ChessLab Academy — famous Najdorf games](https://chesslab.academy/openings/sicilian-najdorf/master-games/): gives a specific Fischer–Najdorf game from Varna 1962. Record its PGN/game identity in the candidate evidence if using it.
