@@ -62,9 +62,26 @@ jobs:
         run: npm run test:results-identity-selftest 2>&1 | tee results-identity-selftest.txt; exit ${PIPESTATUS[0]}
         shell: bash
 
-      - name: Browser click-through (cards, demo board, pieces, board editor, evaluation bar, navigation)
+      - name: Browser click-through against candidate over local HTTP (Chromium desktop)
         if: success() || failure()
-        run: npm run clickthrough -- --shots out/screens 2>&1 | tee clickthrough.txt; exit ${PIPESTATUS[0]}
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4173 --directory ../.. > /tmp/chesspsyche-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html -o /dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" != 1 ]; then cat /tmp/chesspsyche-http.log; echo "Candidate HTTP server did not start"; exit 1; fi
+          want_sha256=$(sha256sum ../../index.html | cut -d ' ' -f1)
+          set +e
+          node clickthrough.js --url http://127.0.0.1:4173/index.html --expect-sha256 "$want_sha256" --browser chromium --viewport desktop --report out/report.json --shots out/screens --trace 2>&1 | tee clickthrough.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          if [ "$code" = 3 ]; then echo "::error title=NOT TESTED::chromium desktop could not be started; nothing was tested"; fi
+          exit "$code"
         shell: bash
 
       - name: Known card issues can only shrink (pull requests; compares with the base branch)
@@ -149,14 +166,27 @@ jobs:
         continue-on-error: true
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
-      - name: Browser click-through, ${{ matrix.browser }} ${{ matrix.viewport }} (offline)
+      - name: Browser click-through against candidate over local HTTP, ${{ matrix.browser }} ${{ matrix.viewport }}
         run: |
+          set -uo pipefail
           mkdir -p out
-          node clickthrough.js ../../index.html --browser ${{ matrix.browser }} --viewport ${{ matrix.viewport }} \
+          python3 -m http.server 4173 --directory ../.. > /tmp/chesspsyche-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html -o /dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" != 1 ]; then cat /tmp/chesspsyche-http.log; echo "Candidate HTTP server did not start"; exit 1; fi
+          want_sha256=$(sha256sum ../../index.html | cut -d ' ' -f1)
+          set +e
+          node clickthrough.js --url http://127.0.0.1:4173/index.html --expect-sha256 "$want_sha256" --browser ${{ matrix.browser }} --viewport ${{ matrix.viewport }} \
             --report out/report.json --shots out/screens --trace 2>&1 | tee out/clickthrough.txt
           code=${PIPESTATUS[0]}
+          set -e
           if [ "$code" = 3 ]; then echo "::error title=NOT TESTED::${{ matrix.browser }} ${{ matrix.viewport }} could not be started; nothing was tested"; fi
-          exit $code
+          exit "$code"
         shell: bash
 
       - name: Summary
