@@ -8,11 +8,12 @@ live about a minute later. The rules for who may merge are in [`AGENTS.md`](AGEN
    page, or run `git rev-parse --short origin/main`). This is what a rollback returns to.
 2. Confirm the **Regression tests** check is green on the pull request's latest commit.
 3. Read the PR's "Files changed" tab: only the files the PR describes should change.
-4. Merge with **Create a merge commit** (not squash or rebase), so the release is one commit that can be
-   reverted.
+4. Merge with **Squash and merge** or **Create a merge commit**, never **Rebase and merge**, so the release
+   is one commit on `main` that can be reverted.
 
 ## After merging: Live Guardian (live smoke test)
-1. Actions tab → **pages-build-deployment**: the run for the merge commit must succeed.
+1. Actions tab → **pages-build-deployment**: the run for the release commit (the commit the merge put on
+   `main`) must succeed.
 2. Actions tab → **Live Guardian** (formerly Live smoke test): it starts automatically after a successful
    deployment (listed with the event `workflow_run`), and also runs once a day. Its **Deployment check**
    waits until the site serves exactly the merged commit's `index.html` (sha256), then the browser
@@ -49,19 +50,48 @@ Stop all other releases first. Then undo the release with a revert pull request,
 and goes through the same checks:
 
 **On GitHub (no tools needed):** open the merged pull request → **Revert** button (near the bottom) →
-this creates a branch and a revert pull request → wait for **Regression tests** to pass → merge it with
-**Create a merge commit**. Pages redeploys the previous version in about a minute. Re-run the Live
-Guardian.
+this creates a branch and a revert pull request → check its **Files changed** tab: it must undo exactly
+that release's changes and nothing else → wait for **Regression tests** to pass → merge it with
+**Squash and merge** or **Create a merge commit**. Pages redeploys the previous version in about a minute.
+Re-run the Live Guardian.
+
+The **Revert** button has not been tested on a squash-merged pull request. If it fails, or its revert pull
+request changes anything other than the exact inverse of that release, stop, do not merge it, report it,
+and use the command-line procedure below.
 
 **From the command line:**
 
+Before reverting anything: the rollback needs the owner's explicit approval (AGENTS.md rule 1), all other
+merges stop, and the known-good commit to return to is written down.
+
 ```
 git fetch origin && git checkout -b revert-<sha> origin/main
-git revert -m 1 <merge-commit-sha>     # -m 1 keeps main's side of the merge
-git push -u origin revert-<sha>        # then open a pull request and merge it after CI passes
+git log --first-parent --format='%h %p %s' <known-good-sha>..origin/main   # release commits after known-good, newest first
+git show -s --format=%p <sha>          # parent count of one release commit
+git revert <sha>                       # one parent: Squash and merge
+git revert -m 1 <sha>                  # two parents: Create a merge commit; -m 1 keeps main's side
+git diff --exit-code <known-good-sha> HEAD && git push -u origin revert-<sha>   # push runs only if the tree check passes
 ```
 
-To return to an older known-good commit instead, revert each later merge commit, newest first.
+A release made with an allowed method has one parent (**Squash and merge**) or two parents (**Create a
+merge commit**). Use `git revert <sha>` for one parent and `git revert -m 1 <sha>` for two; never use
+`-m 1` on a one-parent commit. If the history is not what you expect, stop, revert nothing more, and report
+it for investigation; do not guess. Unexpected history includes a commit with three or more parents, a
+listed commit that does not match exactly one merged pull request (for example several commits from one
+rebase-merged pull request), and a revert that stops with a conflict.
+
+To undo one release, revert only that commit. To return to an older known-good commit (undoing the latest
+release returns to its first parent), revert every release commit the `git log` line lists, newest first
+(the order it prints), on the same branch, choosing the command for each by its parent count. Then
+`git diff --exit-code <known-good-sha> HEAD` must print nothing and exit with status 0. If it prints a diff
+or exits nonzero, stop. Do not push the branch or open or merge the revert pull request until the mismatch
+has been investigated and resolved.
+
+That check proves only that the branch's files match the known-good commit. It does not show that CI
+passed, that the revert pull request was merged, or that the fix is live. Check and report each of these
+separately: **Regression tests** green on the revert pull request's exact head SHA; the revert pull request
+merged; the **pages-build-deployment** run for the resulting commit on `main` succeeded; and the **Live
+Guardian** passed against that commit.
 
 **Branch protection.** The **Protect main** ruleset (Settings → Rules → Rulesets) is Active on `main`. It
 requires a pull request and a passing **Regression tests** check, restricts deletion and blocks force pushes.
@@ -75,7 +105,8 @@ check itself is broken). Only the owner does this, and only for the revert pull 
 1. Note the time, and in the revert pull request write why the check is being skipped.
 2. Settings → Rules → Rulesets → **Protect main** → set **Enforcement status** to **Disabled** →
    **Save changes**. Do not delete the ruleset: disabling keeps every rule so it can be switched back.
-3. Merge the revert pull request with **Create a merge commit**. Merge nothing else while protection is off.
+3. Merge the revert pull request with **Squash and merge** or **Create a merge commit**. Merge nothing else
+   while protection is off.
 4. Straight away, set **Enforcement status** back to **Active** → **Save changes**.
 5. Confirm protection is back. Open **Protect main** again and check that:
    - **Enforcement status** is **Active** and the target is still the default branch (`main`);
