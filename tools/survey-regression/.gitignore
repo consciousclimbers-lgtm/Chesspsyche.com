@@ -3,3 +3,5 @@ out/
 survey-regression.txt
 clickthrough.txt
 live-smoke.txt
+results-identity.txt
+results-identity-selftest.txt
