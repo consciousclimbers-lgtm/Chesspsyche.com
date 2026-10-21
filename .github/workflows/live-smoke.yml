@@ -166,8 +166,12 @@ jobs:
           WANT_SHA256: ${{ needs.deployment.outputs.sha256 }}
         run: |
           mkdir -p out
+          # A PR's live check tests deployed main, while regression.yml tests the candidate branch offline.
+          # Skip only the new feature-specific picker check here; Live Guardian tests it after deployment.
+          labs_picker_args=()
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then labs_picker_args+=(--skip-labs-eco-picker); fi
           node clickthrough.js --url "${SITE_URL}?guardian=${GITHUB_RUN_ID}" --expect-sha256 "$WANT_SHA256" \
-            --browser ${{ matrix.browser }} --viewport ${{ matrix.viewport }} \
+            --browser ${{ matrix.browser }} --viewport ${{ matrix.viewport }} "${labs_picker_args[@]}" \
             --report out/report.json --shots out/screens --trace 2>&1 | tee out/clickthrough.txt
           code=${PIPESTATUS[0]}
           if [ "$code" = 3 ]; then echo "::error title=NOT TESTED::${{ matrix.browser }} ${{ matrix.viewport }} could not be started; nothing was tested"; fi
