@@ -32,8 +32,8 @@
 // every console error counts. A fresh browser context (empty localStorage) is used for every case, so
 // each case gets the first pick for its combination.
 // With --url the test is read-only: any request other than GET, HEAD or OPTIONS is blocked and fails the
-// check it happens in (the site sends none; the only exception, listed in READ_ONLY_POSTS, is the Google
-// Maps embed reading viewport information), and a page that does not load is retried twice.
+// check it happens in, except the explicitly reviewed Google Maps viewport-read POST. A separate Google
+// Maps telemetry POST is fulfilled locally with an empty 204 response; it is never sent externally.
 //
 // Diagnostics: failed requests and HTTP errors are listed for every run. With --shots, a check that fails
 // also saves a full-page screenshot (<check>-FAILED.png), and with --trace a Playwright trace
@@ -55,6 +55,7 @@ const crypto = require('crypto');
 const playwright = require('playwright');
 const { Chess } = require('chess.js');
 const cardChecks = require('./card_checks');
+const { classifyLiveRequest } = require('./live_request_policy');
 
 const args = process.argv.slice(2);
 const strictCards = args.includes('--strict-cards');
@@ -91,10 +92,7 @@ const isBlockedLoad = t => browserName === 'chromium' ? t === BLOCKED_LOAD : t.s
 // line alone does not say whether the cause was transient, and an HTTP 4xx fails through the response itself
 const isLoadFailure = e => e.startsWith('console error: Failed to load resource');
 // Diagnostics for the whole run, each line prefixed with the check it came from
-const diag = { failedRequests: [], httpErrors: [], blockedWrites: [], allowedReadPosts: [], retries: [] };
-// Third-party services that read with POST and store nothing for the site; allowed and listed. The Google
-// Maps embed on the Clubs tab asks for viewport information this way (seen in WebKit at phone size).
-const READ_ONLY_POSTS = [/^https:\/\/maps\.googleapis\.com\/\$rpc\/google\.internal\.maps\.mapsjs\.v1\.MapsJsInternalService\/GetViewportInfo$/];
+const diag = { failedRequests: [], httpErrors: [], blockedWrites: [], allowedReadPosts: [], mockedTelemetryPosts: [], retries: [] };
 const checks = []; // the report's checks, also written if the run stops with an error
 let current = null; // page of the check that is running, for a screenshot if it stops with an error
 
@@ -141,11 +139,19 @@ async function openPage(browser, label) {
   const context = await browser.newContext({ ...VIEWPORTS[viewportName], ...(url ? { serviceWorkers: 'block' } : {}) });
   const errors = [], aborted = new Set();
   if (!url) await context.route(/^https?:\/\//, r => { aborted.add(r.request().url()); return r.abort(); });
-  // Live site: read-only, so only reading requests go out
+  // Live site: all unapproved writes remain blocked. The known telemetry endpoint is mocked locally,
+  // never allowed through to Google; all other requests follow the fail-closed policy module.
   else await context.route('**/*', r => {
     const req = r.request();
-    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method())) return r.continue();
-    if (READ_ONLY_POSTS.some(re => re.test(req.url()))) { diag.allowedReadPosts.push(`${label}: ${req.method()} ${req.url()}`); return r.continue(); }
+    const decision = classifyLiveRequest(req.method(), req.url());
+    if (decision.action === 'continue') {
+      if (req.method() === 'POST') diag.allowedReadPosts.push(`${label}: ${req.method()} ${req.url()}`);
+      return r.continue();
+    }
+    if (decision.action === 'mock') {
+      diag.mockedTelemetryPosts.push(`${label}: ${req.method()} ${req.url()} (mocked ${decision.status}; not sent externally)`);
+      return r.fulfill({ status: decision.status, contentType: 'text/plain', body: '' });
+    }
     aborted.add(req.url());
     diag.blockedWrites.push(`${label}: ${req.method()} ${req.url()}`);
     errors.push(`blocked a ${req.method()} request to ${req.url()} (the live test is read-only)`);
@@ -577,7 +583,7 @@ function writeReport(status, checks, extra) {
     console.log(`\nRead-only guard -> ${diag.blockedWrites.length ? 'FAIL' : 'PASS'}`);
   }
   // Diagnostics: shown for every run, they only fail a check through the errors they cause
-  for (const [key, title] of [['retries', 'Page load retries'], ['blockedWrites', 'Blocked write requests'], ['allowedReadPosts', 'Allowed read-only POSTs (Google Maps)'], ['failedRequests', 'Failed requests'], ['httpErrors', 'HTTP errors']]) {
+  for (const [key, title] of [['retries', 'Page load retries'], ['blockedWrites', 'Blocked write requests'], ['allowedReadPosts', 'Allowed read-only POSTs (Google Maps)'], ['mockedTelemetryPosts', 'Mocked telemetry POSTs (not sent externally)'], ['failedRequests', 'Failed requests'], ['httpErrors', 'HTTP errors']]) {
     const lines = diag[key];
     if (!lines.length) { console.log(`${title}: none`); continue; }
     console.log(`${title}: ${lines.length}`);
