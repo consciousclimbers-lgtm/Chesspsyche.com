@@ -8,7 +8,7 @@ const READ_ONLY_POSTS = [
   /^https:\/\/maps\.googleapis\.com\/\$rpc\/google\.internal\.maps\.mapsjs\.v1\.MapsJsInternalService\/GetViewportInfo$/
 ];
 const MOCKED_TELEMETRY_POSTS = [
-  /^https:\/\/maps\.googleapis\.com\/maps_api_js_slo\/log(?:\?[^#]*)?$/
+  /^https:\/\/maps\.googleapis\.com\/maps_api_js_slo\/log(?:\?[^#\s]*)?$/
 ];
 
 function classifyLiveRequest(method, url) {
