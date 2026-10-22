@@ -3845,16 +3845,13 @@ function ecoToSystem(code, side) {
         if (!m) break;
         moves.push({ move: san, from: m.from, to: m.to });
     }
-    const note = t => String(t).split(' — ').slice(1).join(' — ');
-    let first = (e.commentary && e.commentary[0]) ? note(e.commentary[0]) : '';
-    if (side === 'black') {
-        // commentary[0] describes White's first move; use the last matching note on Black's own moves
-        const plies = e.moves.split(/\s+/).filter(x => x && !/^\d+\./.test(x));
-        const i = (e.commentary || []).map((t, j) => j % 2 === 1 && note(t) && String(t).split(' — ')[0].trim() === plies[j] ? j : -1).filter(j => j >= 0).pop();
-        first = i === undefined ? '' : `${(i + 1) / 2}...${plies[i]}: ${note(e.commentary[i])}.`;
-    }
+    const first = (e.commentary && e.commentary[0]) ? String(e.commentary[0]).split(' — ').slice(1).join(' — ') : '';
+    const plies = e.moves.split(/\s+/).filter(x => x && !/^\d+\./.test(x));
+    const blackReply = plies[1] || '';
     const written = ECO_SUMMARIES[code + '|' + side];
-    const summary = written ? written.summary : (first || ('Starts with ' + e.moves.split(/\s+/).slice(0, 9).join(' ') + (e.moves.split(/\s+/).length > 9 ? ' ...' : '') + '.'));
+    // Do not reuse move commentary for a Black card: it is not an opening summary and may be mislabeled.
+    const blackFallback = `In ${e.name}, Black's ${blackReply ? '...' + blackReply + ' reply' : 'reply'} defines this line and shapes the plans that follow.`;
+    const summary = written ? written.summary : (side === 'black' ? blackFallback : (first || ('Starts with ' + e.moves.split(/\s+/).slice(0, 9).join(' ') + (e.moves.split(/\s+/).length > 9 ? ' ...' : '') + '.')));
     return { name: e.name, eco: e.eco, summary, variations: [{ moves }] };
 }
 
