@@ -125,7 +125,7 @@ async function runSurvey(browser, file, seed) {
       moves: sys.variations[0].moves.map(m => m.move),
       gm: sys.notableGm || null,
       gmApproved: sys.notableGm ? approved(sys.eco, want).includes(sys.notableGm) : !approved(sys.eco, want).length,
-      summaryWritten: handSide.has(`${sys.eco}|${want}`) || (written[`${sys.eco}|${want}`] || {}).summary === sys.summary
+      summaryWritten: handSide.has(`${sys.eco}|${want}`) || !written[`${sys.eco}|${want}`] || written[`${sys.eco}|${want}`].summary === sys.summary
     };
     const out = {};
     for (const arch of Object.keys(archetypes)) for (const lvl of Object.keys(LEVEL_BANDS)) for (const strong of [0, 4]) {
@@ -165,7 +165,7 @@ async function runSurvey(browser, file, seed) {
             handWritten: handSide.has(key), summary: sys.summary, comments: (ecoVaultData[sys.eco] || {}).commentary || [],
             moves: sys.variations[0].moves.map(m => m.move), gm: sys.notableGm || null,
             gmOk: sys.notableGm ? approved.includes(sys.notableGm) : !approved.length,
-            summaryWritten: handSide.has(key) || (ECO_SUMMARIES[key] || {}).summary === sys.summary
+            summaryWritten: handSide.has(key) || !ECO_SUMMARIES[key] || ECO_SUMMARIES[key].summary === sys.summary
           };
         }
         if (now === prev) break;
