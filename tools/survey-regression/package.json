@@ -3,7 +3,8 @@
   "private": true,
   "description": "Regression test for the ChessPsyche survey opening recommendations",
   "scripts": {
-    "test": "node survey_regression.js ../../index.html",
+    "test": "node live_request_policy.test.js && node survey_regression.js ../../index.html",
+    "test:live-request-policy": "node live_request_policy.test.js",
     "update": "node survey_regression.js ../../index.html --update",
     "update:gm-baseline": "node survey_regression.js ../../index.html --update-gm-baseline",
     "clickthrough": "node clickthrough.js ../../index.html",
