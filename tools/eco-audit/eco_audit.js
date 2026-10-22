@@ -155,7 +155,7 @@ for (const [eco, d] of Object.entries(vault.value)) {
     else add('vault', eco, 'reaches its code', 'error', `follows a different line; ends in ${endsIn(r)}`, { line });
   } else {
     if (!r.last.some(c => c.eco === eco)) add('vault', eco, 'ends in its code', 'warn', `passes through ${eco} at ply ${r.reachedAt}, then continues; ends in ${endsIn(r)}`, { line });
-    if (r.reachedAt > 10) add('vault', eco, 'card demo reaches its code', 'info', `a generated survey card plays the first 10 plies; ${eco} is reached at ply ${r.reachedAt}`, { line });
+    if (r.reachedAt > 20) add('vault', eco, 'card demo reaches its code', 'info', `a generated survey card plays the first 20 plies; ${eco} is reached at ply ${r.reachedAt}`, { line });
   }
   if (nm.verdict === 'differs' || nm.verdict === 'partial') add('vault', eco, nm.verdict === 'differs' ? 'name' : 'name (partly matches)', nm.verdict === 'differs' ? 'warn' : 'info', `"${name}" vs reference ${refList(nm)}`, { line });
   if (nm.verdict === 'no reference name') add('vault', eco, 'name', 'info', `the reference has no entry for ${eco}`, { line });
@@ -186,7 +186,7 @@ for (const [arch, a] of Object.entries(archetypes.value)) {
       for (const m of r.mismatch) add('slot', sys.eco, 'from/to squares', 'error', `${where}: ${m}`, { line });
       if (!r.error && !r.reachedAt) add('slot', sys.eco, 'reaches its code', 'error', `${where}: ends in ${endsIn(r)}`, { line });
       if (!r.error && r.reachedAt && !r.last.some(c => c.eco === sys.eco)) add('slot', sys.eco, 'ends in its code', 'warn', `${where}: passes through ${sys.eco} at ply ${r.reachedAt}, then continues; ends in ${endsIn(r)}`, { line });
-      if (!r.error && r.reachedAt > 10) add('slot', sys.eco, 'results demo reaches its code', 'info', `${where}: the results-board demo plays the first 10 plies; ${sys.eco} is reached at ply ${r.reachedAt}`, { line });
+      if (!r.error && r.reachedAt > 20) add('slot', sys.eco, 'results demo reaches its code', 'info', `${where}: the results-board demo plays the first 20 plies; ${sys.eco} is reached at ply ${r.reachedAt}`, { line });
       const declared = side.value[sys.eco];
       if (declared && declared !== 'either' && declared !== slotSide) add('slot', sys.eco, 'side', 'warn', `${where} is a ${slotSide} card, but ECO_SIDE[${sys.eco}] = ${declared}, so the ECO list and Arena say "You play as ${declared}"`, { line });
       const nm = nameCheck(sys.name, sys.eco);
@@ -199,7 +199,7 @@ for (const [arch, a] of Object.entries(archetypes.value)) {
 for (const [k, v] of Object.entries(slotEcos)) if (v.length > 1) add('slot', k.split('|')[0], 'duplicate slot code', 'info', `${k} is used by ${v.join(', ')}`);
 
 // ---- 3. Notable GM pools: the GM is looked up by (picked ECO code, card side), so that pair must name the opening shown ----
-// The card is the hand-written slot for that code and side if one exists, otherwise the vault entry (first 10 plies on
+// The card is the hand-written slot for that code and side if one exists, otherwise the vault entry (first 20 plies on
 // the board). The survey only picks vault codes whose ECO_SIDE is the card's side or "either".
 // Codes the survey can ever pick for a side, mirroring ecoCandidatesFor and pickEcoCode in index.html: for each
 // style, level band and "strong" stretch, the first non-empty list of the style and its fallbacks, side-only codes
@@ -241,7 +241,7 @@ for (const p of gmPools.value) {
     if (!surveyCanPick && !slot) { add('gm pool', eco, 'reachable', 'warn', `${where}: the survey never picks ${eco} for a ${sd} card (ECO_SIDE ${declared}${profile[eco] ? '' : ', no ECO_PROFILE entry'}), so this key is never used`, extra); status = 'unreachable'; }
     else if (!surveyCanPick) add('gm pool', eco, 'reachable', 'info', `${where}: the survey never picks ${eco} for ${sd}; only the hand-written ${sd} slot on the safety-net path shows it`, extra);
     const sans = slot ? (slot.variations?.[0]?.moves || []).map(m => m.move) : sanList(v.moves);
-    const shown = slot ? sans : sans.slice(0, 10);
+    const shown = slot ? sans : sans.slice(0, 20);
     const cardName = slot ? slot.name : (names.value[eco] || eco);
     const r = play(sans, eco), rs = play(shown, eco);
     if (r.error) { add('gm pool', eco, 'card line', 'error', `${where}: ${r.error}`, extra); status = 'line'; }
