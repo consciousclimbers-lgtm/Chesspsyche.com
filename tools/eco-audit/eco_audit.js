@@ -241,7 +241,7 @@ for (const p of gmPools.value) {
     if (!surveyCanPick && !slot) { add('gm pool', eco, 'reachable', 'warn', `${where}: the survey never picks ${eco} for a ${sd} card (ECO_SIDE ${declared}${profile[eco] ? '' : ', no ECO_PROFILE entry'}), so this key is never used`, extra); status = 'unreachable'; }
     else if (!surveyCanPick) add('gm pool', eco, 'reachable', 'info', `${where}: the survey never picks ${eco} for ${sd}; only the hand-written ${sd} slot on the safety-net path shows it`, extra);
     const sans = slot ? (slot.variations?.[0]?.moves || []).map(m => m.move) : sanList(v.moves);
-    const shown = slot ? sans : sans.slice(0, 20);
+    const shown = sans.slice(0, 20);
     const cardName = slot ? slot.name : (names.value[eco] || eco);
     const r = play(sans, eco), rs = play(shown, eco);
     if (r.error) { add('gm pool', eco, 'card line', 'error', `${where}: ${r.error}`, extra); status = 'line'; }
