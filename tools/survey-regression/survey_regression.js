@@ -184,8 +184,9 @@ async function runSurvey(browser, file, seed) {
     const written = typeof ECO_SUMMARIES === 'object' ? ECO_SUMMARIES : {};
     for (const [key, e] of Object.entries(written)) {
       const parts = key.split('|'), code = parts[0], side = parts[1], v = ecoVault.find(x => x.eco === code);
+      if (parts.length !== 2 || !/^[A-E][0-9]{2}$/.test(code) || !['white', 'black'].includes(side)) { issues.push(key + ': invalid ECO|side key'); continue; }
       if (!v) { issues.push(key + ': not in the opening vault'); continue; }
-      if (!['white', 'black'].includes(side) || (v.side !== side && v.side !== 'either')) issues.push(key + ': wrong side for vault opening (' + v.side + ')');
+      if (v.side !== side && v.side !== 'either') issues.push(key + ': wrong side for vault opening (' + v.side + ')');
       if (hand.has(key)) issues.push(key + ': duplicates a hand-written system');
       const t = String(e.summary || '');
       if (!/^[A-Z].{59,229}\.$/.test(t) || /[a-z)]\. [A-Z]/.test(t)) issues.push(key + ': summary is not one sentence of 60–230 characters');
@@ -368,6 +369,9 @@ async function runSurvey(browser, file, seed) {
     const key = `${c.eco}|${c.side}`;
     if (c.cardSide !== c.side && c.cardSide !== 'either') reachFails.push(`card ${key} (${c.firstSeen}) is a ${c.cardSide} card`);
     if (!c.gmOk) reachFails.push(`card ${key} (${c.firstSeen}) shows Notable GM "${c.gm || '-'}", not from its approved pool`);
+    // Every reachable generated card must use the exact written ECO|side summary.
+    // Hand-written systems are intentionally exempt because their summaries are authored inline.
+    if (!c.handWritten && !c.summaryWritten) reachFails.push(`card ${key} (${c.firstSeen}) does not use its matching ECO_SUMMARIES entry`);
     const g = new Chess();
     for (const san of c.moves) if (!g.move(san)) { reachFails.push(`card ${key} (${c.firstSeen}) illegal at ${san}`); break; }
     const issues = cardChecks.summaryIssues(c);
@@ -392,6 +396,7 @@ async function runSurvey(browser, file, seed) {
   for (const [cfg, runs] of Object.entries(res)) for (const pair of runs) for (const c of pair) {
     if (!c) continue;
     if (c.side !== c.want && c.side !== 'either') sideIssues.add(`${c.eco} shown as ${c.want}, card is ${c.side}`);
+    if (!c.handWritten && !c.summaryWritten) illegal.push(`${cfg}: ${c.eco} (${c.want}) does not use its matching ECO_SUMMARIES entry`);
     if (!c.gmApproved) illegal.push(`${cfg}: ${c.eco} (${c.want}) shows Notable GM "${c.gm || '-'}", not from its approved pool`);
     const g = new Chess();
     for (const san of c.moves) if (!g.move(san)) { illegal.push(`${cfg}: ${c.eco} illegal at ${san}`); break; }
