@@ -4812,7 +4812,7 @@
    "handWritten": false,
    "pool": "Nimzo-Indian Defence|black",
    "plies": 14,
-   "line": "d4 Nf6 c4 e6 Nc3 Bb4 e3 O-O Bd3 d5 Nf3 Nc6 O-O c5",
+   "line": "d4 Nf6 c4 e6 Nc3 Bb4 e3 O-O Bd3 d5 a3 Bxc3+ bxc3 c5",
    "ecoPly": 13,
    "ecoFen": "rnbq1rk1/ppp2ppp/4pn2/3p4/2PP4/P1PBP3/5PPP/R1BQK1NR b KQ -",
    "ecoName": "Nimzo-Indian Defense: Normal Variation, Botvinnik System"
