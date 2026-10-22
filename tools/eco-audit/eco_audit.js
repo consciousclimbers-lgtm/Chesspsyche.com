@@ -62,6 +62,8 @@ function extractLiteral(name) {
   for (; i < src.length; i++) {
     const c = src[i];
     if (q) { if (c === '\\') i++; else if (c === q) q = null; continue; }
+    // Skip // comments outside strings: an apostrophe in one ("pool's") would otherwise open a quote and desync the count
+    if (c === '/' && src[i + 1] === '/') { while (i < src.length && src[i] !== '\n') i++; continue; }
     if (c === '"' || c === "'" || c === '`') q = c;
     else if (c === '{' || c === '[') depth++;
     else if ((c === '}' || c === ']') && --depth === 0) break;
