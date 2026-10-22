@@ -28,9 +28,10 @@
 //
 // Offline by default, like survey_regression.js: every http(s) request is blocked except chess.js 0.10.3,
 // served from node_modules (the console errors those blocked requests cause are expected and ignored).
-// With --url it tests a deployed site instead (live smoke test): nothing is blocked or replaced, and
-// every console error counts. A fresh browser context (empty localStorage) is used for every case, so
-// each case gets the first pick for its combination.
+// With --url it tests a deployed site instead (live smoke test): unapproved writes are blocked, the
+// explicitly approved viewport-read POST is the only external write exception, and one exact telemetry
+// POST is mocked locally rather than sent. Every console error still counts. A fresh browser context
+// (empty localStorage) is used for every case, so each case gets the first pick for its combination.
 // With --url the test is read-only: any request other than GET, HEAD or OPTIONS is blocked and fails the
 // check it happens in, except the explicitly reviewed Google Maps viewport-read POST. A separate Google
 // Maps telemetry POST is fulfilled locally with an empty 204 response; it is never sent externally.
