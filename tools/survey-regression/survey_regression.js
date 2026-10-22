@@ -121,6 +121,7 @@ async function runSurvey(browser, file, seed) {
     const card = (sys, want) => sys && {
       eco: sys.eco, want,
       side: handSide.has(`${sys.eco}|${want}`) ? want : (ecoVault.find(e => e.eco === sys.eco) || {}).side,
+      handWritten: handSide.has(`${sys.eco}|${want}`),
       moves: sys.variations[0].moves.map(m => m.move),
       gm: sys.notableGm || null,
       gmApproved: sys.notableGm ? approved(sys.eco, want).includes(sys.notableGm) : !approved(sys.eco, want).length,
