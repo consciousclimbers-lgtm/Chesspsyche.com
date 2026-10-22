@@ -3817,7 +3817,7 @@ const ECO_SUMMARIES = {
     "B01|black": { summary: "The Scandinavian Defence challenges e4 at once, and after the usual recapture on d5 Black's queen develops early in return for a sound pawn structure and easy piece play.", source: "https://www.chess.com/openings/Scandinavian-Defense" },
     "A43|black": { summary: "Meeting 1.d4 with ...c5 invites White to gain space with d5, leading to Benoni structures where Black plays for counterplay against an advanced centre.", source: "https://www.chess.com/openings/Old-Benoni-Defense-2.d5-d6" },
     "E52|black": { summary: "In the Rubinstein Nimzo-Indian Black adds ...d5 and a Queen's Indian-style ...b6, aiming to control e4 and develop the light-squared bishop on b7.", source: "https://chessarchive.net/uk/openings/indian-defences/page/6" },
-    "E53|black": { summary: "In the Rubinstein Nimzo-Indian main line Black adds ...d5 and ...c5 to challenge White's centre, often leading to isolated-pawn or hanging-pawn structures.", source: "https://chessiro.com/openings/E50-nimzo-indian-4-e3-o-o-5-nf3-c5" },
+    "E53|black": { summary: "In the Nimzo-Indian Gligoric System, Black uses ...d5 and ...c5 to challenge White's centre and create central tension.", source: "https://www.chessiro.com/openings/E53-nimzo-indian-defense-normal-variation-gligoric-system" },
     "B49|black": { summary: "The Taimanov sets up ...e6, ...Nc6, ...Qc7 and ...a6, a flexible Sicilian that develops the queenside quickly and keeps the d-pawn and dark-squared bishop uncommitted.", source: "https://www.exeterchessclub.org.uk/content/taimanovs-legacy" },
     "B82|black": { summary: "The Scheveningen keeps a compact small centre with pawns on d6 and e6, and against White's active f4 Black looks for counterplay with ...b5 and well-timed ...e5 or ...d5 breaks.", source: "https://en.wikipedia.org/wiki/Sicilian_Defence,_Scheveningen_Variation" },
     "B83|black": { summary: "The Scheveningen keeps a compact small centre with pawns on d6 and e6, and against White's positional Be2 Black prepares queenside play and central breaks with ...d5 or ...e5.", source: "https://en.wikipedia.org/wiki/Sicilian_Defence,_Scheveningen_Variation" },
@@ -3845,7 +3845,14 @@ function ecoToSystem(code, side) {
         if (!m) break;
         moves.push({ move: san, from: m.from, to: m.to });
     }
-    const first = (e.commentary && e.commentary[0]) ? String(e.commentary[0]).split(' — ').slice(1).join(' — ') : '';
+    const note = t => String(t).split(' — ').slice(1).join(' — ');
+    let first = (e.commentary && e.commentary[0]) ? note(e.commentary[0]) : '';
+    if (side === 'black') {
+        // commentary[0] describes White's first move; use the last matching note on Black's own moves
+        const plies = e.moves.split(/\s+/).filter(x => x && !/^\d+\./.test(x));
+        const i = (e.commentary || []).map((t, j) => j % 2 === 1 && note(t) && String(t).split(' — ')[0].trim() === plies[j] ? j : -1).filter(j => j >= 0).pop();
+        first = i === undefined ? '' : `${(i + 1) / 2}...${plies[i]}: ${note(e.commentary[i])}.`;
+    }
     const written = ECO_SUMMARIES[code + '|' + side];
     const summary = written ? written.summary : (first || ('Starts with ' + e.moves.split(/\s+/).slice(0, 9).join(' ') + (e.moves.split(/\s+/).length > 9 ? ' ...' : '') + '.'));
     return { name: e.name, eco: e.eco, summary, variations: [{ moves }] };
