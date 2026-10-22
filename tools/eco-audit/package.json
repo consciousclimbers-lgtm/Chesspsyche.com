@@ -1,0 +1,11 @@
+{
+  "name": "chesspsyche-eco-audit",
+  "private": true,
+  "description": "Report-only audit of ECO codes, names, sides and move lines in index.html against a pinned lichess-org/chess-openings copy",
+  "scripts": {
+    "audit": "node eco_audit.js ../../index.html --json eco-audit.json --markdown eco-audit.md"
+  },
+  "dependencies": {
+    "chess.js": "1.0.0"
+  }
+}
