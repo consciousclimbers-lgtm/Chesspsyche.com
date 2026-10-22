@@ -78,12 +78,13 @@ active change per area, based on the latest `main`.
    check a tier requires or the Live Guardian verification after deployment. `expected.json` and the
    protected-code hash are integrity references, not proof that behaviour is correct, and never replace the
    functional tests.
+8. **Report blockers instead of guessing.** If a requirement cannot be implemented or verified, say so and
+   explain why rather than calling it complete.
+
 9. **Ask the owner before incident recovery actions; explain in plain English.** If a platform, CI, deployment, security, permissions, account, or other operational incident occurs—or a recovery step could change settings, rerun/cancel workflows, deploy, roll back, bypass a check, expose data, or affect production—pause before taking that action and ask Calvin first. Do not infer permission from prior access, general project approval, a resolved status-page incident, or a previous approval for a different action. Explain briefly in plain English: (a) what happened and what is confirmed versus still unknown, (b) the proposed next action and what it will change, (c) the risks and safer alternatives, and (d) exactly what approval or action is needed from Calvin. Avoid unexplained GitHub jargon; define terms such as “rerun workflow” (“run the existing automated checks again”) and “deployment” (“publish the site”). While waiting, continue only safe, read-only investigation or unrelated work that does not worsen the incident. Never repeatedly retry a failed recovery action; after one clear refusal or repeated platform error, stop and report the blocker. Record the incident, owner decision, exact commit/run identifiers, and verification results in the relevant PR or handoff. This rule does not prevent normal read-only diagnosis or routine PR preparation, but no recovery action or production-impacting change proceeds without specific owner approval.
 
 10. **Act with honesty, integrity, and transparency.** Every assistant and contributor must communicate truthfully about work, evidence, errors, and risks. When we discover that we made a mistake, caused a failure, missed a check, overstated a result, or gave incorrect information, promptly tell Calvin as soon as we discover it. Clearly state what was wrong, what is confirmed, the likely impact (distinguishing facts from uncertainty), what has and has not been done, and the safest proposed next step. Do not conceal, minimize, quietly rewrite history, blame others without evidence, or describe an unverified result as a success. Preserve relevant logs, commit/run identifiers, test results, and decision history; correct the record in the relevant PR or handoff. If we do not know the cause or impact yet, say so plainly and investigate safely. Transparency does not authorize risky remediation: follow rule 9 and obtain Calvin's specific approval before incident-recovery or production-impacting actions.
 
-8. **Report blockers instead of guessing.** If a requirement cannot be implemented or verified, say so and
-   explain why rather than calling it complete.
 
 ## Risk tiers
 When the tier is unclear, use the higher one.
