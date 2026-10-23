@@ -30,7 +30,7 @@ const HEADING_TYPES = ['no-gm-heading'];
 
 // Written at the top of known-card-issues.json: what the list is and how each kind of entry goes away
 const KNOWN_HEADER = {
-  about: 'Temporary list of known summary problems on survey recommendation cards, keyed "ECO|side". Listed issues are reported, not failed. It may only shrink: a new issue fails the test, a listed issue that no longer occurs fails until its entry is removed (npm run prune:known-card-issues), and on a pull request CI fails if this file has any card and issue type that the base branch copy does not (check_known_shrink.js). Never add entries to make a test pass without owner approval.',
+  about: 'Temporary list of known summary problems on survey recommendation cards, keyed "ECO|side". Listed issues are reported, not failed. It may only shrink; an already-known card may be reclassified as generic-summary when an unsourced Black fallback replaces an earlier summary defect. New card keys or unrelated issue types are not allowed by the shrink guard. Never add entries to make a test pass without owner approval.',
   removal: {
     fallback: 'Card shows the generic "Starts with <moves>" text. Removed when a sourced family-and-side summary (or a per-code override) covers this ECO code and side.',
     'generic-summary': 'Generated Black card uses a neutral generic reply sentence rather than an opening-specific sourced summary. Removed only when a sourced family-and-side summary (or a per-code override) covers this ECO code and side.',
