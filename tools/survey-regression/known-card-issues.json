@@ -8,32 +8,14 @@
   "no-gm-heading": "Card with no approved Notable GM has no \"Notable GM:\" line. Removed when the results page shows \"Notable GM: None approved for this opening yet.\" on such cards (checked by clickthrough.js on its cases)."
  },
  "issues": {
-  "A05|white": [
-   "move-comment"
-  ],
-  "A06|white": [
-   "move-comment"
-  ],
-  "A08|white": [
-   "move-comment"
-  ],
   "A11|black": [
    "generic-summary"
-  ],
-  "A14|white": [
-   "move-comment"
-  ],
-  "A17|white": [
-   "move-comment"
   ],
   "A18|white": [
    "fallback"
   ],
   "A19|white": [
    "fallback"
-  ],
-  "A20|white": [
-   "move-comment"
   ],
   "A21|white": [
    "fallback"
