@@ -1,7 +1,6 @@
 // Pull-request check: known-card-issues.json may only shrink against the base branch.
-// Fails if this branch adds a card/issue that the base did not know. One narrow migration is allowed:
-// an existing card with any prior summary issue may be reclassified as "generic-summary" when a neutral,
-// unsourced Black fallback replaces the prior defect. The survey test verifies that this type really occurs.
+// Fails if this branch's list has any card and issue type ("ECO|side" + code) that the base branch's list
+// does not have, so a new defect cannot be made acceptable by listing it in the same PR.
 // When the base branch has no list yet (the PR that introduces it), the list is only accepted if index.html
 // is identical to the base branch: npm test then proves the list is exactly the issues the base site has.
 // If the base branch has the file but it cannot be read or is not a valid list, the check fails (fail closed).
@@ -69,19 +68,11 @@ if (baseList === null) {
   process.exit(0);
 }
 
-const rawAdded = cardChecks.additions(head, baseList);
-const reclassified = rawAdded.filter(entry => {
-  const match = entry.match(/^(.*) (generic-summary)$/);
-  return match && match[1].endsWith('|black') && ['fallback', 'move-comment', 'wrong-side'].some(type => (baseList[match[1]] || []).includes(type));
-});
-const added = rawAdded.filter(entry => !reclassified.includes(entry));
+const added = cardChecks.additions(head, baseList);
 const removed = cardChecks.additions(baseList, head);
-const findingCount = issues => Object.values(issues).reduce((n, codes) => n + codes.length, 0);
 console.log(`Base ${base}: ${cardChecks.countLine(baseList)}`);
 console.log(`This branch: ${cardChecks.countLine(head)}`);
-console.log(`Removed/replaced prior issue types: ${removed.length}${removed.length ? ` (${removed.join('; ')})` : ''}`);
-console.log(`Reclassified known Black cards to generic-summary (still unresolved): ${reclassified.length}`);
-console.log(`Net issue-finding reduction: ${findingCount(baseList) - findingCount(head)}`);
+console.log(`Removed: ${removed.length}${removed.length ? ` (${removed.join('; ')})` : ''}`);
 if (added.length) {
   console.log(`\nFAIL: ${added.length} entries are not in the base branch list. The list can only shrink; fix these instead of listing them:`);
   for (const a of added) console.log('  - ' + a);
