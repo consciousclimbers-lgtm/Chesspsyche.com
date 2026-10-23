@@ -20,9 +20,6 @@
   "A47|black": [
    "generic-summary"
   ],
-  "A48|black": [
-   "generic-summary"
-  ],
   "A50|black": [
    "generic-summary"
   ],
@@ -687,120 +684,6 @@
    "generic-summary"
   ],
   "E59|black": [
-   "generic-summary"
-  ],
-  "E61|black": [
-   "generic-summary"
-  ],
-  "E62|white": [
-   "fallback"
-  ],
-  "E63|white": [
-   "fallback"
-  ],
-  "E64|white": [
-   "fallback"
-  ],
-  "E65|white": [
-   "fallback"
-  ],
-  "E66|white": [
-   "fallback"
-  ],
-  "E67|black": [
-   "generic-summary"
-  ],
-  "E68|white": [
-   "fallback"
-  ],
-  "E69|white": [
-   "fallback"
-  ],
-  "E70|black": [
-   "generic-summary"
-  ],
-  "E71|white": [
-   "fallback"
-  ],
-  "E72|white": [
-   "fallback"
-  ],
-  "E73|white": [
-   "fallback"
-  ],
-  "E74|white": [
-   "fallback"
-  ],
-  "E75|white": [
-   "fallback"
-  ],
-  "E76|white": [
-   "fallback"
-  ],
-  "E77|white": [
-   "fallback"
-  ],
-  "E78|white": [
-   "fallback"
-  ],
-  "E79|white": [
-   "fallback"
-  ],
-  "E80|white": [
-   "fallback"
-  ],
-  "E81|white": [
-   "fallback"
-  ],
-  "E82|white": [
-   "fallback"
-  ],
-  "E83|white": [
-   "fallback"
-  ],
-  "E84|white": [
-   "fallback"
-  ],
-  "E85|white": [
-   "fallback"
-  ],
-  "E86|white": [
-   "fallback"
-  ],
-  "E87|white": [
-   "fallback"
-  ],
-  "E88|white": [
-   "fallback"
-  ],
-  "E89|white": [
-   "fallback"
-  ],
-  "E90|black": [
-   "generic-summary"
-  ],
-  "E91|black": [
-   "generic-summary"
-  ],
-  "E92|black": [
-   "generic-summary"
-  ],
-  "E93|black": [
-   "generic-summary"
-  ],
-  "E94|black": [
-   "generic-summary"
-  ],
-  "E95|black": [
-   "generic-summary"
-  ],
-  "E96|black": [
-   "generic-summary"
-  ],
-  "E98|black": [
-   "generic-summary"
-  ],
-  "E99|black": [
    "generic-summary"
   ]
  }
