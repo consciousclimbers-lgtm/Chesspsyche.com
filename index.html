@@ -3838,20 +3838,26 @@ function ecoToSystem(code, side) {
         if (side !== 'white' && s.blackSystem.eco === code) return s.blackSystem;
     }
     const e = ecoVault.find(x => x.eco === code);
+    const moveText = typeof e.moves === 'string' ? e.moves.trim() : '';
     const g = createChessInstance(), moves = [];
     // Up to ten full moves of the vault line; stop at a move the engine rejects rather than skip it
-    for (const san of e.moves.split(/\s+/).filter(x => x && !/^\d+\./.test(x)).slice(0, DEMO_MAX_PLIES)) {
+    for (const san of moveText.split(/\s+/).filter(x => x && !/^\d+\./.test(x)).slice(0, DEMO_MAX_PLIES)) {
         const m = g.move(san);
         if (!m) break;
         moves.push({ move: san, from: m.from, to: m.to });
     }
     const first = (e.commentary && e.commentary[0]) ? String(e.commentary[0]).split(' — ').slice(1).join(' — ') : '';
-    const plies = e.moves.split(/\s+/).filter(x => x && !/^\d+\./.test(x));
+    const plies = moveText.split(/\s+/).filter(x => x && !/^\d+\./.test(x));
     const blackReply = plies[1] || '';
     const written = ECO_SUMMARIES[code + '|' + side];
     // Do not reuse move commentary for a Black card: it is not an opening summary and may be mislabeled.
-    const blackFallback = `In ${e.name}, Black's ${blackReply ? '...' + blackReply + ' reply' : 'reply'} defines this line and shapes the plans that follow.`;
-    const summary = written ? written.summary : (side === 'black' ? blackFallback : (first || ('Starts with ' + e.moves.split(/\s+/).slice(0, 9).join(' ') + (e.moves.split(/\s+/).length > 9 ? ' ...' : '') + '.')));
+    const blackFallback = blackReply
+        ? `In ${e.name}, Black's ...${blackReply} reply defines this line and shapes the plans that follow.`
+        : `In ${e.name}, no Black reply is available in this line, so this summary stays general.`;
+    const genericFallback = moveText
+        ? ('Starts with ' + moveText.split(/\s+/).slice(0, 9).join(' ') + (moveText.split(/\s+/).length > 9 ? ' ...' : '') + '.')
+        : `The ${e.name} line is not available yet.`;
+    const summary = written ? written.summary : (side === 'black' ? blackFallback : (first || genericFallback));
     return { name: e.name, eco: e.eco, summary, variations: [{ moves }] };
 }
 

@@ -200,6 +200,34 @@ async function runSurvey(browser, file, seed) {
     }
     return { count: Object.keys(written).length, issues };
   });
+  // Exercise generated Black summaries when the move list is absent or too short to contain a Black reply.
+  const fallbackAudit = await page.evaluate(() => {
+    const issues = [], cases = [], handBlack = new Set();
+    for (const a of Object.values(archetypes)) for (const s of Object.values(a.systems)) handBlack.add(s.blackSystem.eco);
+    const written = typeof ECO_SUMMARIES === 'object' ? ECO_SUMMARIES : {};
+    const probe = ecoVault.find(v => v.moves && !handBlack.has(v.eco) && !written[v.eco + '|black']);
+    if (!probe) issues.push('no unsourced generated Black card is available for fallback tests');
+    else {
+      const originalMoves = probe.moves, originalCommentary = probe.commentary;
+      try {
+        for (const [label, moves] of [['missing', null], ['empty', ''], ['one-ply', '1. e4'], ['partial', '1. e4 e5']]) {
+          if (moves === null) delete probe.moves; else probe.moves = moves;
+          probe.commentary = ['e4 — WHITE COMMENTARY SENTINEL'];
+          const summary = ecoToSystem(probe.eco, 'black').summary;
+          cases.push({ label, summary });
+          if (summary.includes('WHITE COMMENTARY SENTINEL')) issues.push(label + ': copied White move commentary');
+          if (['missing', 'empty', 'one-ply'].includes(label)) {
+            if (!summary.includes('no Black reply is available')) issues.push(label + ': does not acknowledge the absent Black reply');
+            if (summary.includes('reply defines this line')) issues.push(label + ': claims a nonexistent Black reply');
+          } else if (!summary.includes('...e5 reply')) issues.push('partial: does not identify the available Black reply');
+        }
+      } finally {
+        probe.moves = originalMoves;
+        probe.commentary = originalCommentary;
+      }
+    }
+    return { cases, issues };
+  });
   // Notable GM pools: data checks, fair round-robin, stability on re-render and reload, women's representation
   const rotation = await page.evaluate(() => {
     const issues = [], warnings = [];
@@ -344,7 +372,7 @@ async function runSurvey(browser, file, seed) {
   const notableGm = {};
   for (const [cfg, runs] of Object.entries(res)) picks[cfg] = runs.map(([w, b]) => `${w ? w.eco : '-'}/${b ? b.eco : '-'}`).join(' ');
   for (const [cfg, runs] of Object.entries(res)) notableGm[cfg] = runs.map(([w, b]) => `${(w && w.gm) || '-'} / ${(b && b.gm) || '-'}`).join(' | ');
-  return { res, picks, notableGm, labs, rotation, bank, reach, summaryAudit, errors, blocked: [...blocked] };
+  return { res, picks, notableGm, labs, rotation, bank, reach, summaryAudit, fallbackAudit, errors, blocked: [...blocked] };
 }
 
 (async () => {
@@ -355,12 +383,12 @@ async function runSurvey(browser, file, seed) {
   for (let i = 0; i < repeat; i++) runs.push(await runSurvey(browser, htmlPath, SEED));
   const otherSeed = await runSurvey(browser, htmlPath, OTHER_SEED);
   await browser.close();
-  const { res, picks, bank, notableGm, labs, rotation, reach, summaryAudit } = runs[0];
+  const { res, picks, bank, notableGm, labs, rotation, reach, summaryAudit, fallbackAudit } = runs[0];
   const gmNow = { notableGm, handWritten: labs.handWritten, labsDrill: labs.drill };
   const errors = [...new Set([...runs, otherSeed].flatMap(r => r.errors))];
   const blocked = [...new Set([...runs, otherSeed].flatMap(r => r.blocked))].sort();
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res) && same(r.labs, labs) && same(r.rotation, rotation) && same(r.reach, reach));
+  const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res) && same(r.labs, labs) && same(r.rotation, rotation) && same(r.reach, reach) && same(r.fallbackAudit, fallbackAudit));
   const seedOk = same(otherSeed.picks, picks) && same(otherSeed.notableGm, notableGm) && same(otherSeed.labs, labs) && same(otherSeed.rotation, rotation) && same(otherSeed.reach, reach);
 
   // Every reachable card (check 11)
@@ -457,6 +485,7 @@ async function runSurvey(browser, file, seed) {
   }
   fails.push(...rotation.issues.map(i => `Notable GM pools: ${i}`));
   fails.push(...summaryAudit.issues.map(i => `Opening summaries: ${i}`));
+  fails.push(...fallbackAudit.issues.map(i => `Black summary fallback: ${i}`));
   fails.push(...reachFails, ...cardCmp.fails);
   const shownGms = new Set(Object.values(res).flat().flat().filter(c => c && c.gm).map(c => c.gm));
   const names = new Set(labs.names);
@@ -477,6 +506,7 @@ async function runSurvey(browser, file, seed) {
   console.log(`Scoring: ${vecs.size} answer combinations, ${vecs.size - scoreDiffs.length} match (${Object.entries(styleCounts).map(([s, n]) => `${s} ${n}`).join(', ')})`);
   console.log(`Notable GM on cards: ${Object.keys(notableGm).length} combinations (x3 runs), ${gmMatch} match gm-baseline.json; ${shownGms.size} different GMs shown, ${noRecord.length} with no GM record (${noRecord.join(', ') || 'none'})`);
   console.log(`Opening summaries: ${summaryAudit.count} entries, ${summaryAudit.issues.length} validation issues; reachable generated cards checked for coverage`);
+  console.log(`Black fallback edge cases: ${fallbackAudit.cases.length} tested, ${fallbackAudit.issues.length} issues`);
   console.log(`Hand-written Notable GM names: ${labs.handWritten.length}, ${handOk ? 'unchanged' : 'CHANGED'}`);
   console.log(`Labs GM drill: ${Object.keys(labs.drill).length} picker GMs, ${drillMatch} match gm-baseline.json (${Object.values(labs.drill).filter(m => m !== '-').length} load an opening)`);
   const rp = rotation.report, womenSet = new Set(rp.womenNames);
