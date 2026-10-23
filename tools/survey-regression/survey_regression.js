@@ -234,13 +234,13 @@ async function runSurvey(browser, file, seed) {
     else {
       const originalMoves = probe.moves, originalCommentary = probe.commentary;
       try {
-        for (const [label, moves] of [['missing', null], ['empty', ''], ['one-ply', '1. e4'], ['partial', '1. e4 e5']]) {
+        for (const [label, moves] of [['missing', null], ['empty', ''], ['non-string', 42], ['one-ply', '1. e4'], ['partial', '1. e4 e5']]) {
           if (moves === null) delete probe.moves; else probe.moves = moves;
           probe.commentary = ['e4 — WHITE COMMENTARY SENTINEL'];
           const summary = ecoToSystem(probe.eco, 'black').summary;
           cases.push({ label, summary });
           if (summary.includes('WHITE COMMENTARY SENTINEL')) issues.push(label + ': copied White move commentary');
-          if (['missing', 'empty', 'one-ply'].includes(label)) {
+          if (['missing', 'empty', 'non-string', 'one-ply'].includes(label)) {
             if (!summary.includes('no Black reply is available')) issues.push(label + ': does not acknowledge the absent Black reply');
             if (summary.includes('reply defines this line')) issues.push(label + ': claims a nonexistent Black reply');
           } else if (!summary.includes('...e5 reply')) issues.push('partial: does not identify the available Black reply');
