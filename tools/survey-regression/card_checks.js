@@ -50,7 +50,7 @@ function summaryIssues(card) {
   const text = String(card.summary || '').trim();
   if (!text) return ['empty'];
   if (/^Starts with /.test(text)) return ['fallback'];
-  if (/^In .+, Black's (?:\.\.\.\S+ reply|reply) defines this line and shapes the plans that follow\.$/.test(text)) return ['generic-summary'];
+  if (card.side === 'black' && /^In .+, Black's (?:\.\.\.\S+ reply|reply) defines this line and shapes the plans that follow\.$/.test(text)) return ['generic-summary'];
   // Ply i (0-based) is a White move when i is even
   const notes = (card.comments || []).map((c, i) => ({ text: norm(String(c).split(' — ').slice(1).join(' — ')), white: i % 2 === 0 })).filter(c => c.text);
   const body = norm(text.replace(MOVE_LABEL, ''));
