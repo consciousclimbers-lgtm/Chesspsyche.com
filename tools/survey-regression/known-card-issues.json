@@ -8,36 +8,6 @@
   "no-gm-heading": "Card with no approved Notable GM has no \"Notable GM:\" line. Removed when the results page shows \"Notable GM: None approved for this opening yet.\" on such cards (checked by clickthrough.js on its cases)."
  },
  "issues": {
-  "A11|black": [
-   "generic-summary"
-  ],
-  "A18|white": [
-   "fallback"
-  ],
-  "A19|white": [
-   "fallback"
-  ],
-  "A21|white": [
-   "fallback"
-  ],
-  "A22|white": [
-   "fallback"
-  ],
-  "A23|white": [
-   "fallback"
-  ],
-  "A24|white": [
-   "fallback"
-  ],
-  "A26|white": [
-   "fallback"
-  ],
-  "A27|white": [
-   "fallback"
-  ],
-  "A28|white": [
-   "fallback"
-  ],
   "A42|black": [
    "generic-summary"
   ],
@@ -63,48 +33,6 @@
    "generic-summary"
   ],
   "A55|black": [
-   "generic-summary"
-  ],
-  "A85|black": [
-   "generic-summary"
-  ],
-  "A87|black": [
-   "generic-summary"
-  ],
-  "A88|black": [
-   "generic-summary"
-  ],
-  "A89|black": [
-   "generic-summary"
-  ],
-  "A90|black": [
-   "generic-summary"
-  ],
-  "A91|black": [
-   "generic-summary"
-  ],
-  "A92|black": [
-   "generic-summary"
-  ],
-  "A93|black": [
-   "generic-summary"
-  ],
-  "A94|black": [
-   "generic-summary"
-  ],
-  "A95|black": [
-   "generic-summary"
-  ],
-  "A96|black": [
-   "generic-summary"
-  ],
-  "A97|black": [
-   "generic-summary"
-  ],
-  "A98|black": [
-   "generic-summary"
-  ],
-  "A99|black": [
    "generic-summary"
   ],
   "B03|white": [
