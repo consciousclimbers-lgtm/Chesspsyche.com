@@ -1,8 +1,8 @@
 # PR #48 — Independent source-claim review ledger
 
-**Candidate head:** `9059496b7f914280b12792f693e36d757071fa9f`  
+**Candidate head:** `e71ac52daa08ed908e7fea378a3b1b360f28058b`  
 **Purpose:** Independent review handoff for Gemini/Copilot. This is a blank audit worksheet, not a claim that all sources have been reviewed.  
-**Claims extracted from current PR patch:** 82 unique ECO/side entries. Expected target: 82.  
+**Claims extracted from current PR patch:** 88 unique ECO/side entries. Expected target: 88.  
 **Review rule:** Open the cited source page (not just search snippets), verify it supports the strategic claim and the exact ECO/side, record evidence, and recommend keep/narrow/replace. If unavailable or unsupported, mark unresolved.
 
 ## Source claims
@@ -92,9 +92,16 @@
 | B59\|black | In the Boleslavsky Variation, Black's ...e5 follows ...d6 and ...Nf6; White commonly retreats the d4-knight to b3 in the named 7.Nb3 line. | https://www.365chess.com/eco/B59_Sicilian_Boleslavsky_variation_7.Nb3 | Not yet | — | Pending | — |
 | A86\|black | The Leningrad Dutch combines ...f5 with a kingside fianchetto, using the g7 bishop and a later ...d6 and ...e5 for kingside and central play. | https://en.wikipedia.org/wiki/Dutch_Defence | Not yet | — | Pending | — |
 
+| A05\|white | After 1.Nf3 Nf6 2.e3, White has developed the king's knight and opened the c1-bishop's diagonal while keeping the d-pawn uncommitted; Black still has several setups, including ...g6, ...d5 and ...e6. | https://chesscrab.com/openings/zukertort-opening-quiet-system | Not yet by independent reviewer | — | Pending | — |
+| A06\|white | After 1.Nf3 d5, Black occupies the centre and White retains several routes: c4 to challenge the d5-pawn, g3 for a kingside fianchetto, or d4 to transpose into a Queen's Pawn structure. | https://chesscodex.org/openings/zukertort-opening-3 | Not yet by independent reviewer | — | Pending | — |
+| A08\|white | White's g3 and Bg2 fianchetto meets Black's ...d5 and ...c5 central claim; a common setup continues with O-O, d3, Nbd2 and e4, building toward a kingside attack. | https://www.chessranger.com/research/kings-indian-attack | Not yet by independent reviewer | — | Pending | — |
+| A14\|white | In the Neo-Catalan Declined, White has fianchettoed the king's bishop and castled while Black has developed ...e6, ...d5, ...Nf6 and ...Be7. The centre remains tense; Black can castle, play ...c6 or challenge it with ...dxc4. | https://chesscodex.org/openings/english-opening-agincourt-defense-neo-catalan-declined | Not yet by independent reviewer | — | Pending | — |
+| A17\|white | After 1.c4 Nf6 2.Nc3 e6, White's c-pawn and knight contest d5 while the d-pawn stays flexible; Black can choose ...Bb4, ...d5, ...b6 or ...c5, so White can choose between 3.e4, 3.Nf3 and 3.g3. | https://chessiverse.com/resources/openings/english-opening-1-c4-nf6-2-nc3-e6 | Not yet by independent reviewer | — | Pending | — |
+| A20\|white | The King's English starts 1.c4 e5: White contests d5 from the flank rather than occupying the centre immediately, while Black's ...e5 gives the game a reversed-Sicilian character and leaves transpositions possible. | https://www.chess.com/openings/English-Opening | Not yet by independent reviewer | — | Pending | — |
+
 ## Audit acceptance criteria
 
-- [ ] Reconcile extracted count against `ECO_SUMMARIES` in `index.html`; expected 82.
+- [ ] Reconcile extracted count against `ECO_SUMMARIES` in `index.html`; expected 88.
 - [ ] Open every URL directly; record the relevant section/position evidence.
 - [ ] Verify the summary describes the named ECO and displayed side, not merely the opening family.
 - [ ] Check strategic assertions (pawn breaks, piece placement, plans, captures) against the source.
