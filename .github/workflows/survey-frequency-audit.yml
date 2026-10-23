@@ -1,0 +1,56 @@
+name: Survey frequency audit
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - audit/survey-frequency-20261023
+    paths:
+      - 'tools/survey-regression/**'
+permissions:
+  contents: read
+jobs:
+  survey-frequency:
+    name: Survey frequency (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SOURCE_SHA: 1a0ec054db7d3ea181042271f350b757125935b0
+      TESTED_SHA: 1a0ec054db7d3ea181042271f350b757125935b0
+    steps:
+      - name: Check out exact triggering commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Verify tested site source is unchanged
+        shell: bash
+        run: |
+          echo "## Survey frequency audit" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Checked-out commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Tested site-code SHA: $TESTED_SHA" >> "$GITHUB_STEP_SUMMARY"
+          git diff --exit-code "$SOURCE_SHA" "$GITHUB_SHA" -- index.html
+          test "$(git rev-parse "$SOURCE_SHA:index.html")" = "$(git rev-parse "$GITHUB_SHA:index.html")"
+          echo "- Source guard: PASS — index.html blob matches the tested SHA." >> "$GITHUB_STEP_SUMMARY"
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        working-directory: tools/survey-regression
+        run: npm ci
+      - name: Install Chromium
+        working-directory: tools/survey-regression
+        run: npx playwright install --with-deps chromium
+      - name: Run frequency audit
+        working-directory: tools/survey-regression
+        env:
+          TESTED_SHA: ${{ env.TESTED_SHA }}
+          OUTPUT_CSV: artifacts/survey-frequency.csv
+        run: node survey_frequency.js
+      - name: Upload frequency CSV
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: survey-frequency-${{ github.sha }}
+          path: tools/survey-regression/artifacts/survey-frequency.csv
+          if-no-files-found: warn
