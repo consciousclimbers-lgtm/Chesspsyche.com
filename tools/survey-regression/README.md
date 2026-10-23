@@ -90,7 +90,7 @@ The **Live Guardian** workflow (`.github/workflows/live-smoke.yml`) runs after e
 `clickthrough.js` also checks, on the rendered cards of its cases:
 - `no-gm-heading`: a card with no approved Notable GM that does not show "Notable GM: None approved for this opening yet."
 
-Before the sourced-summary change, **457 unique cards** (`ECO|side`: 176 White, 281 Black) had **463 summary issue findings**: fallback 436, move-comment 21, wrong-side 6. The reviewed `ECO_SUMMARIES` table resolves 82 generated-card summary entries; the remaining problems continue to be reported and are not waived. Both tests print cards and findings separately.
+Before the sourced-summary change, **457 unique cards** (`ECO|side`: 176 White, 281 Black) had **463 summary issue findings**: fallback 436, move-comment 21, wrong-side 6. The 82-entry `ECO_SUMMARIES` table removes 88 findings on 82 cards. The other 242 Black cards now using a neutral generic reply sentence are explicitly reclassified as `generic-summary` and remain unresolved until opening-specific sourced summaries are added; they are not counted as sourced-summary fixes. The other 133 White-side issues remain listed. Current total: **375 unique cards / 375 issue findings**. Both tests print cards and findings separately.
 
 All of these are listed, one card per line, in `known-card-issues.json` (keyed `ECO|side`, each with its issue types), so the checks can run in CI now. The list is **temporary and can only shrink**:
 - an issue that is not listed fails;
