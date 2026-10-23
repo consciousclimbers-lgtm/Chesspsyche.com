@@ -1,144 +1,1137 @@
 {
- "about": "Temporary list of known summary problems on survey recommendation cards, keyed \"ECO|side\". Listed issues are reported, not failed. It may only shrink: a new issue fails the test, a listed issue that no longer occurs fails until its entry is removed (npm run prune:known-card-issues), and on a pull request CI fails if this file has any card and issue type that the base branch copy does not (check_known_shrink.js). Never add entries to make a test pass without owner approval.",
+ "about": "Temporary list of known summary problems on survey recommendation cards, keyed \"ECO|side\". Listed issues are reported, not failed. It may only shrink; an already-known card may be reclassified as generic-summary when an unsourced Black fallback replaces an earlier summary defect. New card keys or unrelated issue types are not allowed by the shrink guard. Never add entries to make a test pass without owner approval.",
  "removal": {
   "fallback": "Card shows the generic \"Starts with <moves>\" text. Removed when a sourced family-and-side summary (or a per-code override) covers this ECO code and side.",
+  "generic-summary": "Generated Black card uses a neutral but non-opening-specific reply sentence. It remains tracked until a sourced family-and-side summary (or per-code override) covers this ECO code and side.",
   "move-comment": "Card summary is a copied move comment such as \"English\" or \"Queen's Pawn\". Removed by the same family-and-side summary data.",
   "wrong-side": "Black card summarised by the comment on a White move. Removed by the same data; the summary must be written for the side being recommended.",
   "no-gm-heading": "Card with no approved Notable GM has no \"Notable GM:\" line. Removed when the results page shows \"Notable GM: None approved for this opening yet.\" on such cards (checked by clickthrough.js on its cases)."
  },
  "issues": {
-  "A05|white": ["move-comment"],
-  "A06|white": ["move-comment"],
-  "A08|white": ["move-comment"],
-  "A14|white": ["move-comment"],
-  "A17|white": ["move-comment"],
-  "A18|white": ["fallback"],
-  "A19|white": ["fallback"],
-  "A20|white": ["move-comment"],
-  "A21|white": ["fallback"],
-  "A22|white": ["fallback"],
-  "A23|white": ["fallback"],
-  "A24|white": ["fallback"],
-  "A26|white": ["fallback"],
-  "A27|white": ["fallback"],
-  "A28|white": ["fallback"],
-  "A46|white": ["fallback"],
-  "A62|white": ["fallback"],
-  "A63|white": ["fallback"],
-  "A64|white": ["fallback"],
-  "A67|white": ["fallback"],
-  "A68|white": ["fallback"],
-  "A69|white": ["fallback"],
-  "B03|white": ["fallback"],
-  "B14|white": ["fallback"],
-  "B23|white": ["fallback"],
-  "B24|white": ["fallback"],
-  "B25|white": ["fallback"],
-  "B26|white": ["fallback"],
-  "B31|white": ["fallback"],
-  "B45|white": ["fallback"],
-  "B51|white": ["fallback"],
-  "B61|white": ["fallback"],
-  "B62|white": ["fallback"],
-  "B63|white": ["fallback"],
-  "B64|white": ["fallback"],
-  "B65|white": ["fallback"],
-  "B66|white": ["fallback"],
-  "B67|white": ["fallback"],
-  "B68|white": ["fallback"],
-  "B69|white": ["fallback"],
-  "B75|white": ["fallback"],
-  "B76|white": ["fallback"],
-  "B78|white": ["fallback"],
-  "B79|white": ["fallback"],
-  "B85|white": ["fallback"],
-  "B86|white": ["fallback"],
-  "B87|white": ["fallback"],
-  "B88|white": ["fallback"],
-  "B89|white": ["fallback"],
-  "C01|white": ["fallback"],
-  "C02|white": ["fallback"],
-  "C04|white": ["fallback"],
-  "C05|white": ["fallback"],
-  "C06|white": ["fallback"],
-  "C08|white": ["fallback"],
-  "C09|white": ["fallback"],
-  "C21|white": ["fallback"],
-  "C22|white": ["fallback"],
-  "C26|white": ["fallback"],
-  "C28|white": ["fallback"],
-  "C32|white": ["fallback"],
-  "C34|white": ["fallback"],
-  "C38|white": ["fallback"],
-  "C43|white": ["fallback"],
-  "C46|white": ["fallback"],
-  "C47|white": ["fallback"],
-  "C49|white": ["fallback"],
-  "C50|white": ["fallback"],
-  "C52|white": ["fallback"],
-  "C56|white": ["fallback"],
-  "C58|white": ["fallback"],
-  "C68|white": ["fallback"],
-  "C69|white": ["fallback"],
-  "C70|white": ["fallback"],
-  "C81|white": ["fallback"],
-  "C85|white": ["fallback"],
-  "C86|white": ["fallback"],
-  "C87|white": ["fallback"],
-  "C90|white": ["fallback"],
-  "C91|white": ["fallback"],
-  "C92|white": ["fallback"],
-  "C95|white": ["fallback"],
-  "C96|white": ["fallback"],
-  "C97|white": ["fallback"],
-  "C99|white": ["fallback"],
-  "D04|white": ["fallback"],
-  "D09|white": ["fallback"],
-  "D13|white": ["fallback"],
-  "D14|white": ["fallback"],
-  "D36|white": ["fallback"],
-  "D42|white": ["fallback"],
-  "D64|white": ["fallback"],
-  "D65|white": ["fallback"],
-  "D70|white": ["fallback"],
-  "D81|white": ["fallback"],
-  "D86|white": ["fallback"],
-  "D87|white": ["fallback"],
-  "D88|white": ["fallback"],
-  "D89|white": ["fallback"],
-  "D99|white": ["fallback"],
-  "E09|white": ["fallback"],
-  "E24|white": ["fallback"],
-  "E25|white": ["fallback"],
-  "E26|white": ["fallback"],
-  "E27|white": ["fallback"],
-  "E28|white": ["fallback"],
-  "E29|white": ["fallback"],
-  "E62|white": ["fallback"],
-  "E63|white": ["fallback"],
-  "E64|white": ["fallback"],
-  "E65|white": ["fallback"],
-  "E66|white": ["fallback"],
-  "E68|white": ["fallback"],
-  "E69|white": ["fallback"],
-  "E71|white": ["fallback"],
-  "E72|white": ["fallback"],
-  "E73|white": ["fallback"],
-  "E74|white": ["fallback"],
-  "E75|white": ["fallback"],
-  "E76|white": ["fallback"],
-  "E77|white": ["fallback"],
-  "E78|white": ["fallback"],
-  "E79|white": ["fallback"],
-  "E80|white": ["fallback"],
-  "E81|white": ["fallback"],
-  "E82|white": ["fallback"],
-  "E83|white": ["fallback"],
-  "E84|white": ["fallback"],
-  "E85|white": ["fallback"],
-  "E86|white": ["fallback"],
-  "E87|white": ["fallback"],
-  "E88|white": ["fallback"],
-  "E89|white": ["fallback"]
+  "A05|white": [
+   "move-comment"
+  ],
+  "A06|white": [
+   "move-comment"
+  ],
+  "A08|white": [
+   "move-comment"
+  ],
+  "A11|black": [
+   "generic-summary"
+  ],
+  "A14|white": [
+   "move-comment"
+  ],
+  "A17|white": [
+   "move-comment"
+  ],
+  "A18|white": [
+   "fallback"
+  ],
+  "A19|white": [
+   "fallback"
+  ],
+  "A20|white": [
+   "move-comment"
+  ],
+  "A21|white": [
+   "fallback"
+  ],
+  "A22|white": [
+   "fallback"
+  ],
+  "A23|white": [
+   "fallback"
+  ],
+  "A24|white": [
+   "fallback"
+  ],
+  "A26|white": [
+   "fallback"
+  ],
+  "A27|white": [
+   "fallback"
+  ],
+  "A28|white": [
+   "fallback"
+  ],
+  "A42|black": [
+   "generic-summary"
+  ],
+  "A44|black": [
+   "generic-summary"
+  ],
+  "A46|white": [
+   "fallback"
+  ],
+  "A47|black": [
+   "generic-summary"
+  ],
+  "A48|black": [
+   "generic-summary"
+  ],
+  "A50|black": [
+   "generic-summary"
+  ],
+  "A53|black": [
+   "generic-summary"
+  ],
+  "A54|black": [
+   "generic-summary"
+  ],
+  "A55|black": [
+   "generic-summary"
+  ],
+  "A56|black": [
+   "generic-summary"
+  ],
+  "A58|black": [
+   "generic-summary"
+  ],
+  "A59|black": [
+   "generic-summary"
+  ],
+  "A60|black": [
+   "generic-summary"
+  ],
+  "A61|black": [
+   "generic-summary"
+  ],
+  "A62|white": [
+   "fallback"
+  ],
+  "A63|white": [
+   "fallback"
+  ],
+  "A64|white": [
+   "fallback"
+  ],
+  "A65|black": [
+   "generic-summary"
+  ],
+  "A66|black": [
+   "generic-summary"
+  ],
+  "A67|white": [
+   "fallback"
+  ],
+  "A68|white": [
+   "fallback"
+  ],
+  "A69|white": [
+   "fallback"
+  ],
+  "A70|black": [
+   "generic-summary"
+  ],
+  "A71|black": [
+   "generic-summary"
+  ],
+  "A72|black": [
+   "generic-summary"
+  ],
+  "A73|black": [
+   "generic-summary"
+  ],
+  "A74|black": [
+   "generic-summary"
+  ],
+  "A75|black": [
+   "generic-summary"
+  ],
+  "A76|black": [
+   "generic-summary"
+  ],
+  "A77|black": [
+   "generic-summary"
+  ],
+  "A78|black": [
+   "generic-summary"
+  ],
+  "A79|black": [
+   "generic-summary"
+  ],
+  "A85|black": [
+   "generic-summary"
+  ],
+  "A87|black": [
+   "generic-summary"
+  ],
+  "A88|black": [
+   "generic-summary"
+  ],
+  "A89|black": [
+   "generic-summary"
+  ],
+  "A90|black": [
+   "generic-summary"
+  ],
+  "A91|black": [
+   "generic-summary"
+  ],
+  "A92|black": [
+   "generic-summary"
+  ],
+  "A93|black": [
+   "generic-summary"
+  ],
+  "A94|black": [
+   "generic-summary"
+  ],
+  "A95|black": [
+   "generic-summary"
+  ],
+  "A96|black": [
+   "generic-summary"
+  ],
+  "A97|black": [
+   "generic-summary"
+  ],
+  "A98|black": [
+   "generic-summary"
+  ],
+  "A99|black": [
+   "generic-summary"
+  ],
+  "B03|white": [
+   "fallback"
+  ],
+  "B04|black": [
+   "generic-summary"
+  ],
+  "B05|black": [
+   "generic-summary"
+  ],
+  "B07|black": [
+   "generic-summary"
+  ],
+  "B14|white": [
+   "fallback"
+  ],
+  "B15|black": [
+   "generic-summary"
+  ],
+  "B16|black": [
+   "generic-summary"
+  ],
+  "B17|black": [
+   "generic-summary"
+  ],
+  "B18|black": [
+   "generic-summary"
+  ],
+  "B19|black": [
+   "generic-summary"
+  ],
+  "B23|white": [
+   "fallback"
+  ],
+  "B24|white": [
+   "fallback"
+  ],
+  "B25|white": [
+   "fallback"
+  ],
+  "B26|white": [
+   "fallback"
+  ],
+  "B29|black": [
+   "generic-summary"
+  ],
+  "B30|black": [
+   "generic-summary"
+  ],
+  "B31|white": [
+   "fallback"
+  ],
+  "B34|black": [
+   "generic-summary"
+  ],
+  "B35|black": [
+   "generic-summary"
+  ],
+  "B36|black": [
+   "generic-summary"
+  ],
+  "B37|black": [
+   "generic-summary"
+  ],
+  "B38|black": [
+   "generic-summary"
+  ],
+  "B39|black": [
+   "generic-summary"
+  ],
+  "B41|black": [
+   "generic-summary"
+  ],
+  "B42|black": [
+   "generic-summary"
+  ],
+  "B43|black": [
+   "generic-summary"
+  ],
+  "B45|white": [
+   "fallback"
+  ],
+  "B46|black": [
+   "generic-summary"
+  ],
+  "B47|black": [
+   "generic-summary"
+  ],
+  "B50|black": [
+   "generic-summary"
+  ],
+  "B51|white": [
+   "fallback"
+  ],
+  "B54|black": [
+   "generic-summary"
+  ],
+  "B55|black": [
+   "generic-summary"
+  ],
+  "B56|black": [
+   "generic-summary"
+  ],
+  "B61|white": [
+   "fallback"
+  ],
+  "B62|white": [
+   "fallback"
+  ],
+  "B63|white": [
+   "fallback"
+  ],
+  "B64|white": [
+   "fallback"
+  ],
+  "B65|white": [
+   "fallback"
+  ],
+  "B66|white": [
+   "fallback"
+  ],
+  "B67|white": [
+   "fallback"
+  ],
+  "B68|white": [
+   "fallback"
+  ],
+  "B69|white": [
+   "fallback"
+  ],
+  "B71|black": [
+   "generic-summary"
+  ],
+  "B72|black": [
+   "generic-summary"
+  ],
+  "B73|black": [
+   "generic-summary"
+  ],
+  "B74|black": [
+   "generic-summary"
+  ],
+  "B75|white": [
+   "fallback"
+  ],
+  "B76|white": [
+   "fallback"
+  ],
+  "B77|black": [
+   "generic-summary"
+  ],
+  "B78|white": [
+   "fallback"
+  ],
+  "B79|white": [
+   "fallback"
+  ],
+  "B80|black": [
+   "generic-summary"
+  ],
+  "B84|black": [
+   "generic-summary"
+  ],
+  "B85|white": [
+   "fallback"
+  ],
+  "B86|white": [
+   "fallback"
+  ],
+  "B87|white": [
+   "fallback"
+  ],
+  "B88|white": [
+   "fallback"
+  ],
+  "B89|white": [
+   "fallback"
+  ],
+  "B91|black": [
+   "generic-summary"
+  ],
+  "B92|black": [
+   "generic-summary"
+  ],
+  "B93|black": [
+   "generic-summary"
+  ],
+  "B94|black": [
+   "generic-summary"
+  ],
+  "B95|black": [
+   "generic-summary"
+  ],
+  "B96|black": [
+   "generic-summary"
+  ],
+  "B97|black": [
+   "generic-summary"
+  ],
+  "B98|black": [
+   "generic-summary"
+  ],
+  "C00|black": [
+   "generic-summary"
+  ],
+  "C01|white": [
+   "fallback"
+  ],
+  "C02|white": [
+   "fallback"
+  ],
+  "C04|white": [
+   "fallback"
+  ],
+  "C05|white": [
+   "fallback"
+  ],
+  "C06|white": [
+   "fallback"
+  ],
+  "C07|black": [
+   "generic-summary"
+  ],
+  "C08|white": [
+   "fallback"
+  ],
+  "C09|white": [
+   "fallback"
+  ],
+  "C10|black": [
+   "generic-summary"
+  ],
+  "C11|black": [
+   "generic-summary"
+  ],
+  "C12|black": [
+   "generic-summary"
+  ],
+  "C13|black": [
+   "generic-summary"
+  ],
+  "C14|black": [
+   "generic-summary"
+  ],
+  "C15|black": [
+   "generic-summary"
+  ],
+  "C16|black": [
+   "generic-summary"
+  ],
+  "C17|black": [
+   "generic-summary"
+  ],
+  "C19|black": [
+   "generic-summary"
+  ],
+  "C21|white": [
+   "fallback"
+  ],
+  "C22|white": [
+   "fallback"
+  ],
+  "C24|black": [
+   "generic-summary"
+  ],
+  "C26|white": [
+   "fallback"
+  ],
+  "C28|white": [
+   "fallback"
+  ],
+  "C32|white": [
+   "fallback"
+  ],
+  "C33|black": [
+   "generic-summary"
+  ],
+  "C34|white": [
+   "fallback"
+  ],
+  "C35|black": [
+   "generic-summary"
+  ],
+  "C36|black": [
+   "generic-summary"
+  ],
+  "C37|black": [
+   "generic-summary"
+  ],
+  "C38|white": [
+   "fallback"
+  ],
+  "C41|black": [
+   "generic-summary"
+  ],
+  "C43|white": [
+   "fallback"
+  ],
+  "C46|white": [
+   "fallback"
+  ],
+  "C47|white": [
+   "fallback"
+  ],
+  "C49|white": [
+   "fallback"
+  ],
+  "C50|white": [
+   "fallback"
+  ],
+  "C52|white": [
+   "fallback"
+  ],
+  "C55|black": [
+   "generic-summary"
+  ],
+  "C56|white": [
+   "fallback"
+  ],
+  "C57|black": [
+   "generic-summary"
+  ],
+  "C58|white": [
+   "fallback"
+  ],
+  "C61|black": [
+   "generic-summary"
+  ],
+  "C62|black": [
+   "generic-summary"
+  ],
+  "C63|black": [
+   "generic-summary"
+  ],
+  "C64|black": [
+   "generic-summary"
+  ],
+  "C66|black": [
+   "generic-summary"
+  ],
+  "C67|black": [
+   "generic-summary"
+  ],
+  "C68|white": [
+   "fallback"
+  ],
+  "C69|white": [
+   "fallback"
+  ],
+  "C70|white": [
+   "fallback"
+  ],
+  "C71|black": [
+   "generic-summary"
+  ],
+  "C72|black": [
+   "generic-summary"
+  ],
+  "C73|black": [
+   "generic-summary"
+  ],
+  "C74|black": [
+   "generic-summary"
+  ],
+  "C75|black": [
+   "generic-summary"
+  ],
+  "C76|black": [
+   "generic-summary"
+  ],
+  "C77|black": [
+   "generic-summary"
+  ],
+  "C78|black": [
+   "generic-summary"
+  ],
+  "C79|black": [
+   "generic-summary"
+  ],
+  "C80|black": [
+   "generic-summary"
+  ],
+  "C81|white": [
+   "fallback"
+  ],
+  "C82|black": [
+   "generic-summary"
+  ],
+  "C83|black": [
+   "generic-summary"
+  ],
+  "C85|white": [
+   "fallback"
+  ],
+  "C86|white": [
+   "fallback"
+  ],
+  "C87|white": [
+   "fallback"
+  ],
+  "C90|white": [
+   "fallback"
+  ],
+  "C91|white": [
+   "fallback"
+  ],
+  "C92|white": [
+   "fallback"
+  ],
+  "C93|black": [
+   "generic-summary"
+  ],
+  "C94|black": [
+   "generic-summary"
+  ],
+  "C95|white": [
+   "fallback"
+  ],
+  "C96|white": [
+   "fallback"
+  ],
+  "C97|white": [
+   "fallback"
+  ],
+  "C98|black": [
+   "generic-summary"
+  ],
+  "C99|white": [
+   "fallback"
+  ],
+  "D04|white": [
+   "fallback"
+  ],
+  "D08|black": [
+   "generic-summary"
+  ],
+  "D09|white": [
+   "fallback"
+  ],
+  "D11|black": [
+   "generic-summary"
+  ],
+  "D12|black": [
+   "generic-summary"
+  ],
+  "D13|white": [
+   "fallback"
+  ],
+  "D14|white": [
+   "fallback"
+  ],
+  "D15|black": [
+   "generic-summary"
+  ],
+  "D16|black": [
+   "generic-summary"
+  ],
+  "D17|black": [
+   "generic-summary"
+  ],
+  "D18|black": [
+   "generic-summary"
+  ],
+  "D19|black": [
+   "generic-summary"
+  ],
+  "D21|black": [
+   "generic-summary"
+  ],
+  "D22|black": [
+   "generic-summary"
+  ],
+  "D23|black": [
+   "generic-summary"
+  ],
+  "D24|black": [
+   "generic-summary"
+  ],
+  "D25|black": [
+   "generic-summary"
+  ],
+  "D26|black": [
+   "generic-summary"
+  ],
+  "D27|black": [
+   "generic-summary"
+  ],
+  "D28|black": [
+   "generic-summary"
+  ],
+  "D29|black": [
+   "generic-summary"
+  ],
+  "D31|black": [
+   "generic-summary"
+  ],
+  "D32|black": [
+   "generic-summary"
+  ],
+  "D33|black": [
+   "generic-summary"
+  ],
+  "D36|white": [
+   "fallback"
+  ],
+  "D37|black": [
+   "generic-summary"
+  ],
+  "D38|black": [
+   "generic-summary"
+  ],
+  "D39|black": [
+   "generic-summary"
+  ],
+  "D40|black": [
+   "generic-summary"
+  ],
+  "D41|black": [
+   "generic-summary"
+  ],
+  "D42|white": [
+   "fallback"
+  ],
+  "D44|black": [
+   "generic-summary"
+  ],
+  "D45|black": [
+   "generic-summary"
+  ],
+  "D46|black": [
+   "generic-summary"
+  ],
+  "D47|black": [
+   "generic-summary"
+  ],
+  "D48|black": [
+   "generic-summary"
+  ],
+  "D49|black": [
+   "generic-summary"
+  ],
+  "D50|black": [
+   "generic-summary"
+  ],
+  "D51|black": [
+   "generic-summary"
+  ],
+  "D52|black": [
+   "generic-summary"
+  ],
+  "D53|black": [
+   "generic-summary"
+  ],
+  "D54|black": [
+   "generic-summary"
+  ],
+  "D55|black": [
+   "generic-summary"
+  ],
+  "D56|black": [
+   "generic-summary"
+  ],
+  "D57|black": [
+   "generic-summary"
+  ],
+  "D58|black": [
+   "generic-summary"
+  ],
+  "D59|black": [
+   "generic-summary"
+  ],
+  "D60|black": [
+   "generic-summary"
+  ],
+  "D61|black": [
+   "generic-summary"
+  ],
+  "D62|black": [
+   "generic-summary"
+  ],
+  "D63|black": [
+   "generic-summary"
+  ],
+  "D64|white": [
+   "fallback"
+  ],
+  "D65|white": [
+   "fallback"
+  ],
+  "D66|black": [
+   "generic-summary"
+  ],
+  "D67|black": [
+   "generic-summary"
+  ],
+  "D68|black": [
+   "generic-summary"
+  ],
+  "D69|black": [
+   "generic-summary"
+  ],
+  "D70|white": [
+   "fallback"
+  ],
+  "D72|black": [
+   "generic-summary"
+  ],
+  "D73|black": [
+   "generic-summary"
+  ],
+  "D74|black": [
+   "generic-summary"
+  ],
+  "D75|black": [
+   "generic-summary"
+  ],
+  "D76|black": [
+   "generic-summary"
+  ],
+  "D77|black": [
+   "generic-summary"
+  ],
+  "D78|black": [
+   "generic-summary"
+  ],
+  "D79|black": [
+   "generic-summary"
+  ],
+  "D81|white": [
+   "fallback"
+  ],
+  "D82|black": [
+   "generic-summary"
+  ],
+  "D83|black": [
+   "generic-summary"
+  ],
+  "D84|black": [
+   "generic-summary"
+  ],
+  "D86|white": [
+   "fallback"
+  ],
+  "D87|white": [
+   "fallback"
+  ],
+  "D88|white": [
+   "fallback"
+  ],
+  "D89|white": [
+   "fallback"
+  ],
+  "D90|black": [
+   "generic-summary"
+  ],
+  "D91|black": [
+   "generic-summary"
+  ],
+  "D92|black": [
+   "generic-summary"
+  ],
+  "D93|black": [
+   "generic-summary"
+  ],
+  "D94|black": [
+   "generic-summary"
+  ],
+  "D95|black": [
+   "generic-summary"
+  ],
+  "D96|black": [
+   "generic-summary"
+  ],
+  "D97|black": [
+   "generic-summary"
+  ],
+  "D98|black": [
+   "generic-summary"
+  ],
+  "D99|white": [
+   "fallback"
+  ],
+  "E03|black": [
+   "generic-summary"
+  ],
+  "E05|black": [
+   "generic-summary"
+  ],
+  "E09|white": [
+   "fallback"
+  ],
+  "E10|black": [
+   "generic-summary"
+  ],
+  "E11|black": [
+   "generic-summary"
+  ],
+  "E13|black": [
+   "generic-summary"
+  ],
+  "E14|black": [
+   "generic-summary"
+  ],
+  "E15|black": [
+   "generic-summary"
+  ],
+  "E16|black": [
+   "generic-summary"
+  ],
+  "E17|black": [
+   "generic-summary"
+  ],
+  "E18|black": [
+   "generic-summary"
+  ],
+  "E19|black": [
+   "generic-summary"
+  ],
+  "E21|black": [
+   "generic-summary"
+  ],
+  "E22|black": [
+   "generic-summary"
+  ],
+  "E23|black": [
+   "generic-summary"
+  ],
+  "E24|white": [
+   "fallback"
+  ],
+  "E25|white": [
+   "fallback"
+  ],
+  "E26|white": [
+   "fallback"
+  ],
+  "E27|white": [
+   "fallback"
+  ],
+  "E28|white": [
+   "fallback"
+  ],
+  "E29|white": [
+   "fallback"
+  ],
+  "E30|black": [
+   "generic-summary"
+  ],
+  "E31|black": [
+   "generic-summary"
+  ],
+  "E32|black": [
+   "generic-summary"
+  ],
+  "E33|black": [
+   "generic-summary"
+  ],
+  "E34|black": [
+   "generic-summary"
+  ],
+  "E35|black": [
+   "generic-summary"
+  ],
+  "E36|black": [
+   "generic-summary"
+  ],
+  "E37|black": [
+   "generic-summary"
+  ],
+  "E38|black": [
+   "generic-summary"
+  ],
+  "E39|black": [
+   "generic-summary"
+  ],
+  "E41|black": [
+   "generic-summary"
+  ],
+  "E42|black": [
+   "generic-summary"
+  ],
+  "E43|black": [
+   "generic-summary"
+  ],
+  "E44|black": [
+   "generic-summary"
+  ],
+  "E45|black": [
+   "generic-summary"
+  ],
+  "E46|black": [
+   "generic-summary"
+  ],
+  "E47|black": [
+   "generic-summary"
+  ],
+  "E48|black": [
+   "generic-summary"
+  ],
+  "E49|black": [
+   "generic-summary"
+  ],
+  "E50|black": [
+   "generic-summary"
+  ],
+  "E51|black": [
+   "generic-summary"
+  ],
+  "E54|black": [
+   "generic-summary"
+  ],
+  "E55|black": [
+   "generic-summary"
+  ],
+  "E56|black": [
+   "generic-summary"
+  ],
+  "E57|black": [
+   "generic-summary"
+  ],
+  "E58|black": [
+   "generic-summary"
+  ],
+  "E59|black": [
+   "generic-summary"
+  ],
+  "E61|black": [
+   "generic-summary"
+  ],
+  "E62|white": [
+   "fallback"
+  ],
+  "E63|white": [
+   "fallback"
+  ],
+  "E64|white": [
+   "fallback"
+  ],
+  "E65|white": [
+   "fallback"
+  ],
+  "E66|white": [
+   "fallback"
+  ],
+  "E67|black": [
+   "generic-summary"
+  ],
+  "E68|white": [
+   "fallback"
+  ],
+  "E69|white": [
+   "fallback"
+  ],
+  "E70|black": [
+   "generic-summary"
+  ],
+  "E71|white": [
+   "fallback"
+  ],
+  "E72|white": [
+   "fallback"
+  ],
+  "E73|white": [
+   "fallback"
+  ],
+  "E74|white": [
+   "fallback"
+  ],
+  "E75|white": [
+   "fallback"
+  ],
+  "E76|white": [
+   "fallback"
+  ],
+  "E77|white": [
+   "fallback"
+  ],
+  "E78|white": [
+   "fallback"
+  ],
+  "E79|white": [
+   "fallback"
+  ],
+  "E80|white": [
+   "fallback"
+  ],
+  "E81|white": [
+   "fallback"
+  ],
+  "E82|white": [
+   "fallback"
+  ],
+  "E83|white": [
+   "fallback"
+  ],
+  "E84|white": [
+   "fallback"
+  ],
+  "E85|white": [
+   "fallback"
+  ],
+  "E86|white": [
+   "fallback"
+  ],
+  "E87|white": [
+   "fallback"
+  ],
+  "E88|white": [
+   "fallback"
+  ],
+  "E89|white": [
+   "fallback"
+  ],
+  "E90|black": [
+   "generic-summary"
+  ],
+  "E91|black": [
+   "generic-summary"
+  ],
+  "E92|black": [
+   "generic-summary"
+  ],
+  "E93|black": [
+   "generic-summary"
+  ],
+  "E94|black": [
+   "generic-summary"
+  ],
+  "E95|black": [
+   "generic-summary"
+  ],
+  "E96|black": [
+   "generic-summary"
+  ],
+  "E98|black": [
+   "generic-summary"
+  ],
+  "E99|black": [
+   "generic-summary"
+  ]
  }
 }
