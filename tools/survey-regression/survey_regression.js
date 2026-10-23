@@ -84,11 +84,35 @@ const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 
 function protectedHash(html) {
   const lines = html.split('\n');
-  const start = lines.findIndex(l => l.startsWith('const ecoNamesMap = {'));
-  const end = lines.findIndex(l => l.startsWith('// ---- Picks one White and one Black opening'));
-  if (start < 0 || end < 0 || end < start) throw new Error('could not find the opening-data block markers');
-  const rest = lines.slice(0, start).concat(lines.slice(end)).join('\n');
-  return crypto.createHash('sha256').update(rest).digest('hex');
+  const openingStart = lines.findIndex(l => l.startsWith('const ecoNamesMap = {'));
+  const openingEnd = lines.findIndex(l => l.startsWith('// ---- Picks one White and one Black opening'));
+  const summaryStart = lines.findIndex(l => l.startsWith('const ECO_SUMMARIES = {'));
+  if (openingStart < 0 || openingEnd < 0 || openingEnd < openingStart) {
+    throw new Error('could not find the opening-data block markers');
+  }
+
+  // Both maps are opening data, not executable site logic. Exclude only the
+  // exact ECO_SUMMARIES object so its contents do not invalidate the protected
+  // code fingerprint; all surrounding Results, survey, board and navigation
+  // code remains covered by the hash.
+  let summaryEnd = -1;
+  if (summaryStart >= 0) {
+    let depth = 0, started = false;
+    for (let i = summaryStart; i < lines.length; i++) {
+      for (const ch of lines[i]) {
+        if (ch === '{') { depth++; started = true; }
+        else if (ch === '}') depth--;
+      }
+      if (started && depth === 0) { summaryEnd = i; break; }
+    }
+    if (summaryEnd < summaryStart) throw new Error('could not find the ECO_SUMMARIES data block end');
+  }
+
+  const excluded = (i) =>
+    (i >= openingStart && i < openingEnd) ||
+    (summaryStart >= 0 && i >= summaryStart && i <= summaryEnd);
+  const protectedLines = lines.filter((_, i) => !excluded(i));
+  return crypto.createHash('sha256').update(protectedLines.join('\n')).digest('hex');
 }
 
 async function runSurvey(browser, file, seed) {
