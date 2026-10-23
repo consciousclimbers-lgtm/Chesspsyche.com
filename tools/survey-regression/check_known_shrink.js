@@ -72,7 +72,7 @@ if (baseList === null) {
 const rawAdded = cardChecks.additions(head, baseList);
 const reclassified = rawAdded.filter(entry => {
   const match = entry.match(/^(.*) (generic-summary)$/);
-  return match && ['fallback', 'move-comment', 'wrong-side'].some(type => (baseList[match[1]] || []).includes(type));
+  return match && match[1].endsWith('|black') && ['fallback', 'move-comment', 'wrong-side'].some(type => (baseList[match[1]] || []).includes(type));
 });
 const added = rawAdded.filter(entry => !reclassified.includes(entry));
 const removed = cardChecks.additions(baseList, head);
