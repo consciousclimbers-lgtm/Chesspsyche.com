@@ -1,31 +1,32 @@
-# PR #48 — 375 tracked Results summary issues
+# PR #48 — Summary issue triage (375 historically tracked; 6 resolved; 369 remain)
 
-**Source head:** `9059496b7f914280b12792f693e36d757071fa9f`  
+**Source head:** `e71ac52daa08ed908e7fea378a3b1b360f28058b`  
 **Source file:** `tools/survey-regression/known-card-issues.json`  
 **Purpose:** Triage and resolve existing issues without deleting the regression guard or treating generic text as fixed.
 
 ## Counts
 
-| Issue category | Count | Resolution standard |
+| Issue category | Current count | Resolution standard |
 |---|---:|---|
-| `generic-summary` | 242 | Replace generic Black fallback with sourced, opening-specific Black-side summary. |
-| `fallback` | 127 | Replace fallback White summary with sourced, opening-specific White-side summary. |
-| `move-comment` | 6 | Replace reused move-comment text with sourced strategic summary for opening and side. |
-| **Unique cards** | **375** | Keep issue tracked until replacement is independently checked. |
+| `generic-summary` | 242 open | Replace generic Black fallback with sourced, opening-specific Black-side summary. |
+| `fallback` | 127 open | Replace fallback White summary with sourced, opening-specific White-side summary. |
+| `move-comment` | 0 open (6 resolved in this head) | Replace reused move-comment text with sourced strategic summary for opening and side. |
+| **Open unique cards** | **369** | Remaining cards must stay tracked until resolved. |
+| **Historically tracked cards** | **375** | Six cards were resolved in this PR head; their rows remain below for audit history. |
 
 ## Triage queue
 
 | Card key | Current issue(s) | Priority | Owner | Proposed fix / source | Status | Evidence / PR commit |
 |---|---|---|---|---|---|---|
-| A05\|white | move-comment | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
-| A06\|white | move-comment | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
-| A08\|white | move-comment | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
+| A05\|white | move-comment (resolved) | — | ChatGPT | https://chesscrab.com/openings/zukertort-opening-quiet-system | Resolved in PR #48 head e71ac52 (first-pass source check) | Independent source review still pending |
+| A06\|white | move-comment (resolved) | — | ChatGPT | https://chesscodex.org/openings/zukertort-opening-3 | Resolved in PR #48 head e71ac52 (first-pass source check) | Independent source review still pending |
+| A08\|white | move-comment (resolved) | — | ChatGPT | https://www.chessranger.com/research/kings-indian-attack | Resolved in PR #48 head e71ac52 (first-pass source check) | Independent source review still pending |
 | A11\|black | generic-summary | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
-| A14\|white | move-comment | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
-| A17\|white | move-comment | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
+| A14\|white | move-comment (resolved) | — | ChatGPT | https://chesscodex.org/openings/english-opening-agincourt-defense-neo-catalan-declined | Resolved in PR #48 head e71ac52 (first-pass source check) | Independent source review still pending |
+| A17\|white | move-comment (resolved) | — | ChatGPT | https://chessiverse.com/resources/openings/english-opening-1-c4-nf6-2-nc3-e6 | Resolved in PR #48 head e71ac52 (first-pass source check) | Independent source review still pending |
 | A18\|white | fallback | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
 | A19\|white | fallback | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
-| A20\|white | move-comment | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
+| A20\|white | move-comment (resolved) | — | ChatGPT | https://www.chess.com/openings/English-Opening | Resolved in PR #48 head e71ac52 (first-pass source check) | Independent source review still pending |
 | A21\|white | fallback | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
 | A22\|white | fallback | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
 | A23\|white | fallback | Unranked | Gemini/Copilot/ChatGPT | — | Open | — |
