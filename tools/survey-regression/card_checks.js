@@ -4,6 +4,7 @@
 // summaryIssues() returns the problems with one card's summary, as short codes:
 //   empty         no summary text
 //   fallback      the generic "Starts with <moves>" text ecoToSystem uses when it has nothing better
+//   generic-summary a neutral but non-opening-specific Black fallback; tracked separately until sourced data replaces it
 //   move-comment  the summary is a move comment from ecoVaultData (the text after " — "), not a description
 //                 of the opening. Reformatting does not hide it: case, punctuation and a leading move label
 //                 such as "2...Nc6:" are ignored, and a summary that is only move comments plus fewer than
@@ -24,14 +25,15 @@ const KNOWN_PATH = path.join(__dirname, 'known-card-issues.json');
 const NO_GM_TEXT = 'None approved for this opening yet.';
 // Which test finds each issue type: survey_regression.js checks every reachable card's summary;
 // clickthrough.js renders the cards of its cases, so it is the one that checks the Notable GM line
-const SUMMARY_TYPES = ['empty', 'fallback', 'move-comment', 'wrong-side'];
+const SUMMARY_TYPES = ['empty', 'fallback', 'generic-summary', 'move-comment', 'wrong-side'];
 const HEADING_TYPES = ['no-gm-heading'];
 
 // Written at the top of known-card-issues.json: what the list is and how each kind of entry goes away
 const KNOWN_HEADER = {
-  about: 'Temporary list of known summary problems on survey recommendation cards, keyed "ECO|side". Listed issues are reported, not failed. It may only shrink: a new issue fails the test, a listed issue that no longer occurs fails until its entry is removed (npm run prune:known-card-issues), and on a pull request CI fails if this file has any card and issue type that the base branch copy does not (check_known_shrink.js). Never add entries to make a test pass without owner approval.',
+  about: 'Temporary list of known summary problems on survey recommendation cards, keyed "ECO|side". Listed issues are reported, not failed. It may only shrink; an already-known card may be reclassified as generic-summary when an unsourced Black fallback replaces an earlier summary defect. New card keys or unrelated issue types are not allowed by the shrink guard. Never add entries to make a test pass without owner approval.',
   removal: {
     fallback: 'Card shows the generic "Starts with <moves>" text. Removed when a sourced family-and-side summary (or a per-code override) covers this ECO code and side.',
+    'generic-summary': 'Generated Black card uses a neutral generic reply sentence rather than an opening-specific sourced summary. Removed only when a sourced family-and-side summary (or a per-code override) covers this ECO code and side.',
     'move-comment': 'Card summary is a copied move comment such as "English" or "Queen\'s Pawn". Removed by the same family-and-side summary data.',
     'wrong-side': 'Black card summarised by the comment on a White move. Removed by the same data; the summary must be written for the side being recommended.',
     'no-gm-heading': 'Card with no approved Notable GM has no "Notable GM:" line. Removed when the results page shows "Notable GM: None approved for this opening yet." on such cards (checked by clickthrough.js on its cases).'
@@ -48,6 +50,7 @@ function summaryIssues(card) {
   const text = String(card.summary || '').trim();
   if (!text) return ['empty'];
   if (/^Starts with /.test(text)) return ['fallback'];
+  if (card.side === 'black' && /^In .+, Black's (?:\.\.\.\S+ reply|reply) defines this line and shapes the plans that follow\.$/.test(text)) return ['generic-summary'];
   // Ply i (0-based) is a White move when i is even
   const notes = (card.comments || []).map((c, i) => ({ text: norm(String(c).split(' — ').slice(1).join(' — ')), white: i % 2 === 0 })).filter(c => c.text);
   const body = norm(text.replace(MOVE_LABEL, ''));

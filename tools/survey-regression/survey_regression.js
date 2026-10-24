@@ -78,17 +78,58 @@ const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== 
 const htmlPath = path.resolve(positional[0] || path.join(__dirname, '../../index.html'));
 const expectedPath = path.join(__dirname, 'expected.json');
 const gmBaselinePath = path.join(__dirname, 'gm-baseline.json');
+const ecoSummariesBaselinePath = path.join(__dirname, 'eco-summaries-baseline.json');
 const chessLocal = require.resolve('chess.js');
 // Console message Chromium logs for each request this test aborts to stay offline
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 
 function protectedHash(html) {
   const lines = html.split('\n');
-  const start = lines.findIndex(l => l.startsWith('const ecoNamesMap = {'));
-  const end = lines.findIndex(l => l.startsWith('// ---- Picks one White and one Black opening'));
-  if (start < 0 || end < 0 || end < start) throw new Error('could not find the opening-data block markers');
-  const rest = lines.slice(0, start).concat(lines.slice(end)).join('\n');
-  return crypto.createHash('sha256').update(rest).digest('hex');
+  const openingStart = lines.findIndex(l => l.startsWith('const ecoNamesMap = {'));
+  const openingEnd = lines.findIndex(l => l.startsWith('// ---- Picks one White and one Black opening'));
+  const summaryStart = lines.findIndex(l => l.startsWith('const ECO_SUMMARIES = {'));
+  if (openingStart < 0 || openingEnd < 0 || openingEnd < openingStart) {
+    throw new Error('could not find the opening-data block markers');
+  }
+
+  // Both maps are opening data, not executable site logic. Exclude only the
+  // exact ECO_SUMMARIES object so its contents do not invalidate the protected
+  // code fingerprint; all surrounding Results, survey, board and navigation
+  // code remains covered by the hash.
+  let summaryEnd = -1;
+  if (summaryStart >= 0) {
+    let depth = 0, started = false;
+    for (let i = summaryStart; i < lines.length; i++) {
+      for (const ch of lines[i]) {
+        if (ch === '{') { depth++; started = true; }
+        else if (ch === '}') depth--;
+      }
+      if (started && depth === 0) { summaryEnd = i; break; }
+    }
+    if (summaryEnd < summaryStart) throw new Error('could not find the ECO_SUMMARIES data block end');
+  }
+
+  const excluded = (i) =>
+    (i >= openingStart && i < openingEnd) ||
+    (summaryStart >= 0 && i >= summaryStart && i <= summaryEnd);
+  const protectedLines = lines.filter((_, i) => !excluded(i));
+  return crypto.createHash('sha256').update(protectedLines.join('\n')).digest('hex');
+}
+
+function ecoSummariesHash(html) {
+  const lines = html.split('\n');
+  const start = lines.findIndex(l => l.startsWith('const ECO_SUMMARIES = {'));
+  if (start < 0) throw new Error('could not find the ECO_SUMMARIES data block start');
+  let depth = 0, started = false, end = -1;
+  for (let i = start; i < lines.length; i++) {
+    for (const ch of lines[i]) {
+      if (ch === '{') { depth++; started = true; }
+      else if (ch === '}') depth--;
+    }
+    if (started && depth === 0) { end = i; break; }
+  }
+  if (end < start) throw new Error('could not find the ECO_SUMMARIES data block end');
+  return crypto.createHash('sha256').update(lines.slice(start, end + 1).join('\n')).digest('hex');
 }
 
 async function runSurvey(browser, file, seed) {
@@ -117,12 +158,15 @@ async function runSurvey(browser, file, seed) {
       handSide.add(`${s.whiteSystem.eco}|white`); handSide.add(`${s.blackSystem.eco}|black`);
     }
     const approved = (eco, side) => { const p = notableGmPool(eco, side); return p ? eligibleNotableGms(p) : []; };
+    const written = typeof ECO_SUMMARIES === 'object' ? ECO_SUMMARIES : {};
     const card = (sys, want) => sys && {
       eco: sys.eco, want,
       side: handSide.has(`${sys.eco}|${want}`) ? want : (ecoVault.find(e => e.eco === sys.eco) || {}).side,
+      handWritten: handSide.has(`${sys.eco}|${want}`),
       moves: sys.variations[0].moves.map(m => m.move),
       gm: sys.notableGm || null,
-      gmApproved: sys.notableGm ? approved(sys.eco, want).includes(sys.notableGm) : !approved(sys.eco, want).length
+      gmApproved: sys.notableGm ? approved(sys.eco, want).includes(sys.notableGm) : !approved(sys.eco, want).length,
+      summaryWritten: handSide.has(`${sys.eco}|${want}`) || !written[`${sys.eco}|${want}`] || written[`${sys.eco}|${want}`].summary === sys.summary
     };
     const out = {};
     for (const arch of Object.keys(archetypes)) for (const lvl of Object.keys(LEVEL_BANDS)) for (const strong of [0, 4]) {
@@ -161,7 +205,8 @@ async function runSurvey(browser, file, seed) {
             cardSide: handSide.has(key) ? want : (ecoVault.find(e => e.eco === sys.eco) || {}).side,
             handWritten: handSide.has(key), summary: sys.summary, comments: (ecoVaultData[sys.eco] || {}).commentary || [],
             moves: sys.variations[0].moves.map(m => m.move), gm: sys.notableGm || null,
-            gmOk: sys.notableGm ? approved.includes(sys.notableGm) : !approved.length
+            gmOk: sys.notableGm ? approved.includes(sys.notableGm) : !approved.length,
+            summaryWritten: handSide.has(key) || !ECO_SUMMARIES[key] || ECO_SUMMARIES[key].summary === sys.summary
           };
         }
         if (now === prev) break;
@@ -171,6 +216,58 @@ async function runSurvey(browser, file, seed) {
     }
     localStorage.removeItem(PICKS_KEY); localStorage.removeItem(GM_ROTATION_KEY); currentPicks = null;
     return { cards, combos };
+  });
+  // Validate source-backed summary data independently of the three-run snapshot.
+  const summaryAudit = await page.evaluate(() => {
+    const issues = [], seen = new Set(), hand = new Set();
+    for (const a of Object.values(archetypes)) for (const s of Object.values(a.systems)) {
+      hand.add(s.whiteSystem.eco + '|white'); hand.add(s.blackSystem.eco + '|black');
+    }
+    const written = typeof ECO_SUMMARIES === 'object' ? ECO_SUMMARIES : {};
+    for (const [key, e] of Object.entries(written)) {
+      const parts = key.split('|'), code = parts[0], side = parts[1], v = ecoVault.find(x => x.eco === code);
+      if (parts.length !== 2 || !/^[A-E][0-9]{2}$/.test(code) || !['white', 'black'].includes(side)) { issues.push(key + ': invalid ECO|side key'); continue; }
+      if (!v) { issues.push(key + ': not in the opening vault'); continue; }
+      if (v.side !== side && v.side !== 'either') issues.push(key + ': wrong side for vault opening (' + v.side + ')');
+      if (hand.has(key)) issues.push(key + ': duplicates a hand-written system');
+      const t = String(e.summary || '');
+      if (!/^[A-Z].{59,229}\.$/.test(t) || /[a-z)]\. [A-Z]/.test(t)) issues.push(key + ': summary is not one sentence of 60–230 characters');
+      if (/^Starts with/.test(t)) issues.push(key + ': uses the generic move-list fallback');
+      const notes = (v.commentary || []).map(c => String(c).split(' — ').slice(1).join(' — ').toLowerCase()).filter(n => n.split(' ').length >= 4);
+      if (notes.some(n => t.toLowerCase().includes(n))) issues.push(key + ': repeats vault move commentary');
+      if (seen.has(t)) issues.push(key + ': duplicates another summary');
+      seen.add(t);
+      if (!/^https:\/\/[^\s]+$/.test(e.source || '')) issues.push(key + ': missing HTTPS source');
+    }
+    return { count: Object.keys(written).length, issues };
+  });
+  // Exercise generated Black summaries when the move list is absent or too short to contain a Black reply.
+  const fallbackAudit = await page.evaluate(() => {
+    const issues = [], cases = [], handBlack = new Set();
+    for (const a of Object.values(archetypes)) for (const s of Object.values(a.systems)) handBlack.add(s.blackSystem.eco);
+    const written = typeof ECO_SUMMARIES === 'object' ? ECO_SUMMARIES : {};
+    const probe = ecoVault.find(v => v.moves && !handBlack.has(v.eco) && !written[v.eco + '|black']);
+    if (!probe) issues.push('no unsourced generated Black card is available for fallback tests');
+    else {
+      const originalMoves = probe.moves, originalCommentary = probe.commentary;
+      try {
+        for (const [label, moves] of [['missing', null], ['empty', ''], ['non-string', 42], ['one-ply', '1. e4'], ['partial', '1. e4 e5']]) {
+          if (moves === null) delete probe.moves; else probe.moves = moves;
+          probe.commentary = ['e4 — WHITE COMMENTARY SENTINEL'];
+          const summary = ecoToSystem(probe.eco, 'black').summary;
+          cases.push({ label, summary });
+          if (summary.includes('WHITE COMMENTARY SENTINEL')) issues.push(label + ': copied White move commentary');
+          if (['missing', 'empty', 'non-string', 'one-ply'].includes(label)) {
+            if (!summary.includes('no Black reply is available')) issues.push(label + ': does not acknowledge the absent Black reply');
+            if (summary.includes('reply defines this line')) issues.push(label + ': claims a nonexistent Black reply');
+          } else if (!summary.includes('...e5 reply')) issues.push('partial: does not identify the available Black reply');
+        }
+      } finally {
+        probe.moves = originalMoves;
+        probe.commentary = originalCommentary;
+      }
+    }
+    return { cases, issues };
   });
   // Notable GM pools: data checks, fair round-robin, stability on re-render and reload, women's representation
   const rotation = await page.evaluate(() => {
@@ -316,23 +413,25 @@ async function runSurvey(browser, file, seed) {
   const notableGm = {};
   for (const [cfg, runs] of Object.entries(res)) picks[cfg] = runs.map(([w, b]) => `${w ? w.eco : '-'}/${b ? b.eco : '-'}`).join(' ');
   for (const [cfg, runs] of Object.entries(res)) notableGm[cfg] = runs.map(([w, b]) => `${(w && w.gm) || '-'} / ${(b && b.gm) || '-'}`).join(' | ');
-  return { res, picks, notableGm, labs, rotation, bank, reach, errors, blocked: [...blocked] };
+  return { res, picks, notableGm, labs, rotation, bank, reach, summaryAudit, fallbackAudit, errors, blocked: [...blocked] };
 }
 
 (async () => {
   const html = fs.readFileSync(htmlPath, 'utf8');
   const hash = protectedHash(html);
+  const ecoHash = ecoSummariesHash(html);
+  const ecoBaseline = JSON.parse(fs.readFileSync(ecoSummariesBaselinePath, 'utf8'));
   const browser = await chromium.launch();
   const runs = [];
   for (let i = 0; i < repeat; i++) runs.push(await runSurvey(browser, htmlPath, SEED));
   const otherSeed = await runSurvey(browser, htmlPath, OTHER_SEED);
   await browser.close();
-  const { res, picks, bank, notableGm, labs, rotation, reach } = runs[0];
+  const { res, picks, bank, notableGm, labs, rotation, reach, summaryAudit, fallbackAudit } = runs[0];
   const gmNow = { notableGm, handWritten: labs.handWritten, labsDrill: labs.drill };
   const errors = [...new Set([...runs, otherSeed].flatMap(r => r.errors))];
   const blocked = [...new Set([...runs, otherSeed].flatMap(r => r.blocked))].sort();
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res) && same(r.labs, labs) && same(r.rotation, rotation) && same(r.reach, reach));
+  const repeatOk = runs.every(r => same(r.picks, picks) && same(r.res, res) && same(r.labs, labs) && same(r.rotation, rotation) && same(r.reach, reach) && same(r.fallbackAudit, fallbackAudit));
   const seedOk = same(otherSeed.picks, picks) && same(otherSeed.notableGm, notableGm) && same(otherSeed.labs, labs) && same(otherSeed.rotation, rotation) && same(otherSeed.reach, reach);
 
   // Every reachable card (check 11)
@@ -342,6 +441,9 @@ async function runSurvey(browser, file, seed) {
     const key = `${c.eco}|${c.side}`;
     if (c.cardSide !== c.side && c.cardSide !== 'either') reachFails.push(`card ${key} (${c.firstSeen}) is a ${c.cardSide} card`);
     if (!c.gmOk) reachFails.push(`card ${key} (${c.firstSeen}) shows Notable GM "${c.gm || '-'}", not from its approved pool`);
+    // Every reachable generated card must use the exact written ECO|side summary.
+    // Hand-written systems are intentionally exempt because their summaries are authored inline.
+    if (!c.handWritten && !c.summaryWritten) reachFails.push(`card ${key} (${c.firstSeen}) does not use its matching ECO_SUMMARIES entry`);
     const g = new Chess();
     for (const san of c.moves) if (!g.move(san)) { reachFails.push(`card ${key} (${c.firstSeen}) illegal at ${san}`); break; }
     const issues = cardChecks.summaryIssues(c);
@@ -366,6 +468,7 @@ async function runSurvey(browser, file, seed) {
   for (const [cfg, runs] of Object.entries(res)) for (const pair of runs) for (const c of pair) {
     if (!c) continue;
     if (c.side !== c.want && c.side !== 'either') sideIssues.add(`${c.eco} shown as ${c.want}, card is ${c.side}`);
+    if (!c.handWritten && !c.summaryWritten) illegal.push(`${cfg}: ${c.eco} (${c.want}) does not use its matching ECO_SUMMARIES entry`);
     if (!c.gmApproved) illegal.push(`${cfg}: ${c.eco} (${c.want}) shows Notable GM "${c.gm || '-'}", not from its approved pool`);
     const g = new Chess();
     for (const san of c.moves) if (!g.move(san)) { illegal.push(`${cfg}: ${c.eco} illegal at ${san}`); break; }
@@ -396,6 +499,8 @@ async function runSurvey(browser, file, seed) {
   if (!repeatOk) fails.push(`survey results differ between the ${repeat} runs with seed ${SEED}`);
   if (!seedOk) fails.push(`survey picks change with a different Math.random seed (${OTHER_SEED})`);
   if (hash !== exp.protectedHash) fails.push(`protected code changed (sha256 ${hash.slice(0, 12)}, expected ${exp.protectedHash.slice(0, 12)})`);
+  if (typeof ecoBaseline.ecoSummariesHash !== 'string') fails.push('eco-summaries-baseline.json has no ecoSummariesHash');
+  else if (ecoHash !== ecoBaseline.ecoSummariesHash) fails.push(`ECO_SUMMARIES data changed (sha256 ${ecoHash.slice(0, 12)}, expected ${ecoBaseline.ecoSummariesHash.slice(0, 12)})`);
   const cfgs = new Set([...Object.keys(exp.picks), ...Object.keys(picks)]);
   for (const cfg of cfgs) if (picks[cfg] !== exp.picks[cfg]) fails.push(`picks ${cfg}: got "${picks[cfg]}", expected "${exp.picks[cfg]}"`);
   const known = new Set(exp.knownSideIssues);
@@ -424,6 +529,8 @@ async function runSurvey(browser, file, seed) {
     if (!handOk) fails.push(`hand-written notableGm names changed: ${labs.handWritten.filter(x => !(gmExp.handWritten || []).includes(x)).join('; ') || 'order changed'}`);
   }
   fails.push(...rotation.issues.map(i => `Notable GM pools: ${i}`));
+  fails.push(...summaryAudit.issues.map(i => `Opening summaries: ${i}`));
+  fails.push(...fallbackAudit.issues.map(i => `Black summary fallback: ${i}`));
   fails.push(...reachFails, ...cardCmp.fails);
   const shownGms = new Set(Object.values(res).flat().flat().filter(c => c && c.gm).map(c => c.gm));
   const names = new Set(labs.names);
@@ -436,6 +543,7 @@ async function runSurvey(browser, file, seed) {
   console.log(`Picks fingerprint: sha256 ${crypto.createHash('sha256').update(JSON.stringify(picks)).digest('hex').slice(0, 16)}`);
   console.log(`Network: offline (blocked requests to ${blocked.join(', ') || 'nothing'}; chess.js 0.10.3 served from node_modules)`);
   console.log(`Protected code hash: ${hash === exp.protectedHash ? 'unchanged' : 'CHANGED'}`);
+  console.log(`ECO summary data hash: ${ecoHash === ecoBaseline.ecoSummariesHash ? 'unchanged' : 'CHANGED'}`);
   console.log(`Survey combinations: ${cfgs.size} (x3 runs), ${[...cfgs].filter(c => picks[c] === exp.picks[c]).length} match`);
   console.log(`Card side issues: ${sideIssues.size} (${[...sideIssues].filter(s => known.has(s)).length} known, pre-existing)`);
   for (const s of [...sideIssues].filter(s => known.has(s))) console.log(`  known: ${s}`);
@@ -443,6 +551,8 @@ async function runSurvey(browser, file, seed) {
   console.log(`Question bank: ${Object.entries(bank.counts).map(([a, n]) => `${a} ${n}`).join(', ')}; 200 built survey runs checked; ${bank.issues.length} issues`);
   console.log(`Scoring: ${vecs.size} answer combinations, ${vecs.size - scoreDiffs.length} match (${Object.entries(styleCounts).map(([s, n]) => `${s} ${n}`).join(', ')})`);
   console.log(`Notable GM on cards: ${Object.keys(notableGm).length} combinations (x3 runs), ${gmMatch} match gm-baseline.json; ${shownGms.size} different GMs shown, ${noRecord.length} with no GM record (${noRecord.join(', ') || 'none'})`);
+  console.log(`Opening summaries: ${summaryAudit.count} entries, ${summaryAudit.issues.length} validation issues; reachable generated cards checked for coverage`);
+  console.log(`Black fallback edge cases: ${fallbackAudit.cases.length} tested, ${fallbackAudit.issues.length} issues`);
   console.log(`Hand-written Notable GM names: ${labs.handWritten.length}, ${handOk ? 'unchanged' : 'CHANGED'}`);
   console.log(`Labs GM drill: ${Object.keys(labs.drill).length} picker GMs, ${drillMatch} match gm-baseline.json (${Object.values(labs.drill).filter(m => m !== '-').length} load an opening)`);
   const rp = rotation.report, womenSet = new Set(rp.womenNames);
