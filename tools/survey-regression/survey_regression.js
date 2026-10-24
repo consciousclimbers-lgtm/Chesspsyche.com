@@ -117,7 +117,7 @@ function protectedHash(html) {
 }
 
 function ecoSummariesHash(html) {
-  const lines = html.split('\\n');
+  const lines = html.split('\n');
   const start = lines.findIndex(l => l.startsWith('const ECO_SUMMARIES = {'));
   if (start < 0) throw new Error('could not find the ECO_SUMMARIES data block start');
   let depth = 0, started = false, end = -1;
@@ -129,7 +129,7 @@ function ecoSummariesHash(html) {
     if (started && depth === 0) { end = i; break; }
   }
   if (end < start) throw new Error('could not find the ECO_SUMMARIES data block end');
-  return crypto.createHash('sha256').update(lines.slice(start, end + 1).join('\\n')).digest('hex');
+  return crypto.createHash('sha256').update(lines.slice(start, end + 1).join('\n')).digest('hex');
 }
 
 async function runSurvey(browser, file, seed) {
