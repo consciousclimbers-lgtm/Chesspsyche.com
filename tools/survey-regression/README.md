@@ -8,7 +8,8 @@ Both tests run automatically on every pull request to `main` (GitHub Actions, ch
 
 ## What it checks
 
-1. **Protected code is unchanged.** The test hashes `index.html` with the opening-data block removed. That block runs from `const ecoNamesMap = {` up to the survey picker comment. Any edit outside that block fails the test, including edits to the demo board, evaluation bar, pieces, board editor, results board, player labels, navigation, or the survey logic.
+1. **Protected code is unchanged.** The test hashes `index.html` with the opening-data block and the exact `ECO_SUMMARIES` object removed. The opening-data block runs from `const ecoNamesMap = {` up to the survey picker comment. Any edit to executable site code outside those data blocks fails the test, including edits to the demo board, evaluation bar, pieces, board editor, results board, player labels, navigation, or the survey logic.
+1a. **ECO summary data has its own integrity check.** `eco-summaries-baseline.json` stores a SHA-256 hash of the exact `ECO_SUMMARIES` object, including its opening and closing lines. Any summary-table edit fails unless the separate baseline is deliberately updated and reviewed alongside the source-backed data changes. The regular `expected.json` protected-code fingerprint is not weakened or silently rewritten to accommodate summary edits.
 2. **Survey picks are unchanged.** For every style × experience level × normal/strong answers, the test calls `choosePicksForRun` three times in a row, which covers the retake behaviour. All 60 × 3 White/Black picks must match `expected.json`.
 3. **Recommendation cards are correct.** Each card must come from the side it was picked for, and its moves must be legal. A mismatch fails the test unless it is listed in `knownSideIssues` (currently empty). Every generated card in the three-run snapshot must also use its matching entry in `ECO_SUMMARIES`. The Results board demo is capped at 20 plies (10 full moves).
 3a. **Written opening summaries are checked.** Each `ECO_SUMMARIES` entry in `index.html` must reference a real vault opening and correct side, must not duplicate a hand-written system, must be one sentence of 60–230 characters, must not repeat vault move commentary, must be unique, and must have an HTTPS source.
@@ -51,7 +52,7 @@ node survey_regression.js /path/to/other/index.html   # check another copy
 
 ## When a change is intended
 
-If an owner-approved change is meant to alter picks, scoring or protected code, run `npm run update` and commit the new `expected.json` with that change. The diff of `expected.json` then shows reviewers exactly which recommendations changed.
+If an owner-approved change is meant to alter picks, scoring or protected code, run `npm run update` and commit the new `expected.json` with that change. The diff of `expected.json` then shows reviewers exactly which recommendations changed. ECO summary changes require a separate, explicit update of `eco-summaries-baseline.json` after source and side review; `npm run update` never rewrites that file.
 
 ## Results-page click-through
 
