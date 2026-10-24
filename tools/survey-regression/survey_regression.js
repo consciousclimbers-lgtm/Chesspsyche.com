@@ -78,6 +78,7 @@ const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== 
 const htmlPath = path.resolve(positional[0] || path.join(__dirname, '../../index.html'));
 const expectedPath = path.join(__dirname, 'expected.json');
 const gmBaselinePath = path.join(__dirname, 'gm-baseline.json');
+const ecoSummariesBaselinePath = path.join(__dirname, 'eco-summaries-baseline.json');
 const chessLocal = require.resolve('chess.js');
 // Console message Chromium logs for each request this test aborts to stay offline
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
@@ -113,6 +114,22 @@ function protectedHash(html) {
     (summaryStart >= 0 && i >= summaryStart && i <= summaryEnd);
   const protectedLines = lines.filter((_, i) => !excluded(i));
   return crypto.createHash('sha256').update(protectedLines.join('\n')).digest('hex');
+}
+
+function ecoSummariesHash(html) {
+  const lines = html.split('\\n');
+  const start = lines.findIndex(l => l.startsWith('const ECO_SUMMARIES = {'));
+  if (start < 0) throw new Error('could not find the ECO_SUMMARIES data block start');
+  let depth = 0, started = false, end = -1;
+  for (let i = start; i < lines.length; i++) {
+    for (const ch of lines[i]) {
+      if (ch === '{') { depth++; started = true; }
+      else if (ch === '}') depth--;
+    }
+    if (started && depth === 0) { end = i; break; }
+  }
+  if (end < start) throw new Error('could not find the ECO_SUMMARIES data block end');
+  return crypto.createHash('sha256').update(lines.slice(start, end + 1).join('\\n')).digest('hex');
 }
 
 async function runSurvey(browser, file, seed) {
@@ -402,6 +419,8 @@ async function runSurvey(browser, file, seed) {
 (async () => {
   const html = fs.readFileSync(htmlPath, 'utf8');
   const hash = protectedHash(html);
+  const ecoHash = ecoSummariesHash(html);
+  const ecoBaseline = JSON.parse(fs.readFileSync(ecoSummariesBaselinePath, 'utf8'));
   const browser = await chromium.launch();
   const runs = [];
   for (let i = 0; i < repeat; i++) runs.push(await runSurvey(browser, htmlPath, SEED));
@@ -480,6 +499,8 @@ async function runSurvey(browser, file, seed) {
   if (!repeatOk) fails.push(`survey results differ between the ${repeat} runs with seed ${SEED}`);
   if (!seedOk) fails.push(`survey picks change with a different Math.random seed (${OTHER_SEED})`);
   if (hash !== exp.protectedHash) fails.push(`protected code changed (sha256 ${hash.slice(0, 12)}, expected ${exp.protectedHash.slice(0, 12)})`);
+  if (typeof ecoBaseline.ecoSummariesHash !== 'string') fails.push('eco-summaries-baseline.json has no ecoSummariesHash');
+  else if (ecoHash !== ecoBaseline.ecoSummariesHash) fails.push(`ECO_SUMMARIES data changed (sha256 ${ecoHash.slice(0, 12)}, expected ${ecoBaseline.ecoSummariesHash.slice(0, 12)})`);
   const cfgs = new Set([...Object.keys(exp.picks), ...Object.keys(picks)]);
   for (const cfg of cfgs) if (picks[cfg] !== exp.picks[cfg]) fails.push(`picks ${cfg}: got "${picks[cfg]}", expected "${exp.picks[cfg]}"`);
   const known = new Set(exp.knownSideIssues);
@@ -522,6 +543,7 @@ async function runSurvey(browser, file, seed) {
   console.log(`Picks fingerprint: sha256 ${crypto.createHash('sha256').update(JSON.stringify(picks)).digest('hex').slice(0, 16)}`);
   console.log(`Network: offline (blocked requests to ${blocked.join(', ') || 'nothing'}; chess.js 0.10.3 served from node_modules)`);
   console.log(`Protected code hash: ${hash === exp.protectedHash ? 'unchanged' : 'CHANGED'}`);
+  console.log(`ECO summary data hash: ${ecoHash === ecoBaseline.ecoSummariesHash ? 'unchanged' : 'CHANGED'}`);
   console.log(`Survey combinations: ${cfgs.size} (x3 runs), ${[...cfgs].filter(c => picks[c] === exp.picks[c]).length} match`);
   console.log(`Card side issues: ${sideIssues.size} (${[...sideIssues].filter(s => known.has(s)).length} known, pre-existing)`);
   for (const s of [...sideIssues].filter(s => known.has(s))) console.log(`  known: ${s}`);
