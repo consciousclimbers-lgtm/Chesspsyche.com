@@ -27,8 +27,8 @@ MAX_PLIES = 20
 
 def tokens(text):
     """Turn '1. e4 e5 2. Nf3' into ['e4','e5','Nf3']."""
-    text = re.sub(r"\\{[^}]*\\}|\\([^)]*\\)|\\$\\d+", " ", text or "")
-    text = re.sub(r"\\d+\\.(\\.\\.)?", " ", text)
+    text = re.sub(r"\{[^}]*\}|\([^)]*\)|\$\d+", " ", text or "")
+    text = re.sub(r"\d+\.(\.\.)?", " ", text)
     out = []
     for t in text.split():
         t = t.rstrip("!?")
