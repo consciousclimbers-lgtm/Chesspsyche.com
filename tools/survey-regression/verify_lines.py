@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 DRAFT - read-only opening-line verifier for ChessPsyche.
-Touches no site files. Needs: pip install python-chess==1.10.0
+Touches no site files. Needs: pip install python-chess==1.11.2
 
 Input CSV columns: eco, opening_name, side, then one column per site named
 site_<name> (e.g. site_lichess) holding that site's SAN line. Blank = no line.
@@ -21,14 +21,14 @@ from collections import Counter
 
 import chess
 
-PINNED = "1.10.0"
+PINNED = "1.11.2"
 MAX_PLIES = 20
 
 
 def tokens(text):
     """Turn '1. e4 e5 2. Nf3' into ['e4','e5','Nf3']."""
-    text = re.sub(r"\{[^}]*\}|\([^)]*\)|\$\d+", " ", text or "")
-    text = re.sub(r"\d+\.(\.\.)?", " ", text)
+    text = re.sub(r"\\{[^}]*\\}|\\([^)]*\\)|\\$\\d+", " ", text or "")
+    text = re.sub(r"\\d+\\.(\\.\\.)?", " ", text)
     out = []
     for t in text.split():
         t = t.rstrip("!?")
