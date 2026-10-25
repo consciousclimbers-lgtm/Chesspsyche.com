@@ -13,7 +13,7 @@ A row is CONSENSUS_VERIFIED only if:
 Everything else is EXCLUDED with a reason.
 
 Usage:
-  python verify_lines.py candidates.csv [--threshold 7] [--out report.json]
+  python verify_lines.py candidates.csv [--threshold 4] [--out report.json]
   python verify_lines.py --selftest
 """
 import argparse, csv, json, re, sys
