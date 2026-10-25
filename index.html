@@ -2615,7 +2615,7 @@ const ecoNamesMap = {
     "C40": "King's Knight Opening", "C41": "Philidor Defense", "C42": "Petrov's Defense (Russian Game)", "C43": "Petrov's Defense (Modern Attack)",
     "C44": "Scotch Game (3.d4)", "C45": "Scotch Game", "C46": "Three Knights Game", "C47": "Four Knights Game (Scotch Variation)",
     "C48": "Four Knights Game (Spanish Variation)", "C49": "Four Knights Game (Double Ruy Lopez)", "C50": "Italian Game", "C51": "Italian Game (Evans Gambit)",
-    "C52": "Italian Game (Evans Gambit, Pure Main Line)", "C53": "Italian Game (Classical Variation)", "C54": "Italian Game (Classical, Giuoco Pianissimo)", "C55": "Italian Game (Two Knights Defense)",
+    "C52": "Italian Game (Evans Gambit, Pure Main Line)", "C53": "Italian Game (Classical Variation)", "C54": "Italian Game: Classical Variation, Greco Gambit, Traditional Line", "C55": "Italian Game (Two Knights Defense)",
     "C56": "Italian Game (Two Knights, Max Lange Attack)", "C57": "Italian Game (Two Knights, Traxler Counterattack)", "C58": "Italian Game (Two Knights, 4.Ng5)", "C59": "Two knights defence",
     "C60": "Ruy Lopez (Spanish Opening)", "C61": "Ruy Lopez (Bird's Defense)", "C62": "Ruy Lopez (Old Steinitz Defense)", "C63": "Ruy Lopez (Schliemann Defense)",
     "C64": "Ruy Lopez (Classical Variation, Cordel Gambit)", "C65": "Ruy Lopez (Berlin Defense)", "C66": "Ruy Lopez (Berlin Defense, Closed Variation)", "C67": "Ruy Lopez (Berlin Defense, Rio de Janeiro Variation)",
@@ -3761,7 +3761,11 @@ function ecoToSystem(code, side) {
         moves.push({ move: san, from: m.from, to: m.to });
     }
     const first = (e.commentary && e.commentary[0]) ? String(e.commentary[0]).split(' — ').slice(1).join(' — ') : '';
-    return { name: e.name, eco: e.eco, summary: first || ('Starts with ' + e.moves.split(/\s+/).slice(0, 9).join(' ') + (e.moves.split(/\s+/).length > 9 ? ' ...' : '') + '.'), variations: [{ moves }] };
+    // PROTECTED: C54|white summary override approved for this isolated draft change.
+    const summary = code === 'C54' && side === 'white'
+        ? 'In the Greco Gambit, White challenges the center with c3 and d4. After Black captures on d4, White recaptures with cxd4, establishing a central pawn presence.'
+        : first || ('Starts with ' + e.moves.split(/\s+/).slice(0, 9).join(' ') + (e.moves.split(/\s+/).length > 9 ? ' ...' : '') + '.');
+    return { name: e.name, eco: e.eco, summary, variations: [{ moves }] };
 }
 
 // ---- Notable GM rotation: the GM shown for a picked opening comes from that family's approved pool ----
