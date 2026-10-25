@@ -2615,7 +2615,7 @@ const ecoNamesMap = {
     "C40": "King's Knight Opening", "C41": "Philidor Defense", "C42": "Petrov's Defense (Russian Game)", "C43": "Petrov's Defense (Modern Attack)",
     "C44": "Scotch Game (3.d4)", "C45": "Scotch Game", "C46": "Three Knights Game", "C47": "Four Knights Game (Scotch Variation)",
     "C48": "Four Knights Game (Spanish Variation)", "C49": "Four Knights Game (Double Ruy Lopez)", "C50": "Italian Game", "C51": "Italian Game (Evans Gambit)",
-    "C52": "Italian Game (Evans Gambit, Pure Main Line)", "C53": "Italian Game (Classical Variation)", "C54": "Italian Game (Classical, Giuoco Pianissimo)", "C55": "Italian Game (Two Knights Defense)",
+    "C52": "Italian Game (Evans Gambit, Pure Main Line)", "C53": "Italian Game (Classical Variation)", "C54": "Italian Game: Classical Variation, Greco Gambit, Traditional Line", "C55": "Italian Game (Two Knights Defense)",
     "C56": "Italian Game (Two Knights, Max Lange Attack)", "C57": "Italian Game (Two Knights, Traxler Counterattack)", "C58": "Italian Game (Two Knights, 4.Ng5)", "C59": "Two knights defence",
     "C60": "Ruy Lopez (Spanish Opening)", "C61": "Ruy Lopez (Bird's Defense)", "C62": "Ruy Lopez (Old Steinitz Defense)", "C63": "Ruy Lopez (Schliemann Defense)",
     "C64": "Ruy Lopez (Classical Variation, Cordel Gambit)", "C65": "Ruy Lopez (Berlin Defense)", "C66": "Ruy Lopez (Berlin Defense, Closed Variation)", "C67": "Ruy Lopez (Berlin Defense, Rio de Janeiro Variation)",
@@ -3747,14 +3747,14 @@ function demoLineNote(plies, namedAtPly) {
 }
 
 const ECO_SUMMARIES = {
-    "C54|white": { summary: "In the Giuoco Piano main line White uses c3 and d4 to build a broad pawn centre, and Black answers by taking on d4 and checking on b4 before that centre can settle.", source: "https://en.wikipedia.org/wiki/Giuoco_Piano" },
+    "C54|white": { summary: "In the Greco Gambit, White challenges the center with c3 and d4. After Black captures on d4, White recaptures with cxd4, establishing a central pawn presence.", source: "https://www.365chess.com/eco/C54_Giuoco_Piano" },
     "B12|white": { summary: "The Advance Variation pushes e5 to gain space and establish a pawn chain in Black's half, creating a complex strategic position with attacking chances for White.", source: "https://www.chess.com/openings/Caro-Kann-Defense-Advance-Variation" },
-    "C27|white": { summary: "The Frankenstein-Dracula Variation lets Black grab the e4 pawn and answers with Qh5, renewing threats against f7 and e5 and leading to sharp, heavily analysed complications.", source: "https://en.wikipedia.org/wiki/Vienna_Game,_Frankenstein%E2%80%93Dracula_Variation" },
+    "C27|white": { summary: "After Black's ...Nxe4 grabs the e4-pawn, White can play Qh5, threatening f7 and e5 and entering a sharp, heavily analysed tactical line.", source: "https://en.wikipedia.org/wiki/Vienna_Game,_Frankenstein%E2%80%93Dracula_Variation" },
     "B21|white": { summary: "Meeting the Sicilian with an early f4 aims for a kingside attack with Nf3, a bishop on c4 or b5, castling and a queen swing to the kingside, though Black can strike back in the centre with ...d5.", source: "https://www.chess.com/openings/Closed-Sicilian-Defense-Grand-Prix-Attack" },
     "A03|white": { summary: "Bird’s Opening uses 1.f4 to control e5 and prepare kingside development; against ...d5, White often adopts a Dutch-like structure with colours reversed.", source: "https://en.wikipedia.org/wiki/Bird%27s_Opening" },
     "A81|white": { summary: "Against the Dutch, White can choose the Fianchetto Attack with 2.g3 and develop the king's bishop on g2, while keeping the central pawn structure flexible.", source: "https://en.wikipedia.org/wiki/Dutch_Defence" },
     "B22|white": { summary: "The Alapin answers the Sicilian with c3 to support d4 and a two-pawn centre, often leading to isolated-queen's-pawn positions after ...d5 or to space-gaining e5 thrusts after ...Nf6.", source: "https://en.wikipedia.org/wiki/Sicilian_Defence,_Alapin_Variation" },
-    "D02|white": { summary: "With 1.d4 d5 2.Nf3 establishing the Queen's Pawn structure, White can build a Colle setup with e3, Bd3, c3 and Nbd2, then prepare the e4 break.", source: "https://www.chess.com/openings/Colle-System" },
+    "D02|white": { summary: "With 1.d4 d5 2.Nf3 establishing the Queen's Pawn structure, White can build a Colle setup with e3, Bd3, c3 and Nbd2, then prepare the e4 break.", source: "https://chessiverse.com/resources/openings/closed-game-1-d4-d5-2-nf3" },
     "D10|white": { summary: "Against the Slav, White can exchange on d5 or develop with Nf3 and Nc3; the main line is balanced and leaves both sides several plans.", source: "https://www.chess.com/openings/Slav-Defense" },
     "B00|white": { summary: "The King's Pawn Opening begins 1.e4, claiming central space and opening lines for the queen and king's bishop.", source: "https://www.chess.com/openings/Kings-Pawn-Opening" },
     "A01|white": { summary: "The Nimzowitsch-Larsen Attack fianchettoes the queen's bishop on b2 so that it controls the centre and Black's kingside from a distance, in true hypermodern style.", source: "https://en.wikipedia.org/wiki/Nimzowitsch%E2%80%93Larsen_Attack" },
