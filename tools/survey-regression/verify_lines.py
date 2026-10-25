@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 DRAFT - read-only opening-line verifier for ChessPsyche.
-Touches no site files. Needs: pip install python-chess==1.10.0
+Touches no site files. Needs: pip install chess==1.10.0
 
 Input CSV columns: eco, opening_name, side, then one column per site named
 site_<name> (e.g. site_lichess) holding that site's SAN line. Blank = no line.
