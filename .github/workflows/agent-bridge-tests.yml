@@ -1,0 +1,23 @@
+name: Agent bridge tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/agent-monitor-bridge.yml
+      - .github/workflows/agent-bridge-tests.yml
+      - tools/agent-bridge/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bridge-tests:
+    name: Agent bridge unit tests (no secrets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run standard-library tests
+        run: python3 -m unittest discover -s tools/agent-bridge -p 'test_*.py' -v
