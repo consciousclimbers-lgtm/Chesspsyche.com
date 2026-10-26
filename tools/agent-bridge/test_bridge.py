@@ -78,6 +78,19 @@ class GitHubOnlySummaryTests(unittest.TestCase):
         self.assertNotIn("[click]", summary)
         self.assertLess(len(summary), 2500)
 
+    def test_html_brackets_are_escaped_without_double_escaping(self):
+        summary = build_summary(
+            "pull_request_target", "owner/repo", "actor", "https://github.com/run",
+            "sha", "refs/heads/main",
+            {"pull_request": {"number": 1, "title": "<img src=x onerror=alert(1)> a > b",
+                              "head": {"sha": "sha", "ref": "branch"}}},
+        )
+        self.assertNotIn("<img", summary)
+        self.assertIn("&lt;img", summary)
+        self.assertIn("a &gt; b", summary)
+        self.assertNotIn(r"\&", summary)
+        self.assertNotIn("&amp;", summary)
+
 
 if __name__ == "__main__":
     unittest.main()

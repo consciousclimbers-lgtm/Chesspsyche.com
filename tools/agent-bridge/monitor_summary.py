@@ -14,7 +14,9 @@ def _clean(value: Any, limit: int = 240) -> str:
     if value is None:
         return "not provided"
     text = re.sub(r"[\x00-\x1f\x7f]", " ", str(value))
-    text = re.sub(r"([\\`*_{}\[\]()#+.!|>~-])", r"\\\1", text)
+    # Escape HTML brackets first so the entities below are not escaped again.
+    text = text.replace("<", "&lt;").replace(">", "&gt;")
+    text = re.sub(r"([\\`*_{}\[\]()#+.!|~-])", r"\\\1", text)
     return text[:limit]
 
 
