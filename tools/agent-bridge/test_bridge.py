@@ -22,7 +22,7 @@ class GitHubOnlySummaryTests(unittest.TestCase):
             "base456", "refs/heads/main", event,
         )
         self.assertIn("head123", summary)
-        self.assertIn(r"feature\\-branch", summary)
+        self.assertIn(r"feature\-branch", summary)
         self.assertIn("A safe test PR", summary)
         self.assertIn("#54", summary)
         self.assertNotIn("PRIVATE BODY MUST NOT APPEAR", summary)
