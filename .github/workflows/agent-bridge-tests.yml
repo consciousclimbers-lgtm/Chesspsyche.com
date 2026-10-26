@@ -1,4 +1,4 @@
-name: Agent bridge tests
+name: Agent monitoring tests
 
 on:
   pull_request:
@@ -13,8 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  bridge-tests:
-    name: Agent bridge unit tests (no secrets)
+  summary-tests:
+    name: GitHub-only summary tests (no secrets)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
