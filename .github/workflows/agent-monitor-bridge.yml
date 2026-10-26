@@ -1,0 +1,60 @@
+# Secure, read-only event bridge to an independently hosted monitoring agent.
+# No PR code is checked out or executed. The workflow only forwards allow-listed metadata.
+name: Agent monitoring bridge
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft, closed]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  pull_request_review_comment:
+    types: [created, edited]
+  issue_comment:
+    types: [created, edited]
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: ["Regression tests", "Live Guardian"]
+    types: [completed]
+  deployment_status:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-monitor-${{ github.event_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+  cancel-in-progress: false
+
+jobs:
+  notify-agent:
+    name: Notify external monitoring agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      # For pull_request_target, checkout is explicitly pinned to the trusted default branch.
+      # Never checkout or execute files from the pull-request head in this workflow.
+      - name: Check out trusted workflow code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Test the bridge code
+        run: python3 -m unittest discover -s tools/agent-bridge -p 'test_*.py' -v
+
+      - name: Forward event or explain missing configuration
+        shell: bash
+        env:
+          AGENT_WEBHOOK_URL: ${{ secrets.CHESSPSYCHE_AGENT_WEBHOOK_URL }}
+          AGENT_WEBHOOK_TOKEN: ${{ secrets.CHESSPSYCHE_AGENT_WEBHOOK_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          SERVER_URL: ${{ github.server_url }}
+          EVENT_PATH: ${{ github.event_path }}
+        run: python3 tools/agent-bridge/bridge.py
