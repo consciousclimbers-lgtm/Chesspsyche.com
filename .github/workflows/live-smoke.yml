@@ -169,7 +169,14 @@ jobs:
       - run: npm ci
 
       # If the browser cannot be installed, the next step reports NOT TESTED (not PASS)
+      - name: Cache Playwright ${{ matrix.browser }}
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ matrix.browser }}
+
       - name: Install ${{ matrix.browser }}
+        timeout-minutes: 8
         continue-on-error: true
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
