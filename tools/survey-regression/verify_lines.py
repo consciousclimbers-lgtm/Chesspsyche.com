@@ -51,14 +51,30 @@ def tokens(text):
 
 
 def consensus(lines, threshold):
-    """Longest prefix (<= MAX_PLIES) shared by >= threshold family-level lines."""
+    """Longest prefix shared by threshold families; flag competing prefixes."""
     longest = min(MAX_PLIES, max((len(line) for line in lines), default=0))
+    candidates = []
     for length in range(longest, 0, -1):
         counts = Counter(tuple(line[:length]) for line in lines if len(line) >= length)
-        hits = [(prefix, count) for prefix, count in counts.most_common() if count >= threshold]
-        if hits:
-            return list(hits[0][0]), hits[0][1], len(hits) > 1
-    return [], 0, False
+        candidates.extend(
+            (length, prefix, count)
+            for prefix, count in counts.items()
+            if count >= threshold
+        )
+    if not candidates:
+        return [], 0, False
+
+    # A shorter candidate that is a prefix of a longer candidate is compatible.
+    # Any candidates that diverge at a shared ply are competing lines, even when
+    # they reach threshold at different lengths.
+    for index, (_, prefix, _) in enumerate(candidates):
+        for _, other, _ in candidates[index + 1:]:
+            common = min(len(prefix), len(other))
+            if prefix[:common] != other[:common]:
+                return [], 0, True
+
+    length, prefix, count = max(candidates, key=lambda item: (item[0], item[2]))
+    return list(prefix), count, False
 
 
 def replay(sans):
