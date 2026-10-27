@@ -157,6 +157,7 @@ jobs:
         env:
           COMMIT: ${{ needs.deployment.outputs.commit }}
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           head=$(git rev-parse HEAD)
           if [ -z "$COMMIT" ] || [ "$head" != "$COMMIT" ]; then
             echo "::error title=FAIL::test tools are ${head:0:12}, expected ${COMMIT:-nothing}"; exit 1
@@ -176,6 +177,7 @@ jobs:
         shell: bash
         env:
           WANT_SHA256: ${{ needs.deployment.outputs.sha256 }}
+          DEBUG: ${{ matrix.browser == 'firefox' && 'pw:browser' || '' }}
         run: |
           mkdir -p out
           # A PR's live check tests deployed main with deployed main's test definitions; regression.yml tests the candidate.

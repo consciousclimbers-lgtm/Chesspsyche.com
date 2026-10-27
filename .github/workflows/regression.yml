@@ -173,6 +173,8 @@ jobs:
 
 
       - name: Browser click-through against candidate over local HTTP, ${{ matrix.browser }} ${{ matrix.viewport }}
+        env:
+          DEBUG: ${{ matrix.browser == 'firefox' && 'pw:browser' || '' }}
         run: |
           set -uo pipefail
           mkdir -p out
