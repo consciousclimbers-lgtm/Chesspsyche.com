@@ -177,6 +177,7 @@ jobs:
         shell: bash
         env:
           WANT_SHA256: ${{ needs.deployment.outputs.sha256 }}
+          HOME: ${{ matrix.browser == 'firefox' && '/root' || '/github/home' }}
           DEBUG: ${{ matrix.browser == 'firefox' && 'pw:browser' || '' }}
         run: |
           mkdir -p out
