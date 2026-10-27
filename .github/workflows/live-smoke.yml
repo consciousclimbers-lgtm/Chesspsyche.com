@@ -170,12 +170,22 @@ jobs:
 
       # If the browser cannot be installed, the next step reports NOT TESTED (not PASS)
       - name: Cache Playwright ${{ matrix.browser }}
+        id: cache-playwright
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-browsers-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ matrix.browser }}
 
-      - name: Install ${{ matrix.browser }}
+      # Warm-cache path: use cached browser binaries without apt dependency reconciliation.
+      - name: Install ${{ matrix.browser }} (Warm Cache)
+        if: steps.cache-playwright.outputs.cache-hit == 'true'
+        timeout-minutes: 2
+        continue-on-error: true
+        run: npx playwright install ${{ matrix.browser }}
+
+      # Cold-cache path: install browser binaries and Linux system dependencies.
+      - name: Install ${{ matrix.browser }} (Cold Cache)
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
         timeout-minutes: 8
         continue-on-error: true
         run: npx playwright install --with-deps ${{ matrix.browser }}
