@@ -179,9 +179,9 @@ jobs:
       # Warm-cache path: use cached browser binaries without apt dependency reconciliation.
       - name: Install ${{ matrix.browser }} (Warm Cache)
         if: steps.cache-playwright.outputs.cache-hit == 'true'
-        timeout-minutes: 2
+        timeout-minutes: 3
         continue-on-error: true
-        run: npx playwright install ${{ matrix.browser }}
+        run: npx playwright install-deps ${{ matrix.browser }}
 
       # Cold-cache path: install browser binaries and Linux system dependencies.
       - name: Install ${{ matrix.browser }} (Cold Cache)
