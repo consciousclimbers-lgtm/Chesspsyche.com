@@ -40,7 +40,14 @@ jobs:
       - name: Install test dependencies
         run: npm ci
 
+      - name: Cache Playwright Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-chromium
+
       - name: Install Chromium for Playwright
+        timeout-minutes: 8
         run: npx playwright install --with-deps chromium
 
       - name: Survey regression (protected code, picks, question bank, scoring, console errors)
@@ -138,6 +145,9 @@ jobs:
   browsers:
     name: Click-through ${{ matrix.browser }} ${{ matrix.viewport }}
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -161,12 +171,11 @@ jobs:
 
       - run: npm ci
 
-      # If the browser cannot be installed, the next step reports NOT TESTED (not PASS)
-      - name: Install ${{ matrix.browser }}
-        continue-on-error: true
-        run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Browser click-through against candidate over local HTTP, ${{ matrix.browser }} ${{ matrix.viewport }}
+        env:
+          HOME: ${{ matrix.browser == 'firefox' && '/root' || '/github/home' }}
+          DEBUG: ${{ matrix.browser == 'firefox' && 'pw:browser' || '' }}
         run: |
           set -uo pipefail
           mkdir -p out
