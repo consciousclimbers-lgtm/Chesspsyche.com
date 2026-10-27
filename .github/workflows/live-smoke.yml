@@ -128,6 +128,9 @@ jobs:
     needs: deployment
     if: needs.deployment.outputs.status == 'match'
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -154,6 +157,7 @@ jobs:
         env:
           COMMIT: ${{ needs.deployment.outputs.commit }}
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           head=$(git rev-parse HEAD)
           if [ -z "$COMMIT" ] || [ "$head" != "$COMMIT" ]; then
             echo "::error title=FAIL::test tools are ${head:0:12}, expected ${COMMIT:-nothing}"; exit 1
@@ -168,15 +172,13 @@ jobs:
 
       - run: npm ci
 
-      # If the browser cannot be installed, the next step reports NOT TESTED (not PASS)
-      - name: Install ${{ matrix.browser }}
-        continue-on-error: true
-        run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Click-through against the live site
         shell: bash
         env:
           WANT_SHA256: ${{ needs.deployment.outputs.sha256 }}
+          HOME: ${{ matrix.browser == 'firefox' && '/root' || '/github/home' }}
+          DEBUG: ${{ matrix.browser == 'firefox' && 'pw:browser' || '' }}
         run: |
           mkdir -p out
           # A PR's live check tests deployed main with deployed main's test definitions; regression.yml tests the candidate.
