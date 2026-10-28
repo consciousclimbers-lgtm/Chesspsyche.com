@@ -106,13 +106,13 @@ const CASES = [
   { name: 'black-B40', style: 'strategicArchitect', level: 'novice', strong: false, side: 'black', white: 'D06', black: 'B40', gm: { white: 'Levon Aronian', black: 'Vasyl Ivanchuk' } },
   { name: 'white-D85', style: 'patientGrinder', level: 'advanced', strong: true, side: 'white', white: 'D85', black: 'B82', gm: { white: null, black: 'Ivan Saric' } },
   { name: 'white-D00', style: 'patientGrinder', level: 'none', strong: false, side: 'white', white: 'D00', black: 'C42', gm: { white: null, black: 'Yu Yangyi' } },
-  { name: 'white-E06', style: 'flexibleChameleon', level: 'advanced', strong: true, side: 'white', white: 'E06', black: 'A16', gm: { white: 'Ding Liren', black: null },
+  { name: 'white-E06', style: 'flexibleChameleon', level: 'advanced', strong: true, side: 'white', white: 'E06', black: 'A16', gm: { white: 'Ding Liren', black: 'Vaclav Finek' },
     retake: { white: 'E07', black: 'D80', gm: { white: 'Aleksandra Goryachkina', black: 'Bobby Fischer' } } },
   // Reported cards (issue #24). black-B82 takes the same survey as white-D85, choosing Black on the board.
   { name: 'black-B82', style: 'patientGrinder', level: 'advanced', strong: true, side: 'black', white: 'D85', black: 'B82', gm: { white: null, black: 'Ivan Saric' } },
-  { name: 'black-A40', style: 'strategicArchitect', level: 'none', strong: false, side: 'black', white: 'D06', black: 'A40', gm: { white: 'Levon Aronian', black: null } },
+  { name: 'black-A40', style: 'strategicArchitect', level: 'none', strong: false, side: 'black', white: 'D06', black: 'A40', gm: { white: 'Levon Aronian', black: 'Natalia Zhukova' } },
   { name: 'black-D07', style: 'strategicArchitect', level: 'none', strong: false, side: 'black', white: 'A10', black: 'D07', gm: { white: 'Magnus Carlsen', black: 'Aram Hakobyan' },
-    preload: { after: 1, picks: { 'strategicArchitect|white': 'D06', 'strategicArchitect|black': 'A40' }, rotation: { "Queen's Gambit / QGD Exchange|white": 1 } } },
+    preload: { after: 1, picks: { 'strategicArchitect|white': 'D06', 'strategicArchitect|black': 'A40' }, rotation: { "Queen's Gambit / QGD Exchange|white": 1, 'Queen\'s Pawn Game|black': 1 } } },
   // A86 first appears on the 5th survey of this combination (not in the 3-survey baseline)
   { name: 'black-A86', style: 'aggressiveVanguard', level: 'none', strong: false, side: 'black', white: 'D03', black: 'A86', gm: { white: null, black: 'Anna Muzychuk' },
     preload: { after: 4, picks: { 'aggressiveVanguard|white': 'A46', 'aggressiveVanguard|black': 'A85' }, rotation: { 'Dutch Defence|black': 3, "Alekhine's Defence|black": 1 } } },
