@@ -3,14 +3,17 @@
 // Usage: node gm_sync_report.js ../../index.html
 //
 // For every pool entry it prints the matching GM record and that record's system for the pool's side.
-// Pools with recordLabels (Batch 2) are synchronized with the records, and each entry is classed:
-//   DIRECT       the record's system lists one of the pool's recordLabels (may be "verified")
-//   FAMILY ONLY  it lists only a broader familyLabels entry (needs a targeted check before "verified")
-//   NOT ON CARD  it lists neither (a gap: needs its own evidence)
-//   NO SYSTEM    the record has no system for this side
-// Pools without recordLabels (Batch 1) are matched by name only and reported, not classed.
-// npm test fails if a synchronized entry's id and name disagree, or a "verified" one is not DIRECT.
+// Pools with recordLabels are synchronized with GM records. Evidence classes:
+//   DIRECT       the profile's side-specific system lists a recordLabel
+//   FAMILY ONLY  it lists a broader familyLabels value (needs a targeted check)
+//   FAMILY GAMES an explicit side-specific game-database record is in family-repertoire-evidence.json
+//   NOT ON CARD  neither the profile nor the game-evidence registry supports it
+//   NO SYSTEM    no profile system for that side and no explicit family-game evidence
+// Pools without recordLabels are matched by name only and reported, not classed.
+// The survey regression test enforces identity plus DIRECT or explicit FAMILY GAMES evidence for verified entries.
 const fs = require('fs');
+const path = require('path');
+const familyEvidence = JSON.parse(fs.readFileSync(path.join(__dirname, 'family-repertoire-evidence.json'), 'utf8')).entries;
 
 function grab(lines, start) {
   const s = lines.findIndex(l => l.startsWith(start));
@@ -27,7 +30,12 @@ const { raw, pools } = Function(grab(lines, 'const rawGrandmastersList = [') + '
 const byName = new Map(raw.map(g => [g.name, g]));
 const byId = new Map(raw.map(g => [g.id, g]));
 
-function classify(p, g) {
+function classify(p, g, e) {
+  const hasFamilyGames = familyEvidence.some(f =>
+    f.poolKey === p.key && f.side === p.side && p.recordLabels.includes(f.family) &&
+    f.gm === e.gm && f.fideId === e.id && Array.isArray(f.sources) && f.sources.some(url => /^https:\/\//.test(url))
+  );
+  if (hasFamilyGames) return 'FAMILY GAMES';
   const sys = g && g.system ? g.system[p.side] : undefined;
   if (sys == null) return 'NO SYSTEM';
   const labels = sys.split(' / ');
@@ -43,7 +51,7 @@ for (const p of pools) {
   for (const e of p.pool) {
     const g = synced ? byId.get(e.id) : byName.get(e.gm);
     const ident = !g ? 'NO RECORD' : g.name !== e.gm ? `ID GIVES "${g.name}"` : `id ${g.id}`;
-    const cls = synced && g && g.name === e.gm ? classify(p, g) : synced ? 'IDENTITY' : '';
+    const cls = synced && g && g.name === e.gm ? classify(p, g, e) : synced ? 'IDENTITY' : '';
     if (synced) counts[`${e.status} ${cls}`] = (counts[`${e.status} ${cls}`] || 0) + 1;
     const sys = g && g.system ? g.system[p.side] : undefined;
     console.log(`  ${e.status.padEnd(8)} ${(cls || '-').padEnd(11)} ${e.gm.padEnd(28)} ${ident.padEnd(12)} ${p.side} system: ${sys == null ? '-' : sys}`);
