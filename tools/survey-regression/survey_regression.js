@@ -78,6 +78,9 @@ const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== 
 const htmlPath = path.resolve(positional[0] || path.join(__dirname, '../../index.html'));
 const expectedPath = path.join(__dirname, 'expected.json');
 const gmBaselinePath = path.join(__dirname, 'gm-baseline.json');
+const familyEvidencePath = path.join(__dirname, 'family-repertoire-evidence.json');
+const familyEvidence = JSON.parse(fs.readFileSync(familyEvidencePath, 'utf8'));
+if (!familyEvidence || !Array.isArray(familyEvidence.entries)) throw new Error('family-repertoire-evidence.json must contain an entries array');
 const chessLocal = require.resolve('chess.js');
 // Console message Chromium logs for each request this test aborts to stay offline
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
@@ -173,7 +176,7 @@ async function runSurvey(browser, file, seed) {
     return { cards, combos };
   });
   // Notable GM pools: data checks, fair round-robin, stability on re-render and reload, women's representation
-  const rotation = await page.evaluate(() => {
+  const rotation = await page.evaluate((familyEvidenceEntries) => {
     const issues = [], warnings = [];
     const names = new Set(grandmastersList.map(g => g.name));
     const women = [...new Set(grandmastersList.filter(g => g.gender === 'female').map(g => g.name))];
@@ -197,13 +200,20 @@ async function runSurvey(browser, file, seed) {
         seen.add(e.gm);
         if (e.status === 'verified' && !names.has(e.gm)) issues.push(`${p.key}: ${e.gm} has no GM record`);
         if (e.status === 'verified') poolsPerGm[e.gm] = (poolsPerGm[e.gm] || 0) + 1;
-        // Pools synchronized with the GM records: the entry's FIDE id must give the same name, and a verified
-        // entry's record must list one of the pool's recordLabels for this side (the pop-up's "system")
+        // Synchronized evidence accepts an exact GM profile label or a reviewed, side-specific game-database record.
         if (p.recordLabels) {
           const g = grandmastersList.find(r => r.id === e.id);
           if (!g || g.name !== e.gm) issues.push(`${p.key}: ${e.gm} (id ${e.id}) does not match a GM record`);
-          else if (e.status === 'verified' && !String((g.system || {})[p.side] || '').split(' / ').some(l => p.recordLabels.includes(l)))
-            issues.push(`${p.key}: ${e.gm} is verified, but the GM record's ${p.side} system "${(g.system || {})[p.side] || '-'}" lists none of ${p.recordLabels.join(', ')}`);
+          else if (e.status === 'verified') {
+            const direct = String((g.system || {})[p.side] || '').split(' / ').some(l => p.recordLabels.includes(l));
+            const familyGame = familyEvidenceEntries.some(f =>
+              f.poolKey === p.key && f.side === p.side && p.recordLabels.includes(f.family) &&
+              f.gm === e.gm && f.fideId === e.id && typeof f.basis === 'string' && f.basis.trim() &&
+              Array.isArray(f.sources) && f.sources.some(url => /^https:\/\//.test(url))
+            );
+            if (!direct && !familyGame)
+              issues.push(`${p.key}: ${e.gm} is verified, but has neither an exact ${p.side} profile label nor a reviewed family-game evidence record for ${p.recordLabels.join(', ')}`);
+          }
         }
       }
     }
@@ -258,10 +268,10 @@ async function runSurvey(browser, file, seed) {
         womenInPools: women.filter(w => poolsPerGm[w]).length, women: women.length,
         noWomen: NOTABLE_GM_POOLS.filter(p => !p.pool.some(e => womenSet.has(e.gm))).map(p => p.key),
         mostPools: Object.entries(poolsPerGm).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([g, n]) => `${g} ${n}`),
-        womenNames: women
+        womenNames: women, familyGameEvidence: familyEvidenceEntries.length
       }
     };
-  });
+  }, familyEvidence.entries);
   const bank = await page.evaluate(() => {
     const issues = [], seen = new Set(), counts = {};
     const text = (t, where) => {
@@ -447,7 +457,7 @@ async function runSurvey(browser, file, seed) {
   console.log(`Labs GM drill: ${Object.keys(labs.drill).length} picker GMs, ${drillMatch} match gm-baseline.json (${Object.values(labs.drill).filter(m => m !== '-').length} load an opening)`);
   const rp = rotation.report, womenSet = new Set(rp.womenNames);
   const shownList = Object.values(res).flat().flat().filter(c => c && c.gm).map(c => c.gm);
-  console.log(`Notable GM pools: ${rp.pools} pools, ${rp.entries} approved entries, ${rotation.issues.length} issues; every pool cycles through all its GMs before repeating, and keeps its GM on re-render and reload`);
+  console.log(`Notable GM pools: ${rp.pools} pools, ${rp.entries} approved entries, ${rotation.issues.length} issues, ${rotation.report.familyGameEvidence} family-game evidence entries; every pool cycles through all its GMs before repeating, and keeps its GM on re-render and reload`);
   console.log(`  women: ${rp.womenEntries} of ${rp.entries} pool entries (${Math.round(100 * rp.womenEntries / rp.entries)}%), ${rp.womenInPools} of ${rp.women} female GM records in a pool; ${shownList.filter(g => womenSet.has(g)).length} of ${shownList.length} Notable GMs shown in the snapshot are women (reported, not a quota)`);
   console.log(`  pools with no women: ${rp.noWomen.join(', ') || 'none'}; most pools: ${rp.mostPools.join(', ')}`);
   for (const w of rotation.warnings) console.log(`  warning: ${w}`);
