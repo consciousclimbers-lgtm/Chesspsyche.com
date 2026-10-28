@@ -11,8 +11,8 @@
  *  - Side-lock: every code listed in a pool must have the pool's side (card.side === pool.side).
  *    Codes whose side is "either" are not part of the side-lock check; they are listed as review notes.
  *
- * Exit code: 0 when the report is produced and there are no side-lock violations or duplicate
- * assignments; 1 for a side-lock violation, duplicate assignment, or unreadable data.
+ * Exit codes: 0 clean; 1 one or more records quarantined (side mismatch, duplicate, unknown code);
+ * 2 pre-flight schema check failed (nothing is reported as assigned).
  * A different count than the expected baseline is reported in the JSON (baseline.matches) but does not
  * fail the run, so a data change shows up as a visible difference rather than a broken job.
  */
@@ -26,7 +26,9 @@ const EXPECTED = { cards: 487, unassigned: 216, unassignedWhite: 143, unassigned
 const args = process.argv.slice(2);
 const outIdx = args.indexOf('--out');
 const outPath = outIdx >= 0 ? args[outIdx + 1] : null;
-const inPath = args.find((a, i) => !a.startsWith('--') && i !== outIdx + 1)
+const qIdx = args.indexOf('--quarantine');
+const quarantinePath = qIdx >= 0 ? args[qIdx + 1] : null;
+const inPath = args.find((a, i) => !a.startsWith('--') && i !== outIdx + 1 && i !== qIdx + 1)
   || path.join(__dirname, '..', 'index.html');
 
 function fail(msg) { console.error('ERROR: ' + msg); process.exit(1); }
@@ -62,6 +64,34 @@ const vault = readLiteral('ecoVaultData');
 const sideTable = readLiteral('ECO_SIDE');
 const pools = readLiteral('NOTABLE_GM_POOLS');
 if (!Array.isArray(pools)) fail('NOTABLE_GM_POOLS is not an array');
+
+
+// ---- Pre-flight schema guard (rule 4): abort before producing any assignment report if the data shape is off.
+const schemaErrors = [];
+const isStr = v => typeof v === 'string' && v.length > 0;
+if (!vault || typeof vault !== 'object' || Array.isArray(vault)) schemaErrors.push('ecoVaultData is not an object');
+else Object.entries(vault).forEach(([c, v]) => {
+  if (!/^[A-E]\d{2}$/.test(c)) schemaErrors.push('ecoVaultData: bad ECO code ' + c);
+  if (!v || !isStr(v.moves)) schemaErrors.push('ecoVaultData ' + c + ': moves missing or not a string');
+  if (!v || !Array.isArray(v.commentary) || !v.commentary.every(isStr)) schemaErrors.push('ecoVaultData ' + c + ': commentary is not an array of strings');
+});
+if (!sideTable || typeof sideTable !== 'object') schemaErrors.push('ECO_SIDE is not an object');
+else Object.entries(sideTable).forEach(([c, s]) => {
+  if (!['white', 'black', 'either'].includes(s)) schemaErrors.push('ECO_SIDE ' + c + ': unexpected side value ' + JSON.stringify(s));
+  if (vault && !vault[c]) schemaErrors.push('ECO_SIDE ' + c + ': code not in ecoVaultData');
+});
+pools.forEach((p, i) => {
+  const w = 'NOTABLE_GM_POOLS[' + i + ']';
+  if (!p || !isStr(p.key)) schemaErrors.push(w + ': key missing');
+  if (!p || !['white', 'black'].includes(p.side)) schemaErrors.push(w + ': side must be white or black');
+  if (!p || !Array.isArray(p.codes) || !p.codes.length || !p.codes.every(isStr)) schemaErrors.push(w + ': codes must be a non-empty array of strings');
+  if (!p || !Array.isArray(p.pool) || !p.pool.every(e => e && isStr(e.gm) && isStr(e.status))) schemaErrors.push(w + ': pool entries need gm and status');
+});
+if (schemaErrors.length) {
+  console.error('PRE-FLIGHT SCHEMA CHECK FAILED (' + schemaErrors.length + ' problem(s)); nothing assigned, no report written.');
+  schemaErrors.slice(0, 20).forEach(e => console.error('  - ' + e));
+  process.exit(2);
+}
 
 const sideOf = code => sideTable[code] || 'white'; // same default the site uses
 const codes = Object.keys(vault);
@@ -104,14 +134,23 @@ const report = {
   eitherSideCodes: eitherSide,
   unassignedCodes: { white: unassignedWhite, black: unassignedBlack }
 };
+// ---- Quarantine log (rule 1): records that fail a gate are listed here and are never treated as assigned.
+const quarantined = [
+  ...sideLockViolations.map(v => Object.assign({ reason: 'SIDE_MISMATCH (card.side !== pool.side)' }, v)),
+  ...duplicates.map(d => Object.assign({ reason: 'DUPLICATE_ASSIGNMENT' }, d)),
+  ...unknownCodes.map(u => Object.assign({ reason: 'CODE_NOT_IN_VAULT' }, u))
+];
+if (quarantinePath) fs.writeFileSync(quarantinePath, JSON.stringify({ readOnly: true, count: quarantined.length, quarantined }, null, 2) + '\n');
+report.quarantinedCount = quarantined.length;
 if (outPath) fs.writeFileSync(outPath, JSON.stringify(report, null, 2) + '\n');
 
 console.log('Batch 2 audit (read-only)');
 console.log('  cards: ' + counts.cards + '   either-side (excluded): ' + counts.eitherSide);
 console.log('  pools: ' + counts.pools + '   active pools: ' + counts.activePools);
 console.log('  unassigned: ' + counts.unassigned + ' (white ' + counts.unassignedWhite + ' / black ' + counts.unassignedBlack + ')');
-console.log('  side-lock violations: ' + sideLockViolations.length + '   duplicate assignments: ' + duplicates.length +
+console.log('  quarantined: ' + quarantined.length + '   side-lock violations: ' + sideLockViolations.length + '   duplicate assignments: ' + duplicates.length +
   '   review notes: ' + reviewNotes.length + (reviewNotes.length ? ' (' + reviewNotes.map(n => n.code).join(', ') + ')' : ''));
 console.log('  matches expected baseline: ' + (matches ? 'YES' : 'NO'));
 if (outPath) console.log('  report written to: ' + outPath);
-process.exit(sideLockViolations.length || duplicates.length ? 1 : 0);
+if (quarantinePath) console.log('  quarantine log written to: ' + quarantinePath);
+process.exit(quarantined.length ? 1 : 0);
