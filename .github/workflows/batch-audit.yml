@@ -1,0 +1,56 @@
+# Batch 2 audit: read-only report of unassigned cards, GM pools and side-lock.
+# Runs weekly, on demand (Actions tab -> Batch 2 audit -> Run workflow), and on pull requests that touch
+# the audit files or index.html. It only reads index.html and uploads JSON logs. It never commits, pushes,
+# opens a PR or deploys.
+# Exit codes of the script: 0 clean, 1 records quarantined, 2 pre-flight schema check failed.
+name: Batch 2 audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 9 * * 1'   # Mondays 09:17 UTC
+  pull_request:
+    branches: [main]
+    paths:
+      - index.html
+      - scripts/audit-batch2.js
+      - .github/workflows/batch-audit.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: batch-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Batch 2 audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run read-only audit (pre-flight schema check, side-lock, quarantine log)
+        run: |
+          node scripts/audit-batch2.js index.html \
+            --out "$RUNNER_TEMP/batch2-audit-report.json" \
+            --quarantine "$RUNNER_TEMP/quarantined_cards.json"
+      - name: Show logs
+        if: always()
+        run: |
+          cat "$RUNNER_TEMP/quarantined_cards.json" 2>/dev/null || echo "no quarantine log"
+          echo ---
+          cat "$RUNNER_TEMP/batch2-audit-report.json" 2>/dev/null || echo "no report"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: batch2-audit-logs
+          path: |
+            ${{ runner.temp }}/batch2-audit-report.json
+            ${{ runner.temp }}/quarantined_cards.json
+          if-no-files-found: warn
