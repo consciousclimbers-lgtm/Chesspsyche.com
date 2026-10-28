@@ -111,7 +111,7 @@ const CASES = [
   // Reported cards (issue #24). black-B82 takes the same survey as white-D85, choosing Black on the board.
   { name: 'black-B82', style: 'patientGrinder', level: 'advanced', strong: true, side: 'black', white: 'D85', black: 'B82', gm: { white: null, black: 'Ivan Saric' } },
   { name: 'black-A40', style: 'strategicArchitect', level: 'none', strong: false, side: 'black', white: 'D06', black: 'A40', gm: { white: 'Levon Aronian', black: null } },
-  { name: 'black-D07', style: 'strategicArchitect', level: 'none', strong: false, side: 'black', white: 'A10', black: 'D07', gm: { white: 'Magnus Carlsen', black: null },
+  { name: 'black-D07', style: 'strategicArchitect', level: 'none', strong: false, side: 'black', white: 'A10', black: 'D07', gm: { white: 'Magnus Carlsen', black: 'Aram Hakobyan' },
     preload: { after: 1, picks: { 'strategicArchitect|white': 'D06', 'strategicArchitect|black': 'A40' }, rotation: { "Queen's Gambit / QGD Exchange|white": 1 } } },
   // A86 first appears on the 5th survey of this combination (not in the 3-survey baseline)
   { name: 'black-A86', style: 'aggressiveVanguard', level: 'none', strong: false, side: 'black', white: 'D03', black: 'A86', gm: { white: null, black: 'Anna Muzychuk' },
