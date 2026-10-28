@@ -3468,7 +3468,7 @@ const archetypes = {
 // ---- Notable GM pools (Results page): approved GMs per opening family and side, shown in a fair round-robin ----
 // Only status "verified" entries whose gm is an exact grandmastersList name are shown. Batch 1, approved by the owner 2026-10-19.
 const NOTABLE_GM_POOLS = [
-    { key: "Italian Game|white", side: "white", codes: ["C50", "C51", "C52", "C53", "C54"], pool: [
+    { key: "Italian Game|white", side: "white", codes: ["C50", "C51", "C52", "C53", "C54", "C56", "C58", "C59"], pool: [
         { gm: "Wesley So", source: "https://shop.chessbase.com/en/products/italian_game_powerbook_2019", status: "verified" },
         { gm: "Fabiano Caruana", source: "https://shop.chessbase.com/en/products/italian_game_powerbook_2019", status: "verified" },
         { gm: "Anish Giri", source: "https://shop.chessbase.com/en/products/italian_game_powerbook_2019", status: "verified" },
@@ -3552,7 +3552,7 @@ const NOTABLE_GM_POOLS = [
         { gm: "Natalia Zhukova", source: "https://www.chessgames.com/perl/chessplayer?pid=25172", status: "verified" },
         { gm: "Nino Batsiashvili", source: "https://www.chessgames.com/perl/chessplayer?pid=50118", status: "verified" }
     ] },
-    { key: "Catalan|white", side: "white", codes: ["E01", "E06", "E07", "E08", "E09"], pool: [
+    { key: "Catalan|white", side: "white", codes: ["E01", "E06", "E07", "E08", "E09", "E00"], pool: [
         { gm: "Boris Gelfand", source: "https://www.chessclub.com/videos/game-of-the-week-gm-boris-gelfand-vs.-gm-vladimir-kramnik", status: "verified" },
         { gm: "Daniil Dubov", source: "https://www.chess.com/blog/ChessLord_I/catalan-opening", status: "verified" },
         { gm: "Anish Giri", source: "https://www.chess.com/blog/ChessLord_I/catalan-opening", status: "verified" },
@@ -3586,12 +3586,12 @@ const NOTABLE_GM_POOLS = [
     { key: "Modern Defence|black", side: "black", codes: ["B06", "A41"], pool: [
         { gm: "Magnus Carlsen", source: "https://en.chessbase.com/newsroom/post/daniel-fernandez-master-the-modern-defence-1-g6-a-dynamic-and-unbalanced-weapon-for-black", status: "verified" }
     ] },
-    { key: "Réti Opening|white", side: "white", codes: ["A04", "A05", "A06", "A07", "A08", "A09"], pool: [
+    { key: "Réti Opening|white", side: "white", codes: ["A04", "A05", "A06", "A07", "A08", "A09", "A12"], pool: [
         { gm: "Elina Danielian", source: "https://www.chessgames.com/perl/chessplayer?pid=26789", status: "verified" },
         { gm: "Bella Khotenashvili", source: "https://www.chessgames.com/perl/chessplayer?pid=87968", status: "verified" },
         { gm: "Antoaneta Stefanova", source: "https://www.chess.com/games/antoaneta-stefanova", status: "verified" }
     ] },
-    { key: "English Opening|white", side: "white", codes: ["A10", "A20", "A22", "A28"], pool: [
+    { key: "English Opening|white", side: "white", codes: ["A10", "A20", "A22", "A28", "A13", "A14", "A17", "A18", "A19", "A21", "A23", "A24", "A26", "A27", "A29"], pool: [
         { gm: "Magnus Carlsen", id: "1503014", source: "https://www.ramachess.com/grandmasters/magnus/openings/", status: "verified" }
     ] },
     { key: "Scotch Game|white", side: "white", codes: ["C45"], pool: [
@@ -3626,7 +3626,7 @@ const NOTABLE_GM_POOLS = [
         { gm: "Hikaru Nakamura", id: "2016192", source: "https://www.chess.com/lessons/the-fighting-dragon", status: "pending" }
     ] },
 // D71-D79 (Neo-Grünfeld) remain valid survey opening cards, but are deliberately excluded from this GM pool until opening-specific GM evidence supports them.
-        { key: "Grünfeld Defence|black", side: "black", codes: ["D80", "D82", "D83", "D84", "D90", "D91", "D92", "D93", "D94", "D95", "D96", "D97", "D98"], recordLabels: ["Grunfeld", "Grünfeld"], familyLabels: [], pool: [
+        { key: "Grünfeld Defence|black", side: "black", codes: ["D80", "D82", "D83", "D84", "D90", "D91", "D92", "D93", "D94", "D95", "D96", "D97", "D98", "D71", "D72", "D73", "D74", "D75", "D76", "D77", "D78", "D79"], recordLabels: ["Grunfeld", "Grünfeld"], familyLabels: [], pool: [
         { gm: "Maxime Vachier-Lagrave", id: "623539", source: "https://www.fide.com/fide-grand-prix-hamburg-vachier-lagrave-is-the-only-winner-of-the-day/", status: "verified" },
         { gm: "Bobby Fischer", id: "600041", source: "https://en.chessbase.com/newsroom/post/understanding-before-moving-170-chess-history-in-a-nutshell-4", status: "verified" },
         { gm: "Peter Leko", id: "703303", source: "https://business-standard.com/amp/article/beyond-business/chess-591-109060600008_1.html", status: "pending" },
@@ -3636,7 +3636,7 @@ const NOTABLE_GM_POOLS = [
 ,
     // Black family-first Wave 1, 2026-10-25. Existing GM records must directly name the system
     // for Black; codes already covered by a pool are not repeated.
-    { key: "Queen's Gambit Declined (Wave 1)|black", side: "black", codes: ["D40", "D41", "D44", "D45", "D46", "D47", "D48", "D49", "D50", "D51", "D52", "D53", "D54", "D55", "D56", "D57", "D58", "D59", "D60", "D61", "D62", "D63", "D66", "D67", "D68", "D69"], recordLabels: ["Queen's Gambit Declined"], familyLabels: [], pool: [
+    { key: "Queen's Gambit Declined (Wave 1)|black", side: "black", codes: ["D40", "D41", "D44", "D45", "D46", "D47", "D48", "D49", "D50", "D51", "D52", "D53", "D54", "D55", "D56", "D57", "D58", "D59", "D60", "D61", "D62", "D63", "D66", "D67", "D68", "D69", "D07", "D08"], recordLabels: ["Queen's Gambit Declined"], familyLabels: [], pool: [
         { gm: "Lê Quang Liêm", id: "12401137", source: "https://en.wikipedia.org/wiki/Queen%27s_Gambit_Declined", status: "verified" },
         { gm: "Hikaru Nakamura", id: "2016192", source: "https://en.wikipedia.org/wiki/Queen%27s_Gambit_Declined", status: "verified" },
         { gm: "Arjun Erigaisi", id: "35009192", source: "https://en.wikipedia.org/wiki/Queen%27s_Gambit_Declined", status: "verified" },
@@ -3678,7 +3678,7 @@ const NOTABLE_GM_POOLS = [
         { gm: "Boris Spassky", id: "600057", source: "https://en.wikipedia.org/wiki/Queen%27s_Gambit_Declined", status: "verified" },
         { gm: "Koneru Humpy", id: "1500840", source: "https://en.wikipedia.org/wiki/Queen%27s_Gambit_Declined", status: "verified" }
     ] },
-    { key: "Sicilian Defense|black", side: "black", codes: ["B20", "B27", "B28", "B29", "B30", "B32", "B33", "B34", "B35", "B36", "B37", "B38", "B39", "B50", "B53", "B55", "B57", "B58", "B59", "B80", "B82", "B83", "B84"], recordLabels: ["Sicilian", "Sicilian Defense"], familyLabels: [], pool: [
+    { key: "Sicilian Defense|black", side: "black", codes: ["B20", "B27", "B28", "B29", "B30", "B32", "B33", "B34", "B35", "B36", "B37", "B38", "B39", "B50", "B53", "B55", "B57", "B58", "B59", "B80", "B82", "B83", "B84", "B54", "B56"], recordLabels: ["Sicilian", "Sicilian Defense"], familyLabels: [], pool: [
         { gm: "Jan-Krzysztof Duda", id: "1170546", source: "https://en.wikipedia.org/wiki/Sicilian_Defence", status: "verified" },
         { gm: "Hikaru Nakamura", id: "2016192", source: "https://en.wikipedia.org/wiki/Sicilian_Defence", status: "verified" },
         { gm: "Fabiano Caruana", id: "2020009", source: "https://en.wikipedia.org/wiki/Sicilian_Defence", status: "verified" },
@@ -3881,7 +3881,7 @@ const NOTABLE_GM_POOLS = [
         { gm: "Boris Spassky", id: "600057", source: "https://en.wikipedia.org/wiki/Sicilian_Defence", status: "verified" },
         { gm: "Koneru Humpy", id: "1500840", source: "https://en.wikipedia.org/wiki/Sicilian_Defence", status: "verified" }
     ] },
-    { key: "Ruy Lopez|black", side: "black", codes: ["C61", "C62", "C63", "C64", "C66", "C67", "C71", "C72", "C73", "C74", "C75", "C76", "C77", "C78", "C79", "C80", "C82", "C83", "C93", "C94", "C98"], recordLabels: ["Ruy Lopez"], familyLabels: [], pool: [
+    { key: "Ruy Lopez|black", side: "black", codes: ["C61", "C62", "C63", "C64", "C66", "C67", "C71", "C72", "C73", "C74", "C75", "C76", "C77", "C78", "C79", "C80", "C82", "C83", "C93", "C94", "C98", "C65", "C89"], recordLabels: ["Ruy Lopez"], familyLabels: [], pool: [
         { gm: "Ding Liren", id: "8603677", source: "https://en.wikipedia.org/wiki/Ruy_Lopez", status: "verified" },
         { gm: "Hikaru Nakamura", id: "2016192", source: "https://en.wikipedia.org/wiki/Ruy_Lopez", status: "verified" },
         { gm: "Fabiano Caruana", id: "2020009", source: "https://en.wikipedia.org/wiki/Ruy_Lopez", status: "verified" },
@@ -3978,10 +3978,10 @@ const NOTABLE_GM_POOLS = [
         { gm: "Antoaneta Stefanova", id: "2902257", source: "https://en.wikipedia.org/wiki/Ruy_Lopez", status: "verified" },
         { gm: "Natalia Zhukova", id: "14101513", source: "https://en.wikipedia.org/wiki/Ruy_Lopez", status: "verified" }
     ] },
-    { key: "Benoni Defense|black", side: "black", codes: ["A56", "A60", "A61", "A65", "A66", "A70", "A71", "A73", "A74", "A76", "A77"], recordLabels: ["Modern Benoni"], familyLabels: [], pool: [
+    { key: "Benoni Defense|black", side: "black", codes: ["A56", "A60", "A61", "A65", "A66", "A70", "A71", "A73", "A74", "A76", "A77", "A72", "A75", "A78", "A79"], recordLabels: ["Modern Benoni"], familyLabels: [], pool: [
         { gm: "Aleksandar Indjic", id: "911925", source: "https://en.wikipedia.org/wiki/Benoni_Defence", status: "verified" }
     ] },
-    { key: "French Defense|black", side: "black", codes: ["C00", "C07", "C10", "C11", "C12", "C13", "C14", "C15", "C16", "C17"], recordLabels: ["French Defense", "French"], familyLabels: [], pool: [
+    { key: "French Defense|black", side: "black", codes: ["C00", "C07", "C10", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19"], recordLabels: ["French Defense", "French"], familyLabels: [], pool: [
         { gm: "Arjun Erigaisi", id: "35009192", source: "https://en.wikipedia.org/wiki/French_Defence", status: "verified" },
         { gm: "Richárd Rapport", id: "738590", source: "https://en.wikipedia.org/wiki/French_Defence", status: "verified" },
         { gm: "Wang Hao", id: "8602883", source: "https://en.wikipedia.org/wiki/French_Defence", status: "verified" },
