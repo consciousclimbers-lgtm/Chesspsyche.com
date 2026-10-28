@@ -3644,7 +3644,7 @@
    "name": "Semi-Slav Defense",
    "snapshot": true,
    "handWritten": true,
-   "pool": null,
+   "pool": "Semi-Slav Defence|black",
    "plies": 8,
    "line": "d4 d5 c4 c6 Nf3 Nf6 Nc3 e6",
    "ecoPly": 8,
