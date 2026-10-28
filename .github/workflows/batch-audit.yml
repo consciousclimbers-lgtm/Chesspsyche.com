@@ -1,0 +1,38 @@
+# Batch 2 audit: read-only report of unassigned cards, GM pools and side-lock.
+# Runs weekly and on demand (Actions tab -> Batch 2 audit -> Run workflow).
+# It only reads index.html and uploads a JSON report. It never commits, pushes, opens a PR or deploys.
+name: Batch 2 audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 9 * * 1'   # Mondays 09:17 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: batch-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Batch 2 audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run read-only audit
+        run: node scripts/audit-batch2.js index.html --out "$RUNNER_TEMP/batch2-audit-report.json"
+      - name: Show report
+        if: always()
+        run: cat "$RUNNER_TEMP/batch2-audit-report.json" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: batch2-audit-report
+          path: ${{ runner.temp }}/batch2-audit-report.json
+          if-no-files-found: warn
