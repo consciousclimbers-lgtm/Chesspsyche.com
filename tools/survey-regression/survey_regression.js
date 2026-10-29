@@ -83,7 +83,7 @@ const chessLocal = require.resolve('chess.js');
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 
 function protectedHash(html) {
-  const lines = html.split('\n');
+  const lines = html.replace(/\r\n/g, '\n').split('\n');
   const start = lines.findIndex(l => l.startsWith('const ecoNamesMap = {'));
   const end = lines.findIndex(l => l.startsWith('// ---- Picks one White and one Black opening'));
   if (start < 0 || end < 0 || end < start) throw new Error('could not find the opening-data block markers');

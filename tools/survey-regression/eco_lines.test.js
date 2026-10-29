@@ -12,7 +12,7 @@ const path = require('path');
 const { Chess } = require('chess.js');
 
 const htmlPath = process.argv[2] || path.join(__dirname, '..', '..', 'index.html');
-const lines = fs.readFileSync(htmlPath, 'utf8').split('\n');
+const lines = fs.readFileSync(htmlPath, 'utf8').replace(/\r\n/g, '\n').split('\n');
 
 // code: the vault line's ECO code; ref: the lichess line for that code; wrong: the lichess line it used to reach
 const REPAIRED_VAULT_LINES = [
