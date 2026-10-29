@@ -1,9 +1,9 @@
 {
   "about": "Explicit game-database evidence for a family-level repertoire match. This supplements the GM profile's abbreviated system label; it does not infer support from player identity or opening-name similarity.",
-  "checked": "2026-10-28",
+  "checked": "2026-10-29",
   "entries": [
     {
-      "poolKey": "Sicilian Defense|white",
+      "poolKey": "B21|white",
       "side": "white",
       "family": "Sicilian",
       "gm": "Magnus Carlsen",
@@ -14,26 +14,14 @@
       ]
     },
     {
-      "poolKey": "Sicilian Defense|white",
-      "side": "white",
-      "family": "Sicilian",
-      "gm": "Aleksandra Goryachkina",
-      "fideId": "4147103",
-      "basis": "Chess.com lists Sicilian Defense: Canal Attack among her White openings, with 19 games.",
+      "poolKey": "A40|black",
+      "side": "black",
+      "family": "Queen's Pawn Game",
+      "gm": "Fabiano Caruana",
+      "fideId": "2020009",
+      "basis": "365Chess records Caruana as Black in a 2024 A45 Queen's Pawn Game.",
       "sources": [
-        "https://www.chess.com/players/aleksandra-goryachkina"
-      ]
-    },
-    {
-      "poolKey": "Sicilian Defense|white",
-      "side": "white",
-      "family": "Sicilian",
-      "gm": "Anna Muzychuk",
-      "fideId": "14111330",
-      "basis": "365Chess lists 33 B51 Sicilian games; ChessBox provides a specific White B31 Sicilian game against Anastasia Bodnaruk.",
-      "sources": [
-        "https://www.365chess.com/players/Anna_Muzychuk",
-        "https://www.chessbox.in/?p=45970"
+        "https://www.365chess.com/game.php?gid=4481982"
       ]
     }
   ]
