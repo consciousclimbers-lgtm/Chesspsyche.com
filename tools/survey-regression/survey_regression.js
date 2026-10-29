@@ -180,8 +180,24 @@ async function runSurvey(browser, file, seed) {
     const issues = [], warnings = [];
     const names = new Set(grandmastersList.map(g => g.name));
     const women = [...new Set(grandmastersList.filter(g => g.gender === 'female').map(g => g.name))];
+    const wave1CardKeys = new Set(["A11|black","A15|black","A16|black","A40|black","A47|black","A48|black","A49|white","A50|black","B01|black","B07|black","B08|black","B13|white","B14|white","B21|white","B22|white","B23|white","B24|white","B25|white","B26|white","B31|white","B45|white","B48|white","B51|white","B52|white","B60|white","B61|white","B62|white","B63|white","B64|white","B65|white","B66|white","B67|white","B68|white","B69|white","B75|white","B76|white","B78|white","B79|white","B81|white","B85|white","B86|white","B87|white","B88|white","B89|white"]);
+    const wave1GMNames = new Set(), wave1PoolCodes = new Set();
     const owner = {}, poolsPerGm = {}, keys = new Set();
     for (const p of NOTABLE_GM_POOLS) {
+      const waveCardsInPool = p.codes.filter(c => wave1CardKeys.has(`${c}|${p.side}`));
+      if (waveCardsInPool.length || wave1CardKeys.has(p.key)) {
+        if (p.codes.length !== 1 || waveCardsInPool.length !== 1 || p.pool.length !== 1)
+          issues.push(`Wave 1 pools must map one card to one GM: ${p.key}`);
+        if (p.matchScope !== 'FAMILY ONLY') issues.push(`Wave 1 pool ${p.key} must be explicitly marked FAMILY ONLY`);
+        if (p.pool.length > 5 || new Set(p.pool.map(e => e.gm)).size !== p.pool.length)
+          issues.push(`Wave 1 pool ${p.key} exceeds the five-GM cap or contains duplicate GM names`);
+        if (!Array.isArray(p.familyLabels) || !p.familyLabels.length)
+          issues.push(`Wave 1 pool ${p.key} must carry an explicit FAMILY ONLY label`);
+        const gm = p.pool[0] && p.pool[0].gm;
+        if (gm && wave1GMNames.has(gm)) issues.push(`Wave 1 GM ${gm} is assigned to more than one card`);
+        if (gm) wave1GMNames.add(gm);
+        for (const code of waveCardsInPool) wave1PoolCodes.add(`${code}|${p.side}`);
+      }
       if (!p.key || keys.has(p.key)) issues.push(`pool key "${p.key}" missing or repeated`);
       keys.add(p.key);
       if (!['white', 'black'].includes(p.side)) issues.push(`${p.key}: side "${p.side}"`);
@@ -217,6 +233,8 @@ async function runSurvey(browser, file, seed) {
         }
       }
     }
+    for (const cardKey of wave1CardKeys) if (!wave1PoolCodes.has(cardKey)) issues.push(`Wave 1 card ${cardKey} has no dedicated pool`);
+    if (wave1GMNames.size !== wave1CardKeys.size) issues.push(`Wave 1 must assign one distinct GM to each of its ${wave1CardKeys.size} cards`);
     for (const [g, n] of Object.entries(poolsPerGm)) if (n > 6) warnings.push(`${g} is in ${n} pools (more than 6)`);
     const considered = new Map(NOTABLE_GM_CONSIDERED.map(c => [c.gm, c]));
     for (const w of women) {
