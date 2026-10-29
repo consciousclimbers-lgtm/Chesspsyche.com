@@ -206,6 +206,12 @@ async function runSurvey(browser, file, seed) {
             issues.push(`${p.key}: ${e.gm} is verified, but the GM record's ${p.side} system "${(g.system || {})[p.side] || '-'}" lists none of ${p.recordLabels.join(', ')}`);
         }
       }
+      if (p.matchScope === 'FAMILY ONLY') {
+        if (!Array.isArray(p.familyLabels) || !p.familyLabels.length) issues.push(p.key + ': FAMILY ONLY needs familyLabels');
+        if (p.pool.length > 5) issues.push(p.key + ': FAMILY ONLY pool has ' + p.pool.length + ' entries; maximum is 5');
+        const familyGms = p.pool.map(e => e.gm);
+        if (new Set(familyGms).size !== familyGms.length) issues.push(p.key + ': FAMILY ONLY pool repeats a GM');
+      }
     }
     for (const [g, n] of Object.entries(poolsPerGm)) if (n > 6) warnings.push(`${g} is in ${n} pools (more than 6)`);
     const considered = new Map(NOTABLE_GM_CONSIDERED.map(c => [c.gm, c]));
