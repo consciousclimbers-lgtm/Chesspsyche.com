@@ -6,11 +6,13 @@ on:
       - chatgpt/verify-lines-draft-20261024
     paths:
       - tools/survey-regression/verify_lines.py
+      - tools/survey-regression/move-boundary-fixture.json
       - .github/workflows/verify-lines.yml
   pull_request:
     branches: [main]
     paths:
       - tools/survey-regression/verify_lines.py
+      - tools/survey-regression/move-boundary-fixture.json
       - .github/workflows/verify-lines.yml
 
 permissions:
@@ -48,3 +50,21 @@ jobs:
             exit 1
           fi
           grep -q "invalid choice" /tmp/threshold-check.txt
+
+      - name: Check move-boundary fixture against the site's ECO data
+        run: python tools/survey-regression/verify_lines.py --boundary tools/survey-regression/move-boundary-fixture.json --catalog index.html
+
+      - name: Reject a move-boundary record with a trailing opponent reply
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          records = json.load(open("tools/survey-regression/move-boundary-fixture.json"))
+          bad = dict(records[0], full_legal_replay_sequence=["e4", "c5", "Nf3"])
+          json.dump([bad], open("/tmp/bad-boundary.json", "w"))
+          PY
+          if python tools/survey-regression/verify_lines.py --boundary /tmp/bad-boundary.json --catalog index.html >/tmp/bad-boundary.txt 2>&1; then
+            echo "Trailing opponent reply was unexpectedly accepted"
+            exit 1
+          fi
+          grep -q "must end on black's final move" /tmp/bad-boundary.txt

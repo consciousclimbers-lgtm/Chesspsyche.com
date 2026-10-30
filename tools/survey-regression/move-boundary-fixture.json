@@ -1,0 +1,38 @@
+[
+  {
+    "eco": "B20",
+    "system_name": "Sicilian Defense",
+    "assigned_side": "black",
+    "assigned_side_moves": ["c5"],
+    "full_legal_replay_sequence": ["e4", "c5"],
+    "commentary": "Test fixture copied from the site's B20 line; not reviewed production data.",
+    "evidence_tier": "UNVERIFIED"
+  },
+  {
+    "eco": "B90",
+    "system_name": "Sicilian Defense (Najdorf)",
+    "assigned_side": "black",
+    "assigned_side_moves": ["c5", "d6", "cxd4", "Nf6", "a6"],
+    "full_legal_replay_sequence": ["e4", "c5", "Nf3", "d6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3", "a6"],
+    "commentary": "Test fixture copied from the site's B90 line; not reviewed production data.",
+    "evidence_tier": "UNVERIFIED"
+  },
+  {
+    "eco": "C60",
+    "system_name": "Ruy Lopez",
+    "assigned_side": "white",
+    "assigned_side_moves": ["e4", "Nf3", "Bb5"],
+    "full_legal_replay_sequence": ["e4", "e5", "Nf3", "Nc6", "Bb5"],
+    "commentary": "Test fixture copied from the site's C60 line; not reviewed production data.",
+    "evidence_tier": "UNVERIFIED"
+  },
+  {
+    "eco": "C50",
+    "system_name": "Italian Game",
+    "assigned_side": "white",
+    "assigned_side_moves": ["e4", "Nf3", "Bc4"],
+    "full_legal_replay_sequence": ["e4", "e5", "Nf3", "Nc6", "Bc4"],
+    "commentary": "Test fixture: the site's C50 line ends on Black's 3...Bc5, so a White-only line stops one ply short.",
+    "evidence_tier": "UNVERIFIED"
+  }
+]
