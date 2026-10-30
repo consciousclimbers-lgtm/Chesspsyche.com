@@ -129,37 +129,50 @@ routing: every pool still supplies the Notable GM for its own cards in the same 
 - **Variation-Level Analytical Pool** (`variation-level`): a pool for one variation, sub-line or narrow group of
   codes. It may show **at most five distinct GMs**.
 - **Family-Level Recommendation Pool** (`family-level`): a pool that recommends GMs for a whole opening family on
-  one side. It is exempt from the five-GM maximum **only** when its entry records evidence for every criterion
-  F1–F5 below **and** the owner's approval (`approval.by` "Calvin", a date, and an https link to the approval).
-  A family-level entry with any of these missing fails the test and gets no exemption.
-- **Unclassified** (`unclassified`): not yet individually reviewed. An unclassified pool gets no exemption. Pools
-  that already had more than five GMs on 2026-10-30 are listed in `pendingOverCap` with their GM count. Each may
-  shrink but not grow until it is classified, and no other unclassified pool may exceed five GMs. New pools need
-  an entry before they can merge.
+  one side. It is exempt from the five-GM maximum **only** when its entry holds structured evidence for every
+  criterion F1–F5 below **and** the owner's approval (`approval.by` "Calvin", a date, and an https link to the
+  approval). Missing, malformed or placeholder evidence fails the test and gives no exemption.
+- **Unclassified** (`unclassified`): not yet individually reviewed. An unclassified pool gets no exemption. Each
+  pool that already had more than five GMs on 2026-10-30 is frozen in `frozenRosters` with its exact GM list
+  (FIDE id and name). Any addition or removal fails until the pool is classified, and no other unclassified pool
+  may exceed five GMs. New pools need an entry before they can merge.
 
-**Six-pool tactical limit.** A GM may belong to at most six Variation-Level Analytical Pools. Family-level and
-unclassified memberships do not count against this limit. Memberships are counted as distinct pools, by the GM's
-exact record name. The test also reports, without failing, which GMs would exceed six if all their unclassified
-pools turned out to be variation-level.
+**Six-pool tactical limit.** A GM may belong to at most six Variation-Level Analytical Pools. Family-level
+memberships never count. A GM with more than six confirmed variation-level memberships fails the test. While a GM
+is in any unclassified pool, their six-pool status is **NOT CERTIFIED — classification incomplete**. That is
+neither an exemption nor a confirmed violation. The test lists such GMs and those who could exceed six once
+classified. The limit is certified only when every pool is classified.
 
-**Family-level criteria.** Each must be met and recorded for the individual pool:
-- **F1 family scope:** the pool's codes are the codes, on its side, of one named opening family in an
-  authoritative reference (for example lichess-org/chess-openings), cited in the entry. A single variation or
-  sub-line does not qualify.
-- **F2 several variations:** the codes cover at least two distinct named variations of that family, listed in
-  the entry.
-- **F3 family-level evidence:** each GM's cited evidence supports the family on that side, and the entry says so.
+**GM identity.** GMs are counted by FIDE id: the entry's `id` when it matches a GM record of the same name,
+otherwise the id of the record with the entry's exact name. An `id` that belongs to a different name fails.
+Records with different ids are different GMs. `suspectedDuplicates` flags records that may be one person,
+currently Humpy Koneru 5008123 and Koneru Humpy 1500840. Flagged records stay separate, are counted separately
+and must both remain. They are not merged, aliased or consolidated without verified identity evidence and the
+owner's separate approval.
+
+**Family-level criteria.** Each must be met and recorded for the individual pool, in this structure:
+- **F1 family scope** `{ family, reference, codes }`: one named opening family from an authoritative https
+  reference (for example lichess-org/chess-openings), and `codes` listing exactly the pool's codes. A single
+  variation or sub-line does not qualify.
+- **F2 several variations** `{ variations: [{ name, codes, sources }] }`: at least two distinct named variations of
+  that family. Names are compared ignoring case and spacing, so duplicates do not count. Each variation has ECO
+  codes inside the pool and at least one https source.
+- **F3 family-level evidence** `{ gms: [{ gm, fideId, basis, sources }] }`: one row for every GM the pool shows,
+  matched by FIDE id, with a specific basis and at least one https source supporting the family on that side.
   Evidence for only one variation belongs in a variation-level pool.
-- **F4 recommendation role:** the pool is the recommendation source for the family's cards. It is not a
-  navigation hub or container, and no pool sits inside another.
-- **F5 individual review:** an independent review of this pool's evidence is linked, and the owner approved
-  the classification for this pool by name.
+- **F4 recommendation role** `{ statement, notAContainer: true }`: the pool is the recommendation source for the
+  family's cards. It is not a navigation hub or container, and no pool sits inside another.
+- **F5 individual review** `{ reviewer, reviewRef }`: an independent review of this pool's evidence (not by the
+  approver), linked by https.
+
+Text fields must be specific: generic placeholders such as "recorded evidence", "TBD", "n/a" or "see above" are
+rejected, and `example.com` links do not count as sources.
 
 **What never classifies a pool:** its key or name (for example the word "family"), its size, its number of
 codes, `matchScope: "FAMILY ONLY"`, `familyLabels`, `recordLabels`, or the batch or wave that added it.
-Classifications change only through a pull request that edits `pool-governance.json` with the evidence above.
-That PR is GM data (impact index), needs an independent review, and needs the owner's approval of each pool it
-classifies.
+Classifications, frozen rosters and identity flags change only through a pull request that edits
+`pool-governance.json` with the evidence above. That PR is GM data (impact index), needs an independent review,
+and needs the owner's approval of each pool it classifies or roster it changes.
 
 ## ECO repair acceptance checklist
 - [ ] Inspect the current ECO data in `index.html`.
