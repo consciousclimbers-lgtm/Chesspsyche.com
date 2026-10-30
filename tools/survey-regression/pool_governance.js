@@ -10,6 +10,9 @@
 // The classification comes only from pool-governance.json. A pool's key, name, size, matchScope or batch never
 // classifies it or grants an exemption.
 //
+// These checks validate structure only (fields present, specific text, https links, codes and ids consistent). They
+// cannot tell whether a cited source supports a claim; that is for human review and the owner's approval.
+//
 // GM identity: an entry's FIDE id when it has one that matches a GM record of the same name, otherwise the id of
 // the GM record with the entry's exact name. Records with different ids are different GMs, even when
 // suspectedDuplicates flags them; nothing here merges them.
@@ -113,6 +116,7 @@ function checkPoolGovernance(pools, records, registry) {
   if (!Number.isInteger(maxGms) || !Number.isInteger(maxPools)) issues.push('pool-governance.json needs integer maxGmsPerVariationPool and maxVariationPoolsPerGm');
   if (JSON.stringify(registry.familyLevelCriteria) !== JSON.stringify(CRITERIA)) issues.push(`pool-governance.json familyLevelCriteria must be ${CRITERIA.join(', ')}`);
   if (!registry.approver) issues.push('pool-governance.json needs an approver');
+  const registryOk = !issues.length;
   const entries = registry.pools || {}, frozen = registry.frozenRosters || {};
   const keys = new Set(pools.map(p => p.key));
   for (const k of Object.keys(entries)) if (!keys.has(k)) issues.push(`pool-governance.json lists "${k}", which is not a pool`);
@@ -128,54 +132,77 @@ function checkPoolGovernance(pools, records, registry) {
   });
 
   const counts = { 'variation-level': 0, 'family-level': 0, 'family-level (exempt)': 0, unclassified: 0 };
-  const memberships = {};   // id -> { name, variation: [], unclassified: [] }
+  // id -> { name, variation: [pool keys], incomplete: [{ pool, reason }] }. A membership is "incomplete" when its
+  // pool has no entry, an invalid classification, incomplete family-level evidence or approval, or is unclassified,
+  // or when the GM's identity in that pool cannot be confirmed. Incomplete memberships block certification.
+  const memberships = {};
+  const member = (id, name) => memberships[id] = memberships[id] || { name, variation: [], incomplete: [] };
+  const byName = new Map(records.map(r => [r.name, r]));
   const via = { 'fide-id': 0, name: 0 };
+  let incompletePools = 0;
   for (const p of pools) {
     const gms = shownGms(p, resolve), n = gms.length;
     for (const g of gms) via[g.via]++;
-    for (const e of p.pool) if (e.status === 'verified' && e.id && !resolve(e)) issues.push(`${p.key}: ${e.gm} has id ${e.id}, which is not the FIDE id of a GM record with that name`);
-    const entry = entries[p.key];
-    if (!entry) { issues.push(`${p.key}: no entry in pool-governance.json (every pool needs an explicit classification)`); continue; }
-    const cls = entry.classification;
-    if (!CLASSES.includes(cls)) { issues.push(`${p.key}: classification "${cls}" is not one of ${CLASSES.join(', ')}`); continue; }
-    counts[cls]++;
-    for (const g of gms) {
-      const m = memberships[g.id] = memberships[g.id] || { name: g.name, variation: [], unclassified: [] };
-      if (cls === 'variation-level') m.variation.push(p.key);
-      if (cls === 'unclassified') m.unclassified.push(p.key);
+    // Shown on the site by name, but the entry's id belongs to someone else: identity cannot be confirmed
+    const unconfirmed = [];
+    for (const e of p.pool) if (e.status === 'verified' && e.id && !resolve(e)) {
+      issues.push(`${p.key}: ${e.gm} has id ${e.id}, which is not the FIDE id of a GM record with that name`);
+      const r = byName.get(e.gm);
+      if (r && !gms.some(g => g.id === String(r.id))) unconfirmed.push(r);
     }
-    if (cls !== 'unclassified' && p.key in frozen) issues.push(`${p.key}: classified, so it must not be in frozenRosters`);
-    if (cls === 'variation-level') {
+    for (const r of unconfirmed) member(String(r.id), r.name).incomplete.push({ pool: p.key, reason: 'identity not confirmed' });
+    const entry = entries[p.key];
+    const cls = entry ? entry.classification : undefined;
+    let reason = null;
+    if (!entry) { issues.push(`${p.key}: no entry in pool-governance.json (every pool needs an explicit classification)`); reason = 'no registry entry'; }
+    else if (!CLASSES.includes(cls)) { issues.push(`${p.key}: classification "${cls}" is not one of ${CLASSES.join(', ')}`); reason = `invalid classification "${cls}"`; }
+    else counts[cls]++;
+    if (!reason && cls !== 'unclassified' && p.key in frozen) issues.push(`${p.key}: classified, so it must not be in frozenRosters`);
+    if (reason) {
+      // nothing more can be checked for this pool
+    } else if (cls === 'variation-level') {
       if (n > maxGms) issues.push(`${p.key}: variation-level pool has ${n} GMs; maximum is ${maxGms}`);
     } else if (cls === 'family-level') {
-      const gaps = familyLevelGaps(entry, p, gms, registry);
-      if (gaps.length) issues.push(`${p.key}: family-level evidence is incomplete, so no exemption applies (${gaps.join('; ')})`);
+      const gaps = registryOk ? familyLevelGaps(entry, p, gms, registry) : ['registry settings invalid'];
+      if (gaps.length) { issues.push(`${p.key}: family-level evidence is incomplete, so no exemption applies (${gaps.join('; ')})`); reason = 'family-level evidence or approval incomplete'; }
       else counts['family-level (exempt)']++;
-    } else if (p.key in frozen) {
-      // Frozen over-cap roster: the exact GM list may not change in either direction
-      const want = new Map((frozen[p.key].gms || []).map(g => [String(g.id), g.gm]));
-      const have = new Map(gms.map(g => [g.id, g.name]));
-      const added = [...have].filter(([id]) => !want.has(id)).map(([id, nm]) => `${nm} (${id})`);
-      const removed = [...want].filter(([id]) => !have.has(id)).map(([id, nm]) => `${nm} (${id})`);
-      if (added.length) issues.push(`${p.key}: frozen roster gained ${added.join(', ')} (unauthorized addition)`);
-      if (removed.length) issues.push(`${p.key}: frozen roster lost ${removed.join(', ')} (unauthorized removal)`);
-      if (frozen[p.key].count !== want.size) issues.push(`${p.key}: frozenRosters count ${frozen[p.key].count} does not match its ${want.size} listed GMs`);
-    } else if (n > maxGms) {
-      issues.push(`${p.key}: unclassified pool has ${n} GMs (more than ${maxGms}) and no frozen roster; classify it or keep it at ${maxGms} or fewer`);
+    } else {
+      reason = 'unclassified';
+      if (p.key in frozen) {
+        // Frozen over-cap roster: the exact GM list may not change in either direction
+        const want = new Map((frozen[p.key].gms || []).map(g => [String(g.id), g.gm]));
+        const have = new Map(gms.map(g => [g.id, g.name]));
+        const added = [...have].filter(([id]) => !want.has(id)).map(([id, nm]) => `${nm} (${id})`);
+        const removed = [...want].filter(([id]) => !have.has(id)).map(([id, nm]) => `${nm} (${id})`);
+        if (added.length) issues.push(`${p.key}: frozen roster gained ${added.join(', ')} (unauthorized addition)`);
+        if (removed.length) issues.push(`${p.key}: frozen roster lost ${removed.join(', ')} (unauthorized removal)`);
+        if (frozen[p.key].count !== want.size) issues.push(`${p.key}: frozenRosters count ${frozen[p.key].count} does not match its ${want.size} listed GMs`);
+      } else if (n > maxGms) {
+        issues.push(`${p.key}: unclassified pool has ${n} GMs (more than ${maxGms}) and no frozen roster; classify it or keep it at ${maxGms} or fewer`);
+      }
+    }
+    if (reason || unconfirmed.length) incompletePools++;
+    for (const g of gms) {
+      const m = member(g.id, g.name);
+      if (reason) m.incomplete.push({ pool: p.key, reason });
+      else if (cls === 'variation-level') m.variation.push(p.key);
     }
   }
 
-  // Six-pool limit: confirmed variation-level memberships always fail above the limit; a GM with any
-  // unclassified membership is NOT CERTIFIED, neither an exemption nor a confirmed violation
-  const sixPool = { certified: [], notCertified: [], couldExceed: [] };
+  // Six-pool limit: confirmed variation-level memberships always fail above the limit. A GM is CERTIFIED only when
+  // every one of their memberships is validly classified (variation-level, or family-level with complete evidence
+  // and approval); any incomplete membership gives NOT CERTIFIED, neither an exemption nor a confirmed violation.
+  const sixPool = { certified: [], notCertified: [], couldExceed: [], reasons: {} };
   for (const [id, m] of Object.entries(memberships)) {
     if (m.variation.length > maxPools) issues.push(`${m.name} (${id}) is in ${m.variation.length} variation-level pools; maximum is ${maxPools}`);
-    if (m.unclassified.length) {
+    if (m.incomplete.length) {
       sixPool.notCertified.push(id);
-      if (m.variation.length + m.unclassified.length > maxPools) sixPool.couldExceed.push(`${m.name} ${m.variation.length}+${m.unclassified.length}`);
+      sixPool.reasons[id] = `${m.name}: ` + m.incomplete.map(x => `${x.pool} (${x.reason})`).join(', ');
+      if (m.variation.length + m.incomplete.length > maxPools) sixPool.couldExceed.push(`${m.name} ${m.variation.length}+${m.incomplete.length}`);
     } else sixPool.certified.push(id);
   }
-  const complete = counts.unclassified === 0;
+  const complete = registryOk && incompletePools === 0;
+  sixPool.incompletePools = incompletePools;
   sixPool.status = complete ? 'CERTIFIED' : 'NOT CERTIFIED — classification incomplete';
   for (const d of duplicates) warnings.push(`suspected duplicate identity (${d.status}): GM records ${d.ids.join(' and ')} are counted separately; not merged`);
   return { issues, warnings, report: { pools: pools.length, counts, frozen: Object.keys(frozen).length, via, sixPool, duplicates } };

@@ -466,7 +466,7 @@ async function runSurvey(browser, file, seed) {
   for (const w of rotation.warnings) console.log(`  warning: ${w}`);
   const gr = governance.report, gc = gr.counts, six = gr.sixPool;
   console.log(`Pool governance: ${gr.pools} pools in pool-governance.json: ${gc['variation-level']} variation-level, ${gc['family-level']} family-level (${gc['family-level (exempt)']} exempt), ${gc.unclassified} unclassified (${gr.frozen} frozen over-cap rosters); GMs identified by FIDE id ${gr.via['fide-id']}, by exact record name ${gr.via.name}; ${governance.issues.length} issues`);
-  console.log(`  six-pool limit: ${six.status}; ${six.certified.length} GMs certified, ${six.notCertified.length} not certified (in an unclassified pool); could exceed 6 once classified (variation-level + unclassified): ${six.couldExceed.join(', ') || 'none'}`);
+  console.log(`  six-pool limit: ${six.status}; ${six.certified.length} GMs certified, ${six.notCertified.length} not certified (a membership in ${six.incompletePools} pools not validly classified); could exceed 6 once classified (variation-level + not yet valid): ${six.couldExceed.join(', ') || 'none'}`);
   for (const w of governance.warnings) console.log(`  warning: ${w}`);
   const bySide = s => reachCards.filter(c => c.side === s);
   const early = reachCards.filter(c => c.firstRun <= 5);

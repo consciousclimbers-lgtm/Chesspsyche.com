@@ -98,6 +98,32 @@ const cases = [
     issues: [], six: 'NOT CERTIFIED — classification incomplete', couldExceed: ['Solo 0+7'] },
   { name: 'one unclassified pool anywhere keeps the status NOT CERTIFIED',
     pools: [pool('P0|white', ['Solo']), pool('P1|white', ['GM 1'])], reg: registry({ 'P0|white': V, 'P1|white': U }), issues: [], six: 'NOT CERTIFIED — classification incomplete' },
+  // Certification requires every membership to be validly classified (owner correction, 2026-10-30)
+  { name: 'a missing registry entry forces NOT CERTIFIED and names the pool for the GM',
+    pools: [pool('P0|white', ['Solo']), pool('P1|white', ['Solo'])], reg: registry({ 'P0|white': V }),
+    issues: ['P1|white: no entry'], six: 'NOT CERTIFIED — classification incomplete', reason: 'Solo: P1|white (no registry entry)', notCertified: ['200'] },
+  { name: 'an invalid classification forces NOT CERTIFIED and names the pool for the GM',
+    pools: [pool('P0|white', ['Solo']), pool('P1|white', ['Solo'])], reg: registry({ 'P0|white': V, 'P1|white': { classification: 'macro' } }),
+    issues: ['is not one of'], six: 'NOT CERTIFIED — classification incomplete', reason: 'P1|white (invalid classification "macro")', notCertified: ['200'] },
+  { name: 'a missing classification field forces NOT CERTIFIED',
+    pools: [pool('P0|white', ['Solo'])], reg: registry({ 'P0|white': {} }),
+    issues: ['is not one of'], six: 'NOT CERTIFIED — classification incomplete', reason: 'P0|white (invalid classification "undefined")', notCertified: ['200'] },
+  { name: 'incomplete family-level evidence forces NOT CERTIFIED, not a classified membership',
+    pools: [pool('P0|white', ['Solo']), pool('P1|white', ['Solo'])],
+    reg: registry({ 'P0|white': V, 'P1|white': familyWith(['Solo'], c => { c['F3-family-level-evidence'].gms[0].basis = 'recorded evidence'; }) }),
+    issues: ['family-level evidence is incomplete'], six: 'NOT CERTIFIED — classification incomplete', reason: 'P1|white (family-level evidence or approval incomplete)', notCertified: ['200'] },
+  { name: 'a family-level approval by someone other than the owner forces NOT CERTIFIED',
+    pools: [pool('P0|white', ['Solo'])], reg: registry({ 'P0|white': familyWith(['Solo'], (c, e) => { e.approval.by = 'Gemini'; }) }),
+    issues: ['approval.by'], six: 'NOT CERTIFIED — classification incomplete', reason: 'P0|white (family-level evidence or approval incomplete)', notCertified: ['200'] },
+  { name: 'an unconfirmed identity (id of another GM) forces NOT CERTIFIED for the shown GM',
+    pools: [{ key: 'P0|white', codes: CODES, pool: [{ gm: 'Solo', id: '101', status: 'verified' }] }], reg: registry({ 'P0|white': V }),
+    issues: ['Solo has id 101'], six: 'NOT CERTIFIED — classification incomplete', reason: 'P0|white (identity not confirmed)', notCertified: ['200'] },
+  { name: 'invalid registry settings force NOT CERTIFIED even with complete family evidence',
+    pools: [pool('P0|white', ['Solo'])], reg: Object.assign(registry({ 'P0|white': family(['Solo']) }), { familyLevelCriteria: ['F1-family-scope'] }),
+    issues: ['familyLevelCriteria must be'], six: 'NOT CERTIFIED — classification incomplete', notCertified: ['200'] },
+  { name: 'all memberships validly classified gives CERTIFIED with no GM left uncertified',
+    pools: [pool('P0|white', ['Solo']), pool('P1|white', ['Solo'])], reg: registry({ 'P0|white': V, 'P1|white': family(['Solo']) }),
+    issues: [], six: 'CERTIFIED', certified: ['200'] },
   // Identity
   { name: 'an entry with a FIDE id and an entry by name for the same record count as one GM',
     pools: [{ key: 'A|white', codes: CODES, pool: [{ gm: 'GM 1', id: '101', status: 'verified' }, { gm: 'GM 1', status: 'verified' }].concat(gms(5).slice(1).map(gm => ({ gm, status: 'verified' }))) }],
@@ -120,6 +146,9 @@ for (const c of cases) {
   for (const t of c.issues) if (!has(r.issues, t)) problems.push(`expected an issue containing "${t}", got: ${r.issues.join(' | ') || 'none'}`);
   for (const t of c.warnings || []) if (!has(r.warnings, t)) problems.push(`expected a warning containing "${t}", got: ${r.warnings.join(' | ') || 'none'}`);
   if (c.six && r.report.sixPool.status !== c.six) problems.push(`expected six-pool status "${c.six}", got "${r.report.sixPool.status}"`);
+  if (c.reason && !Object.values(r.report.sixPool.reasons || {}).some(x => x.includes(c.reason))) problems.push(`expected a not-certified reason containing "${c.reason}", got: ${Object.values(r.report.sixPool.reasons || {}).join(' | ') || 'none'}`);
+  for (const id of c.notCertified || []) if (!r.report.sixPool.notCertified.includes(id) || r.report.sixPool.certified.includes(id)) problems.push(`expected GM ${id} NOT CERTIFIED`);
+  for (const id of c.certified || []) if (!r.report.sixPool.certified.includes(id) || r.report.sixPool.notCertified.includes(id)) problems.push(`expected GM ${id} CERTIFIED`);
   for (const t of c.couldExceed || []) if (!r.report.sixPool.couldExceed.includes(t)) problems.push(`expected "${t}" in could-exceed, got: ${r.report.sixPool.couldExceed.join(', ') || 'none'}`);
   console.log(`${problems.length ? 'FAIL' : 'PASS'}: ${c.name}`);
   for (const p of problems) console.log('  ' + p);

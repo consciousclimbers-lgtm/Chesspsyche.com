@@ -138,10 +138,14 @@ routing: every pool still supplies the Notable GM for its own cards in the same 
   may exceed five GMs. New pools need an entry before they can merge.
 
 **Six-pool tactical limit.** A GM may belong to at most six Variation-Level Analytical Pools. Family-level
-memberships never count. A GM with more than six confirmed variation-level memberships fails the test. While a GM
-is in any unclassified pool, their six-pool status is **NOT CERTIFIED — classification incomplete**. That is
-neither an exemption nor a confirmed violation. The test lists such GMs and those who could exceed six once
-classified. The limit is certified only when every pool is classified.
+memberships with complete evidence never count. A GM with more than six confirmed variation-level memberships
+fails the test. A GM is certified only when every pool they are in is validly classified: variation-level, or
+family-level with complete F1–F5 evidence and approval. Any membership in a pool that is unclassified, missing
+from the registry, has a missing or invalid classification, has incomplete family-level evidence or approval, or
+where the GM's identity cannot be confirmed makes their status **NOT CERTIFIED — classification incomplete**.
+That is neither an exemption nor a confirmed violation. The test names each such GM with the pools and reasons,
+and lists those who could exceed six once classified. The limit is certified only when every pool is validly
+classified.
 
 **GM identity.** GMs are counted by FIDE id: the entry's `id` when it matches a GM record of the same name,
 otherwise the id of the record with the entry's exact name. An `id` that belongs to a different name fails.
@@ -167,6 +171,9 @@ owner's separate approval.
 
 Text fields must be specific: generic placeholders such as "recorded evidence", "TBD", "n/a" or "see above" are
 rejected, and `example.com` links do not count as sources.
+These are structural checks only. A well-formed https link is not proof that the source supports the claim, and
+passing tests do not establish the truth or quality of any evidence. Each pool's evidence is judged by human
+review, and the owner gives final approval of every classification and exemption.
 
 **What never classifies a pool:** its key or name (for example the word "family"), its size, its number of
 codes, `matchScope: "FAMILY ONLY"`, `familyLabels`, `recordLabels`, or the batch or wave that added it.
