@@ -83,7 +83,7 @@ const chessLocal = require.resolve('chess.js');
 const BLOCKED_LOAD = 'Failed to load resource: net::ERR_FAILED';
 
 function protectedHash(html) {
-  const lines = html.split('\n');
+  const lines = html.replace(/\r\n/g, '\n').split('\n');
   const start = lines.findIndex(l => l.startsWith('const ecoNamesMap = {'));
   const end = lines.findIndex(l => l.startsWith('// ---- Picks one White and one Black opening'));
   if (start < 0 || end < 0 || end < start) throw new Error('could not find the opening-data block markers');
@@ -205,6 +205,12 @@ async function runSurvey(browser, file, seed) {
           else if (e.status === 'verified' && !String((g.system || {})[p.side] || '').split(' / ').some(l => p.recordLabels.includes(l)))
             issues.push(`${p.key}: ${e.gm} is verified, but the GM record's ${p.side} system "${(g.system || {})[p.side] || '-'}" lists none of ${p.recordLabels.join(', ')}`);
         }
+      }
+      if (p.matchScope === 'FAMILY ONLY') {
+        if (!Array.isArray(p.familyLabels) || !p.familyLabels.length) issues.push(p.key + ': FAMILY ONLY needs familyLabels');
+        if (p.pool.length > 5) issues.push(p.key + ': FAMILY ONLY pool has ' + p.pool.length + ' entries; maximum is 5');
+        const familyGms = p.pool.map(e => e.gm);
+        if (new Set(familyGms).size !== familyGms.length) issues.push(p.key + ': FAMILY ONLY pool repeats a GM');
       }
     }
     for (const [g, n] of Object.entries(poolsPerGm)) if (n > 6) warnings.push(`${g} is in ${n} pools (more than 6)`);
