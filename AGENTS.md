@@ -116,9 +116,50 @@ area or dependency.
 |---|---|---|---|---|
 | Board | Protected code: demo and results board, pieces, board editor, move playback, evaluation bar | 5–10 | `npm test` (protected-code hash), `npm run clickthrough`, `test:results-identity` | High |
 | Scoring and survey | Protected code: survey, scoring, picker; picks and scoring in `expected.json`; opening data that changes picks | 2–4 | `npm test` (checks 1–6, 11), `npm run clickthrough` | High for code, Medium for data |
-| GM data | `NOTABLE_GM_POOLS`, GM records and `notableGm` names; `gm-baseline.json` | 4, 5 | `npm test` (checks 7–11), `test:results-identity` | Medium; High if rotation or pop-up code changes |
+| GM data | `NOTABLE_GM_POOLS`, GM records and `notableGm` names; `gm-baseline.json`; `tools/survey-regression/pool-governance.json` | 4, 5 | `npm test` (checks 7–11 and pool governance), `test:results-identity` | Medium; High if rotation or pop-up code changes |
 | Deployment workflows | `.github/workflows/`, `CNAME`, the **Protect main** ruleset | all, through CI and the Live Guardian | **Regression tests** on the PR itself; `test:known-shrink`, `test:guardian-report`, `test:retries`; Live Guardian after deployment | High, plus policy review |
 | Labs ECO picker | Protected code: Labs opening picker | 11 | `npm run clickthrough` (Labs ECO picker, offline on the PR, live in the Live Guardian) | High |
+
+## Notable GM pool governance
+Every pool in `NOTABLE_GM_POOLS` has exactly one classification, recorded in
+`tools/survey-regression/pool-governance.json`. `npm test` enforces this file through
+`tools/survey-regression/pool_governance.js`. Classifications describe how a pool is governed. They do not change
+routing: every pool still supplies the Notable GM for its own cards in the same way.
+
+- **Variation-Level Analytical Pool** (`variation-level`): a pool for one variation, sub-line or narrow group of
+  codes. It may show **at most five distinct GMs**.
+- **Family-Level Recommendation Pool** (`family-level`): a pool that recommends GMs for a whole opening family on
+  one side. It is exempt from the five-GM maximum **only** when its entry records evidence for every criterion
+  F1–F5 below **and** the owner's approval (`approval.by` "Calvin", a date, and an https link to the approval).
+  A family-level entry with any of these missing fails the test and gets no exemption.
+- **Unclassified** (`unclassified`): not yet individually reviewed. An unclassified pool gets no exemption. Pools
+  that already had more than five GMs on 2026-10-30 are listed in `pendingOverCap` with their GM count. Each may
+  shrink but not grow until it is classified, and no other unclassified pool may exceed five GMs. New pools need
+  an entry before they can merge.
+
+**Six-pool tactical limit.** A GM may belong to at most six Variation-Level Analytical Pools. Family-level and
+unclassified memberships do not count against this limit. Memberships are counted as distinct pools, by the GM's
+exact record name. The test also reports, without failing, which GMs would exceed six if all their unclassified
+pools turned out to be variation-level.
+
+**Family-level criteria.** Each must be met and recorded for the individual pool:
+- **F1 family scope:** the pool's codes are the codes, on its side, of one named opening family in an
+  authoritative reference (for example lichess-org/chess-openings), cited in the entry. A single variation or
+  sub-line does not qualify.
+- **F2 several variations:** the codes cover at least two distinct named variations of that family, listed in
+  the entry.
+- **F3 family-level evidence:** each GM's cited evidence supports the family on that side, and the entry says so.
+  Evidence for only one variation belongs in a variation-level pool.
+- **F4 recommendation role:** the pool is the recommendation source for the family's cards. It is not a
+  navigation hub or container, and no pool sits inside another.
+- **F5 individual review:** an independent review of this pool's evidence is linked, and the owner approved
+  the classification for this pool by name.
+
+**What never classifies a pool:** its key or name (for example the word "family"), its size, its number of
+codes, `matchScope: "FAMILY ONLY"`, `familyLabels`, `recordLabels`, or the batch or wave that added it.
+Classifications change only through a pull request that edits `pool-governance.json` with the evidence above.
+That PR is GM data (impact index), needs an independent review, and needs the owner's approval of each pool it
+classifies.
 
 ## ECO repair acceptance checklist
 - [ ] Inspect the current ECO data in `index.html`.

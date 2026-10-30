@@ -1,0 +1,128 @@
+{
+  "about": "Classification of every Notable GM pool (AGENTS.md, \"Notable GM pool governance\"). Checked by npm test through pool_governance.js. Every pool starts \"unclassified\": no pool is exempt until its own review is recorded here and approved by the owner. pendingOverCap lists the unclassified pools that had more than 5 GMs when this file was created (main e54aad1); each may only shrink until it is classified.",
+  "approver": "Calvin",
+  "maxGmsPerVariationPool": 5,
+  "maxVariationPoolsPerGm": 6,
+  "familyLevelCriteria": [
+    "F1-family-scope",
+    "F2-several-variations",
+    "F3-family-level-evidence",
+    "F4-recommendation-role",
+    "F5-individual-review"
+  ],
+  "pools": {
+    "Italian Game|white": {
+      "classification": "unclassified"
+    },
+    "Dutch Defence|black": {
+      "classification": "unclassified"
+    },
+    "Alekhine's Defence|black": {
+      "classification": "unclassified"
+    },
+    "King's Indian Defence|black": {
+      "classification": "unclassified"
+    },
+    "Ruy Lopez|white": {
+      "classification": "unclassified"
+    },
+    "Queen's Indian Defence|black": {
+      "classification": "unclassified"
+    },
+    "Nimzo-Indian Defence|black": {
+      "classification": "unclassified"
+    },
+    "Caro-Kann Defence|black": {
+      "classification": "unclassified"
+    },
+    "Caro-Kann Advance|white": {
+      "classification": "unclassified"
+    },
+    "Queen's Gambit / QGD Exchange|white": {
+      "classification": "unclassified"
+    },
+    "Catalan|white": {
+      "classification": "unclassified"
+    },
+    "King's Gambit|white": {
+      "classification": "unclassified"
+    },
+    "Budapest Defence|black": {
+      "classification": "unclassified"
+    },
+    "Petrov's Defence|black": {
+      "classification": "unclassified"
+    },
+    "Queen's Gambit Declined|black": {
+      "classification": "unclassified"
+    },
+    "Modern Defence|black": {
+      "classification": "unclassified"
+    },
+    "Réti Opening|white": {
+      "classification": "unclassified"
+    },
+    "English Opening|white": {
+      "classification": "unclassified"
+    },
+    "Scotch Game|white": {
+      "classification": "unclassified"
+    },
+    "Sicilian Paulsen/Kan/Taimanov|black": {
+      "classification": "unclassified"
+    },
+    "Sicilian Najdorf|black": {
+      "classification": "unclassified"
+    },
+    "Sicilian Dragon|black": {
+      "classification": "unclassified"
+    },
+    "Grünfeld Defence|black": {
+      "classification": "unclassified"
+    },
+    "Queen's Gambit Declined (Wave 1)|black": {
+      "classification": "unclassified"
+    },
+    "Sicilian Defense|black": {
+      "classification": "unclassified"
+    },
+    "Ruy Lopez|black": {
+      "classification": "unclassified"
+    },
+    "Benoni Defense|black": {
+      "classification": "unclassified"
+    },
+    "French Defense|black": {
+      "classification": "unclassified"
+    },
+    "Semi-Slav Defence|black": {
+      "classification": "unclassified"
+    },
+    "Catalan|black": {
+      "classification": "unclassified"
+    },
+    "Nimzo-Indian Defence|white": {
+      "classification": "unclassified"
+    },
+    "King's Indian Defence|white": {
+      "classification": "unclassified"
+    }
+  },
+  "pendingOverCap": {
+    "Italian Game|white": 7,
+    "King's Indian Defence|black": 10,
+    "Ruy Lopez|white": 6,
+    "Queen's Indian Defence|black": 6,
+    "Caro-Kann Defence|black": 10,
+    "Queen's Gambit / QGD Exchange|white": 7,
+    "Catalan|white": 6,
+    "King's Gambit|white": 6,
+    "Petrov's Defence|black": 6,
+    "Sicilian Paulsen/Kan/Taimanov|black": 8,
+    "Queen's Gambit Declined (Wave 1)|black": 40,
+    "Sicilian Defense|black": 201,
+    "Ruy Lopez|black": 95,
+    "French Defense|black": 30,
+    "Semi-Slav Defence|black": 6
+  }
+}

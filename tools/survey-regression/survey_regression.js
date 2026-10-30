@@ -65,6 +65,7 @@ const crypto = require('crypto');
 const { chromium } = require('playwright');
 const { Chess } = require('chess.js');
 const cardChecks = require('./card_checks');
+const poolGovernance = require('./pool_governance');
 
 const args = process.argv.slice(2);
 const update = args.includes('--update');
@@ -268,6 +269,11 @@ async function runSurvey(browser, file, seed) {
       }
     };
   });
+  // Pool governance (AGENTS.md): classifications from pool-governance.json, checked against the page's pools
+  const governance = poolGovernance.checkPoolGovernance(...await page.evaluate(() => [
+    NOTABLE_GM_POOLS.map(p => ({ key: p.key, pool: p.pool.map(e => ({ gm: e.gm, status: e.status })) })),
+    grandmastersList.map(g => g.name)
+  ]), poolGovernance.loadRegistry());
   const bank = await page.evaluate(() => {
     const issues = [], seen = new Set(), counts = {};
     const text = (t, where) => {
@@ -322,7 +328,7 @@ async function runSurvey(browser, file, seed) {
   const notableGm = {};
   for (const [cfg, runs] of Object.entries(res)) picks[cfg] = runs.map(([w, b]) => `${w ? w.eco : '-'}/${b ? b.eco : '-'}`).join(' ');
   for (const [cfg, runs] of Object.entries(res)) notableGm[cfg] = runs.map(([w, b]) => `${(w && w.gm) || '-'} / ${(b && b.gm) || '-'}`).join(' | ');
-  return { res, picks, notableGm, labs, rotation, bank, reach, errors, blocked: [...blocked] };
+  return { res, picks, notableGm, labs, rotation, governance, bank, reach, errors, blocked: [...blocked] };
 }
 
 (async () => {
@@ -333,7 +339,7 @@ async function runSurvey(browser, file, seed) {
   for (let i = 0; i < repeat; i++) runs.push(await runSurvey(browser, htmlPath, SEED));
   const otherSeed = await runSurvey(browser, htmlPath, OTHER_SEED);
   await browser.close();
-  const { res, picks, bank, notableGm, labs, rotation, reach } = runs[0];
+  const { res, picks, bank, notableGm, labs, rotation, governance, reach } = runs[0];
   const gmNow = { notableGm, handWritten: labs.handWritten, labsDrill: labs.drill };
   const errors = [...new Set([...runs, otherSeed].flatMap(r => r.errors))];
   const blocked = [...new Set([...runs, otherSeed].flatMap(r => r.blocked))].sort();
@@ -430,6 +436,7 @@ async function runSurvey(browser, file, seed) {
     if (!handOk) fails.push(`hand-written notableGm names changed: ${labs.handWritten.filter(x => !(gmExp.handWritten || []).includes(x)).join('; ') || 'order changed'}`);
   }
   fails.push(...rotation.issues.map(i => `Notable GM pools: ${i}`));
+  fails.push(...governance.issues.map(i => `Pool governance: ${i}`));
   fails.push(...reachFails, ...cardCmp.fails);
   const shownGms = new Set(Object.values(res).flat().flat().filter(c => c && c.gm).map(c => c.gm));
   const names = new Set(labs.names);
@@ -457,6 +464,10 @@ async function runSurvey(browser, file, seed) {
   console.log(`  women: ${rp.womenEntries} of ${rp.entries} pool entries (${Math.round(100 * rp.womenEntries / rp.entries)}%), ${rp.womenInPools} of ${rp.women} female GM records in a pool; ${shownList.filter(g => womenSet.has(g)).length} of ${shownList.length} Notable GMs shown in the snapshot are women (reported, not a quota)`);
   console.log(`  pools with no women: ${rp.noWomen.join(', ') || 'none'}; most pools: ${rp.mostPools.join(', ')}`);
   for (const w of rotation.warnings) console.log(`  warning: ${w}`);
+  const gc = governance.report.counts;
+  console.log(`Pool governance: ${governance.report.pools} pools in pool-governance.json: ${gc['variation-level']} variation-level, ${gc['family-level']} family-level (${gc['family-level (exempt)']} exempt), ${gc.unclassified} unclassified (${governance.report.pending} of them over 5 GMs, pending review); ${governance.issues.length} issues`);
+  console.log(`  over 6 pools if their unclassified pools were variation-level (reported, not failed): ${governance.report.atRisk.join(', ') || 'none'}`);
+  for (const w of governance.warnings) console.log(`  warning: ${w}`);
   const bySide = s => reachCards.filter(c => c.side === s);
   const early = reachCards.filter(c => c.firstRun <= 5);
   const runsTaken = Object.values(reach.combos);
