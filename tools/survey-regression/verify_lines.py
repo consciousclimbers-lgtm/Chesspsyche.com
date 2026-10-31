@@ -29,7 +29,9 @@ Usage:
 --boundary checks move-boundary records (see check_move_boundary): ECO,
 assigned side, at most five assigned-side moves, a legal replay that ends on
 the assigned side's final move, commentary and evidence tier. It never
-upgrades a tier; DIRECT_VERIFIED is refused unless evidence is cited.
+upgrades a tier; DIRECT_VERIFIED is refused unless every evidence entry names a
+non-placeholder source and a specific https page. That gate is structural only:
+human source review is still required.
 """
 import argparse
 import csv
@@ -37,6 +39,7 @@ import json
 import re
 import sys
 from collections import Counter
+from urllib.parse import urlsplit
 
 import chess
 
@@ -281,6 +284,35 @@ BOUNDARY_OPTIONAL_FIELDS = ("evidence",)
 # PREFIX_REPLAYED: the CSV consensus check above passed; not a direct citation.
 # UNVERIFIED: no evidence recorded yet (the safe default for drafted data).
 EVIDENCE_TIERS = ("DIRECT_VERIFIED", "PREFIX_REPLAYED", "UNVERIFIED")
+# Structural citation gate only: it never fetches or judges the page, so human
+# source review is still required for a DIRECT_VERIFIED record.
+_PLACEHOLDER_WORDS = {
+    "test", "testing", "example", "sample", "placeholder", "todo", "tbd", "tba",
+    "none", "null", "n/a", "na", "unknown", "source", "citation", "reference",
+    "xxx", "foo", "bar", "dummy", "fake", "lorem", "ipsum",
+}
+_PLACEHOLDER_HOSTS = ("example.com", "example.org", "example.net", "localhost")
+
+
+def _evidence_problem(entry):
+    """Why an evidence entry is not a usable citation, or None."""
+    if not isinstance(entry, dict):
+        return "each evidence entry must be an object"
+    source = str(entry.get("source") or "").strip()
+    reference = str(entry.get("reference") or "").strip()
+    words = set(re.findall(r"[a-z0-9/]+", source.lower()))
+    if len(source) < 3 or not words or words <= _PLACEHOLDER_WORDS or "test" in words:
+        return f"evidence source {source!r} is missing or a placeholder"
+    parts = urlsplit(reference)
+    host = (parts.hostname or "").lower()
+    if parts.scheme != "https" or "." not in host or " " in reference:
+        return f"evidence reference {reference!r} must be an https URL"
+    if any(host == h or host.endswith("." + h) for h in _PLACEHOLDER_HOSTS) or host.endswith(".test") \
+            or host.endswith(".invalid") or host.endswith(".example"):
+        return f"evidence reference {reference!r} uses a placeholder host"
+    if not parts.path.strip("/") and not parts.query:
+        return f"evidence reference {reference!r} must point to a specific page, not a site root"
+    return None
 
 
 def _is_san_list(value):
@@ -330,10 +362,10 @@ def check_move_boundary(record, catalog=None):
         errors.append("evidence_tier must be one of " + ", ".join(EVIDENCE_TIERS))
     elif tier == "DIRECT_VERIFIED":
         evidence = record.get("evidence")
-        if not (isinstance(evidence, list) and evidence and all(
-                isinstance(e, dict) and str(e.get("source") or "").strip()
-                and str(e.get("reference") or "").strip() for e in evidence)):
+        if not (isinstance(evidence, list) and evidence):
             errors.append("DIRECT_VERIFIED needs evidence: [{source, reference}, ...]")
+        else:
+            errors.extend(p for p in map(_evidence_problem, evidence) if p)
     if not _is_san_list(own):
         errors.append("assigned_side_moves must be a list of SAN strings")
     elif not 1 <= len(own) <= MAX_ASSIGNED_MOVES:
@@ -635,10 +667,27 @@ def boundary_selftest():
     assert "evidence_tier must be" in errors(record(evidence_tier="VERIFIED"))
     # DIRECT_VERIFIED is refused without cited evidence, accepted with it.
     assert "DIRECT_VERIFIED needs evidence" in errors(record(evidence_tier="DIRECT_VERIFIED"))
-    assert "DIRECT_VERIFIED needs evidence" in errors(
+    assert "evidence source" in errors(
         record(evidence_tier="DIRECT_VERIFIED", evidence=[{"source": "x"}]))
-    cited = record(evidence_tier="DIRECT_VERIFIED",
-                   evidence=[{"source": "test", "reference": "test-only citation"}])
+    # Placeholder citations never pass the structural gate.
+    def cite(source, reference):
+        return errors(record(evidence_tier="DIRECT_VERIFIED",
+                             evidence=[{"source": source, "reference": reference}]))
+    assert "placeholder" in cite("test", "test-only citation")
+    assert "placeholder" in cite("TBD", "https://lichess.org/opening/Sicilian_Defense")
+    assert "must be an https URL" in cite("Lichess openings", "test-only citation")
+    assert "must be an https URL" in cite("Lichess openings", "http://lichess.org/opening/Sicilian_Defense")
+    assert "placeholder host" in cite("Lichess openings", "https://example.com/opening/B20")
+    assert "placeholder host" in cite("Lichess openings", "https://www.example.org/B20")
+    assert "specific page" in cite("Lichess openings", "https://lichess.org/")
+    # One bad entry among good ones still fails.
+    mixed = record(evidence_tier="DIRECT_VERIFIED", evidence=[
+        {"source": "Lichess openings", "reference": "https://lichess.org/opening/Sicilian_Defense"},
+        {"source": "placeholder", "reference": "https://lichess.org/opening/Sicilian_Defense"}])
+    assert check_move_boundary(mixed)["status"] == "INVALID"
+    # An HTTPS-shaped citation is structurally accepted (this test does not claim it was reviewed).
+    cited = record(evidence_tier="DIRECT_VERIFIED", evidence=[
+        {"source": "Lichess openings", "reference": "https://lichess.org/opening/Sicilian_Defense"}])
     assert check_move_boundary(cited)["status"] == "VALID"
 
     # Catalog checks against a small stand-in for the site's ECO data.
