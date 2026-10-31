@@ -97,12 +97,13 @@ def replay(sans):
 # Explicit provenance registry. Add a family deliberately when a new source is
 # approved for line comparison; unknown non-empty site_* columns never vote.
 SOURCE_FAMILY_ALIASES = {
-    "365chess": "365chess",
+    # The families below are registered for voting. New families require deliberate provenance review.
     "chesscom": "chesscom",
     "chessdotcom": "chesscom",
     "lichess": "lichess",
     "lichessorg": "lichess",
-    "chessiverse": "chessiverse",
+    # Chessiverse's Lichess-derived opening content is the same source family, not an extra vote.
+    "chessiverse": "lichess",
     "chessgames": "chessgames",
     "chessgamescom": "chessgames",
     "wikibooks": "wikibooks",
@@ -113,7 +114,7 @@ SOURCE_FAMILY_ALIASES = {
     "chessbasecom": "chessbase",
     "chessable": "chessable",
     "chess24": "chess24",
-    "chesstempo": "chesstempo",
+    # 365Chess and ChessTempo remain non-voting until their provenance is established.
 }
 _DUPLICATE_SUFFIX = re.compile(
     r"(?:copy|alt|backup|mirror|duplicate|dup|replica|version|v)?\d+$"
@@ -443,8 +444,8 @@ def selftest():
     illegal = "1.e4 e5 2.Ke3 Nc6"
     long_line = " ".join(["Nf3 Nf6 Ng1 Ng8"] * 6)  # 24 plies, legal
     test_families = [
-        "365chess", "lichess", "chessiverse", "chesscom", "chessgames",
-        "wikibooks", "chessopenings", "wikipedia", "chessbase", "chessable",
+        "chesscom", "chessgames", "wikibooks", "chessopenings", "wikipedia",
+        "chessbase", "chessable", "chess24", "lichess",
     ]
 
     def row(line, count):
@@ -485,34 +486,62 @@ def selftest():
         mix[f"site_{family}"] = legal if index < 4 else alternative
     assert check_row(mix, 4)["status"] == "NEEDS_REVIEW"
 
-    # Three 365Chess aliases are one vote, not three independent sources.
+    # Three registered Chess.com aliases are one vote, not three independent sources.
     aliases = {
         "eco": "C60", "opening_name": "Ruy Lopez", "side": "White",
-        "site_365chess": legal,
-        "site_365chess_copy": legal,
-        "site_365chess_alt": legal,
+        "site_chesscom": legal,
+        "site_chesscom_copy": legal,
+        "site_chesscom_alt": legal,
     }
     alias_result = check_row(aliases, 3)
     assert alias_result["status"] == "EXCLUDED"
     assert alias_result["source_families_with_line"] == 1
-    assert canonical_source_family("site_365chess2") == "365chess"
+    assert canonical_source_family("site_chesscom2") == "chesscom"
 
     # Three registered independent families can satisfy threshold three.
     independent = {
         "eco": "C60", "opening_name": "Ruy Lopez", "side": "White",
-        "site_365chess": legal,
-        "site_lichess": legal,
-        "site_chessiverse": legal,
+        "site_chesscom": legal,
+        "site_chessgames": legal,
+        "site_wikibooks": legal,
     }
     assert check_row(independent, 3)["status"] == "PREFIX_REPLAYED"
+
+    # Lichess-derived Chessiverse content is one family, not a second vote.
+    lichess_derived = {
+        "eco": "C60", "opening_name": "Ruy Lopez", "side": "White",
+        "site_lichess": legal,
+        "site_chessiverse": legal,
+        "site_chesscom": legal,
+        "site_chessgames": legal,
+    }
+    derived_result = check_row(lichess_derived, 3)
+    assert derived_result["status"] == "PREFIX_REPLAYED"
+    assert derived_result["source_families_with_line"] == 3
+    assert canonical_source_family("site_chessiverse") == "lichess"
+
+    # 365Chess and ChessTempo are candidates, not voting families, until provenance is established.
+    unverified_sources = {
+        "eco": "C60", "opening_name": "Ruy Lopez", "side": "White",
+        "site_lichess": legal,
+        "site_chesscom": legal,
+        "site_365chess": legal,
+        "site_chesstempo": legal,
+    }
+    unverified_result = check_row(unverified_sources, 3)
+    assert unverified_result["status"] == "NEEDS_REVIEW"
+    assert unverified_result["source_families_with_line"] == 2
+    assert unverified_result["unrecognized_site_columns"] == ["site_365chess", "site_chesstempo"]
+    assert canonical_source_family("site_365chess2") is None
+    assert canonical_source_family("site_chesstempo") is None
 
     # Two different lines from the same family require human review.
     duplicate_conflict = {
         "eco": "C60", "opening_name": "Ruy Lopez", "side": "White",
-        "site_365chess": legal,
-        "site_365chess_copy": alternative,
+        "site_chesscom": legal,
+        "site_chesscom_copy": alternative,
         "site_lichess": legal,
-        "site_chessiverse": legal,
+        "site_chessgames": legal,
     }
     duplicate_result = check_row(duplicate_conflict, 3)
     assert duplicate_result["status"] == "NEEDS_REVIEW"
@@ -521,7 +550,7 @@ def selftest():
     # Unknown source columns do not vote and cannot silently complete threshold.
     unknown = {
         "eco": "C60", "opening_name": "Ruy Lopez", "side": "White",
-        "site_365chess": legal,
+        "site_chesscom": legal,
         "site_lichess": legal,
         "site_unregistered": legal,
     }
