@@ -1,0 +1,70 @@
+name: ECO line verifier self-test
+
+on:
+  push:
+    branches:
+      - chatgpt/verify-lines-draft-20261024
+    paths:
+      - tools/survey-regression/verify_lines.py
+      - tools/survey-regression/move-boundary-fixture.json
+      - .github/workflows/verify-lines.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - tools/survey-regression/verify_lines.py
+      - tools/survey-regression/move-boundary-fixture.json
+      - .github/workflows/verify-lines.yml
+
+permissions:
+  contents: read
+
+jobs:
+  selftest:
+    name: Verifier self-test (chess module 1.10.0)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install pinned verifier dependency
+        run: python -m pip install --disable-pip-version-check chess==1.10.0
+
+      - name: Confirm pinned chess module version
+        run: python -c "import chess; print(chess.__version__); assert chess.__version__ == '1.10.0'"
+
+      - name: Compile verifier
+        run: python -m py_compile tools/survey-regression/verify_lines.py
+
+      - name: Run verifier self-test
+        run: python tools/survey-regression/verify_lines.py --selftest
+
+      - name: Reject unsupported consensus thresholds
+        shell: bash
+        run: |
+          if python tools/survey-regression/verify_lines.py --threshold 2 --selftest >/tmp/threshold-check.txt 2>&1; then
+            echo "Threshold 2 was unexpectedly accepted"
+            exit 1
+          fi
+          grep -q "invalid choice" /tmp/threshold-check.txt
+
+      - name: Check move-boundary fixture against the site's ECO data
+        run: python tools/survey-regression/verify_lines.py --boundary tools/survey-regression/move-boundary-fixture.json --catalog index.html
+
+      - name: Reject a move-boundary record with a trailing opponent reply
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          records = json.load(open("tools/survey-regression/move-boundary-fixture.json"))
+          bad = dict(records[0], full_legal_replay_sequence=["e4", "c5", "Nf3"])
+          json.dump([bad], open("/tmp/bad-boundary.json", "w"))
+          PY
+          if python tools/survey-regression/verify_lines.py --boundary /tmp/bad-boundary.json --catalog index.html >/tmp/bad-boundary.txt 2>&1; then
+            echo "Trailing opponent reply was unexpectedly accepted"
+            exit 1
+          fi
+          grep -q "must end on black's final move" /tmp/bad-boundary.txt
