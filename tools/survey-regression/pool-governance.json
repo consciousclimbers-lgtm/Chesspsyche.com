@@ -1,0 +1,646 @@
+{
+  "about": "Classification of every Notable GM pool (AGENTS.md, \"Notable GM pool governance\"). Checked by npm test through pool_governance.js. Every pool starts \"unclassified\": no pool is exempt until its own review is recorded here with structured F1-F5 evidence and the owner's approval. frozenRosters holds the exact GM list (FIDE id and name) of each unclassified pool that had more than 5 GMs on main e54aad1; it may not change in either direction until the pool is classified. suspectedDuplicates lists GM records that may be one person; they stay separate records and are counted separately until verified identity evidence and the owner's separate approval exist.",
+  "approver": "Calvin",
+  "maxGmsPerVariationPool": 5,
+  "maxVariationPoolsPerGm": 6,
+  "familyLevelCriteria": [
+    "F1-family-scope",
+    "F2-several-variations",
+    "F3-family-level-evidence",
+    "F4-recommendation-role",
+    "F5-individual-review"
+  ],
+  "pools": {
+    "Italian Game|white": {
+      "classification": "unclassified"
+    },
+    "Dutch Defence|black": {
+      "classification": "unclassified"
+    },
+    "Alekhine's Defence|black": {
+      "classification": "unclassified"
+    },
+    "King's Indian Defence|black": {
+      "classification": "unclassified"
+    },
+    "Ruy Lopez|white": {
+      "classification": "unclassified"
+    },
+    "Queen's Indian Defence|black": {
+      "classification": "unclassified"
+    },
+    "Nimzo-Indian Defence|black": {
+      "classification": "unclassified"
+    },
+    "Caro-Kann Defence|black": {
+      "classification": "unclassified"
+    },
+    "Caro-Kann Advance|white": {
+      "classification": "unclassified"
+    },
+    "Queen's Gambit / QGD Exchange|white": {
+      "classification": "unclassified"
+    },
+    "Catalan|white": {
+      "classification": "unclassified"
+    },
+    "King's Gambit|white": {
+      "classification": "unclassified"
+    },
+    "Budapest Defence|black": {
+      "classification": "unclassified"
+    },
+    "Petrov's Defence|black": {
+      "classification": "unclassified"
+    },
+    "Queen's Gambit Declined|black": {
+      "classification": "unclassified"
+    },
+    "Modern Defence|black": {
+      "classification": "unclassified"
+    },
+    "Réti Opening|white": {
+      "classification": "unclassified"
+    },
+    "English Opening|white": {
+      "classification": "unclassified"
+    },
+    "Scotch Game|white": {
+      "classification": "unclassified"
+    },
+    "Sicilian Paulsen/Kan/Taimanov|black": {
+      "classification": "unclassified"
+    },
+    "Sicilian Najdorf|black": {
+      "classification": "unclassified"
+    },
+    "Sicilian Dragon|black": {
+      "classification": "unclassified"
+    },
+    "Grünfeld Defence|black": {
+      "classification": "unclassified"
+    },
+    "Queen's Gambit Declined (Wave 1)|black": {
+      "classification": "unclassified"
+    },
+    "Sicilian Defense|black": {
+      "classification": "unclassified"
+    },
+    "Ruy Lopez|black": {
+      "classification": "unclassified"
+    },
+    "Benoni Defense|black": {
+      "classification": "unclassified"
+    },
+    "French Defense|black": {
+      "classification": "unclassified"
+    },
+    "Semi-Slav Defence|black": {
+      "classification": "unclassified"
+    },
+    "Catalan|black": {
+      "classification": "unclassified"
+    },
+    "Nimzo-Indian Defence|white": {
+      "classification": "unclassified"
+    },
+    "King's Indian Defence|white": {
+      "classification": "unclassified"
+    }
+  },
+  "frozenRosters": {
+    "Italian Game|white": {
+      "count": 7,
+      "gms": [
+        { "id": "5202213", "gm": "Wesley So" },
+        { "id": "2020009", "gm": "Fabiano Caruana" },
+        { "id": "24116068", "gm": "Anish Giri" },
+        { "id": "13300474", "gm": "Levon Aronian" },
+        { "id": "400025", "gm": "Nigel Short" },
+        { "id": "8602980", "gm": "Hou Yifan" },
+        { "id": "5091756", "gm": "Vaishali Rameshbabu" }
+      ]
+    },
+    "King's Indian Defence|black": {
+      "count": 10,
+      "gms": [
+        { "id": "13400924", "gm": "Teimour Radjabov" },
+        { "id": "2016192", "gm": "Hikaru Nakamura" },
+        { "id": "8603677", "gm": "Ding Liren" },
+        { "id": "13900048", "gm": "Victor Bologan" },
+        { "id": "8600147", "gm": "Xie Jun" },
+        { "id": "13600036", "gm": "Maia Chiburdanidze" },
+        { "id": "13600168", "gm": "Ketevan Arakhamia-Grant" },
+        { "id": "1106619", "gm": "Monika Soćko" },
+        { "id": "13708694", "gm": "Bibisara Assaubayeva" },
+        { "id": "14109336", "gm": "Kateryna Lagno" }
+      ]
+    },
+    "Ruy Lopez|white": {
+      "count": 6,
+      "gms": [
+        { "id": "2020009", "gm": "Fabiano Caruana" },
+        { "id": "600041", "gm": "Bobby Fischer" },
+        { "id": "700070", "gm": "Judit Polgár" },
+        { "id": "617822", "gm": "Marie Sebag" },
+        { "id": "4133471", "gm": "Tatiana Kosintseva" },
+        { "id": "8602980", "gm": "Hou Yifan" }
+      ]
+    },
+    "Queen's Indian Defence|black": {
+      "count": 6,
+      "gms": [
+        { "id": "5000017", "gm": "Viswanathan Anand" },
+        { "id": "400041", "gm": "Michael Adams" },
+        { "id": "700070", "gm": "Judit Polgár" },
+        { "id": "703303", "gm": "Peter Leko" },
+        { "id": "3800024", "gm": "Julio Granda Zuniga" },
+        { "id": "14102536", "gm": "Sergey A. Fedorchuk" }
+      ]
+    },
+    "Caro-Kann Defence|black": {
+      "count": 10,
+      "gms": [
+        { "id": "12573981", "gm": "Alireza Firouzja" },
+        { "id": "24101605", "gm": "Vladislav Artemiev" },
+        { "id": "8603677", "gm": "Ding Liren" },
+        { "id": "5000017", "gm": "Viswanathan Anand" },
+        { "id": "4167570", "gm": "Valentina Gunina" },
+        { "id": "13300210", "gm": "Elina Danielian" },
+        { "id": "13602640", "gm": "Bella Khotenashvili" },
+        { "id": "4195752", "gm": "Olga Girya" },
+        { "id": "2902257", "gm": "Antoaneta Stefanova" },
+        { "id": "14110911", "gm": "Anna Ushenina" }
+      ]
+    },
+    "Queen's Gambit / QGD Exchange|white": {
+      "count": 7,
+      "gms": [
+        { "id": "1503014", "gm": "Magnus Carlsen" },
+        { "id": "46616543", "gm": "D Gukesh" },
+        { "id": "2020009", "gm": "Fabiano Caruana" },
+        { "id": "13300474", "gm": "Levon Aronian" },
+        { "id": "24133795", "gm": "Alexey Sarana" },
+        { "id": "14101513", "gm": "Natalia Zhukova" },
+        { "id": "13602993", "gm": "Nino Batsiashvili" }
+      ]
+    },
+    "Catalan|white": {
+      "count": 6,
+      "gms": [
+        { "id": "2805677", "gm": "Boris Gelfand" },
+        { "id": "24126055", "gm": "Daniil Dubov" },
+        { "id": "24116068", "gm": "Anish Giri" },
+        { "id": "8603677", "gm": "Ding Liren" },
+        { "id": "4147103", "gm": "Aleksandra Goryachkina" },
+        { "id": "8605114", "gm": "Lei Tingjie" }
+      ]
+    },
+    "King's Gambit|white": {
+      "count": 6,
+      "gms": [
+        { "id": "600057", "gm": "Boris Spassky" },
+        { "id": "600041", "gm": "Bobby Fischer" },
+        { "id": "400025", "gm": "Nigel Short" },
+        { "id": "2209390", "gm": "Alexei Shirov" },
+        { "id": "2016192", "gm": "Hikaru Nakamura" },
+        { "id": "700070", "gm": "Judit Polgár" }
+      ]
+    },
+    "Petrov's Defence|black": {
+      "count": 6,
+      "gms": [
+        { "id": "2020009", "gm": "Fabiano Caruana" },
+        { "id": "400041", "gm": "Michael Adams" },
+        { "id": "8603677", "gm": "Ding Liren" },
+        { "id": "8603820", "gm": "Yu Yangyi" },
+        { "id": "8602980", "gm": "Hou Yifan" },
+        { "id": "5008123", "gm": "Humpy Koneru" }
+      ]
+    },
+    "Sicilian Paulsen/Kan/Taimanov|black": {
+      "count": 8,
+      "gms": [
+        { "id": "1700030", "gm": "Pia Cramling" },
+        { "id": "1004786", "gm": "Zhaoqin Peng" },
+        { "id": "1304364", "gm": "Vadim Milov" },
+        { "id": "700070", "gm": "Judit Polgár" },
+        { "id": "14100010", "gm": "Vasyl Ivanchuk" },
+        { "id": "4116992", "gm": "Alexander Morozevich" },
+        { "id": "4126025", "gm": "Alexander Grischuk" },
+        { "id": "2900084", "gm": "Veselin Topalov" }
+      ]
+    },
+    "Queen's Gambit Declined (Wave 1)|black": {
+      "count": 40,
+      "gms": [
+        { "id": "12401137", "gm": "Lê Quang Liêm" },
+        { "id": "2016192", "gm": "Hikaru Nakamura" },
+        { "id": "35009192", "gm": "Arjun Erigaisi" },
+        { "id": "44599790", "gm": "Yağız Kaan Erdoğmuş" },
+        { "id": "13300474", "gm": "Levon Aronian" },
+        { "id": "46616543", "gm": "D Gukesh" },
+        { "id": "25092340", "gm": "Nihal Sarin" },
+        { "id": "8603820", "gm": "Yu Yangyi" },
+        { "id": "24130737", "gm": "Vladimir Fedoseev" },
+        { "id": "5072786", "gm": "Chithambaram VR. Aravindh" },
+        { "id": "35028600", "gm": "M Pranesh" },
+        { "id": "24651516", "gm": "Matthias Bluebaum" },
+        { "id": "14200244", "gm": "Rustam Kasimdzhanov" },
+        { "id": "13306553", "gm": "Haik Martirosyan" },
+        { "id": "1226380", "gm": "Bogdan-Daniel Deac" },
+        { "id": "14204223", "gm": "Shamsiddin Vokhidov" },
+        { "id": "13306677", "gm": "Aram Hakobyan" },
+        { "id": "24125890", "gm": "Grigoriy Oparin" },
+        { "id": "8603332", "gm": "Lu Shanglei" },
+        { "id": "13515110", "gm": "Denis Lazavik" },
+        { "id": "2293307", "gm": "Jaime Santos Latasa" },
+        { "id": "36083534", "gm": "Marc'Andria Maurizzi" },
+        { "id": "358878", "gm": "Thai Dai Van Nguyen" },
+        { "id": "1400355", "gm": "Peter Heine Nielsen" },
+        { "id": "13300881", "gm": "Gabriel Sargissian" },
+        { "id": "240990", "gm": "Daniel Dardha" },
+        { "id": "14210703", "gm": "Mukhiddin Madaminov" },
+        { "id": "14187086", "gm": "Ihor Samunenkov" },
+        { "id": "46634827", "gm": "H Bharath Subramaniyam" },
+        { "id": "21864080", "gm": "Jan Malek" },
+        { "id": "4627253", "gm": "Fabian Doettling" },
+        { "id": "24198455", "gm": "Arseniy Nesterov" },
+        { "id": "10601619", "gm": "Ahmed Adly" },
+        { "id": "13707647", "gm": "Denis Makhnev" },
+        { "id": "8602980", "gm": "Hou Yifan" },
+        { "id": "8603642", "gm": "Tan Zhongyi" },
+        { "id": "35006916", "gm": "Divya Deshmukh" },
+        { "id": "13602993", "gm": "Nino Batsiashvili" },
+        { "id": "600057", "gm": "Boris Spassky" },
+        { "id": "1500840", "gm": "Koneru Humpy" }
+      ]
+    },
+    "Sicilian Defense|black": {
+      "count": 201,
+      "gms": [
+        { "id": "1170546", "gm": "Jan-Krzysztof Duda" },
+        { "id": "2016192", "gm": "Hikaru Nakamura" },
+        { "id": "2020009", "gm": "Fabiano Caruana" },
+        { "id": "35009192", "gm": "Arjun Erigaisi" },
+        { "id": "14205483", "gm": "Javokhir Sindarov" },
+        { "id": "14204118", "gm": "Nodirbek Abdusattorov" },
+        { "id": "5202213", "gm": "Wesley So" },
+        { "id": "25059530", "gm": "R Praggnanandhaa" },
+        { "id": "12940690", "gm": "Vincent Keymer" },
+        { "id": "8603405", "gm": "Wei Yi" },
+        { "id": "12573981", "gm": "Alireza Firouzja" },
+        { "id": "24116068", "gm": "Anish Giri" },
+        { "id": "5000017", "gm": "Viswanathan Anand" },
+        { "id": "3503240", "gm": "Leinier Domínguez" },
+        { "id": "12401137", "gm": "Lê Quang Liêm" },
+        { "id": "44599790", "gm": "Yağız Kaan Erdoğmuş" },
+        { "id": "12521213", "gm": "Amin Tabatabaei" },
+        { "id": "13300474", "gm": "Levon Aronian" },
+        { "id": "4168119", "gm": "Ian Nepomniachtchi" },
+        { "id": "2093596", "gm": "Hans Niemann" },
+        { "id": "623539", "gm": "Maxime Vachier-Lagrave" },
+        { "id": "1039784", "gm": "Jorden Van Foreest" },
+        { "id": "4158814", "gm": "Dmitry Andreikin" },
+        { "id": "14203987", "gm": "Nodirbek Yakubboev" },
+        { "id": "738590", "gm": "Richárd Rapport" },
+        { "id": "46616543", "gm": "D Gukesh" },
+        { "id": "13401319", "gm": "Shakhriyar Mamedyarov" },
+        { "id": "25092340", "gm": "Nihal Sarin" },
+        { "id": "12539929", "gm": "Parham Maghsoodloo" },
+        { "id": "8603820", "gm": "Yu Yangyi" },
+        { "id": "2900084", "gm": "Veselin Topalov" },
+        { "id": "8602883", "gm": "Wang Hao" },
+        { "id": "5029465", "gm": "Vidit Gujrathi" },
+        { "id": "24130737", "gm": "Vladimir Fedoseev" },
+        { "id": "13400924", "gm": "Teimour Radjabov" },
+        { "id": "5072786", "gm": "Chithambaram VR. Aravindh" },
+        { "id": "25060783", "gm": "V Pranav" },
+        { "id": "35028600", "gm": "M Pranesh" },
+        { "id": "24133795", "gm": "Alexey Sarana" },
+        { "id": "14200244", "gm": "Rustam Kasimdzhanov" },
+        { "id": "14102951", "gm": "Pavel Eljanov" },
+        { "id": "703303", "gm": "Peter Leko" },
+        { "id": "4152956", "gm": "Nikita Vitiugov" },
+        { "id": "13409301", "gm": "Mahammad Muradli" },
+        { "id": "12923044", "gm": "Frederik Svane" },
+        { "id": "13306553", "gm": "Haik Martirosyan" },
+        { "id": "2023970", "gm": "Ray Robson" },
+        { "id": "1118358", "gm": "Radoslaw Wojtaszek" },
+        { "id": "44155573", "gm": "Volodar Murzin" },
+        { "id": "2047640", "gm": "Jeffery Xiong" },
+        { "id": "24126055", "gm": "Daniil Dubov" },
+        { "id": "3805662", "gm": "Jose Eduardo Martinez Alcantara" },
+        { "id": "4116992", "gm": "Alexander Morozevich" },
+        { "id": "24101605", "gm": "Vladislav Artemiev" },
+        { "id": "8601445", "gm": "Bu Xiangzhi" },
+        { "id": "14117908", "gm": "Igor Kovalenko" },
+        { "id": "14204223", "gm": "Shamsiddin Vokhidov" },
+        { "id": "5007003", "gm": "Pentala Harikrishna" },
+        { "id": "13306766", "gm": "Shant Sargsyan" },
+        { "id": "5074452", "gm": "Murali Karthikeyan" },
+        { "id": "1510045", "gm": "Aryan Tari" },
+        { "id": "5084423", "gm": "Aryan Chopra" },
+        { "id": "2004887", "gm": "Sam Shankland" },
+        { "id": "35093487", "gm": "Raunak Sadhwani" },
+        { "id": "44507356", "gm": "Ediz Gürel" },
+        { "id": "2805677", "gm": "Boris Gelfand" },
+        { "id": "4135539", "gm": "Kirill Alekseenko" },
+        { "id": "4262875", "gm": "Nikolas Theodorou" },
+        { "id": "13306677", "gm": "Aram Hakobyan" },
+        { "id": "24125890", "gm": "Grigoriy Oparin" },
+        { "id": "4162722", "gm": "Ernesto Inarkiev" },
+        { "id": "8603332", "gm": "Lu Shanglei" },
+        { "id": "30920019", "gm": "Abhimanyu Mishra" },
+        { "id": "4107012", "gm": "Mikhail Antipov" },
+        { "id": "13401653", "gm": "Rauf Mamedov" },
+        { "id": "14103320", "gm": "Ruslan Ponomariov" },
+        { "id": "2905540", "gm": "Ivan Cheparinov" },
+        { "id": "409561", "gm": "Gawain C B Maroroa Jones" },
+        { "id": "35028561", "gm": "Leon Luke Mendonca" },
+        { "id": "4126025", "gm": "Alexander Grischuk" },
+        { "id": "14100010", "gm": "Vasyl Ivanchuk" },
+        { "id": "8608288", "gm": "Xu Xiangyu" },
+        { "id": "1444948", "gm": "Jonas Buhl Bjerre" },
+        { "id": "30901561", "gm": "Brandon Jacobson" },
+        { "id": "1000268", "gm": "Loek Van Wely" },
+        { "id": "2293307", "gm": "Jaime Santos Latasa" },
+        { "id": "36083534", "gm": "Marc'Andria Maurizzi" },
+        { "id": "358878", "gm": "Thai Dai Van Nguyen" },
+        { "id": "5061245", "gm": "Abhimanyu Puranik" },
+        { "id": "35042025", "gm": "Aditya Mittal" },
+        { "id": "4108116", "gm": "Maksim Chigaev" },
+        { "id": "14508150", "gm": "Ivan Saric" },
+        { "id": "14105730", "gm": "Anton Korobov" },
+        { "id": "642908", "gm": "Jules Moussard" },
+        { "id": "8601429", "gm": "Wang Yue" },
+        { "id": "30953499", "gm": "Andy Woodward" },
+        { "id": "14107090", "gm": "Andrei Volokitin" },
+        { "id": "9301348", "gm": "A.R. Saleh Salem" },
+        { "id": "12510130", "gm": "Pouya Idani" },
+        { "id": "8604436", "gm": "Li Chao" },
+        { "id": "34189030", "gm": "Aleksey Grebnev" },
+        { "id": "14109182", "gm": "Yuriy Kryvoruchko" },
+        { "id": "1400355", "gm": "Peter Heine Nielsen" },
+        { "id": "712779", "gm": "Benjamin Gledura" },
+        { "id": "605506", "gm": "Etienne Bacrot" },
+        { "id": "718572", "gm": "Ferenc Berkes" },
+        { "id": "240990", "gm": "Daniel Dardha" },
+        { "id": "24107581", "gm": "Alexandr Predke" },
+        { "id": "13402935", "gm": "Vasif Durarbayli" },
+        { "id": "24603295", "gm": "Alexander Donchenko" },
+        { "id": "608742", "gm": "Laurent Fressinet" },
+        { "id": "13402129", "gm": "Eltaj Safarli" },
+        { "id": "2099438", "gm": "Andrew Hong" },
+        { "id": "404853", "gm": "Luke McShane" },
+        { "id": "309095", "gm": "David Navara" },
+        { "id": "14187086", "gm": "Ihor Samunenkov" },
+        { "id": "14506688", "gm": "Ante Brkic" },
+        { "id": "3800024", "gm": "Julio Granda Zuniga" },
+        { "id": "911925", "gm": "Aleksandar Indjic" },
+        { "id": "46626786", "gm": "Pranav Anand" },
+        { "id": "3518736", "gm": "Carlos Daniel Albornoz Cabrera" },
+        { "id": "4201345", "gm": "Ioannis Papaioannou" },
+        { "id": "46634827", "gm": "H Bharath Subramaniyam" },
+        { "id": "1710400", "gm": "Nils Grandelius" },
+        { "id": "8602280", "gm": "Bai Jinshi" },
+        { "id": "22291482", "gm": "Miguel Santos Ruiz" },
+        { "id": "14109530", "gm": "Alexander Areshchenko" },
+        { "id": "4111990", "gm": "Semen Khanin" },
+        { "id": "8622388", "gm": "Xiao Tong" },
+        { "id": "662399", "gm": "Maxime Lagarde" },
+        { "id": "4120787", "gm": "Vladimir Malakhov" },
+        { "id": "4173708", "gm": "Aleksandr Rakhmanov" },
+        { "id": "14102536", "gm": "Sergey A. Fedorchuk" },
+        { "id": "8603154", "gm": "Ma Qun" },
+        { "id": "21864080", "gm": "Jan Malek" },
+        { "id": "4168003", "gm": "Maxim Matlakov" },
+        { "id": "4170350", "gm": "Ivan Popov" },
+        { "id": "310204", "gm": "Sergei Movsesian" },
+        { "id": "12961523", "gm": "Luis Engel" },
+        { "id": "2000024", "gm": "Gata Kamsky" },
+        { "id": "2209390", "gm": "Alexei Shirov" },
+        { "id": "2802007", "gm": "Emil Sutovsky" },
+        { "id": "2257327", "gm": "Ivan Salgado Lopez" },
+        { "id": "13900048", "gm": "Victor Bologan" },
+        { "id": "1400010", "gm": "Curt Hansen" },
+        { "id": "916811", "gm": "Dragan Solak" },
+        { "id": "30909694", "gm": "Christopher Woojin Yoo" },
+        { "id": "3700488", "gm": "Axel Bachmann" },
+        { "id": "4663527", "gm": "Arik Braun" },
+        { "id": "23718293", "gm": "Vaclav Finek" },
+        { "id": "2200015", "gm": "Miguel Illescas Cordoba" },
+        { "id": "4194985", "gm": "David Paravyan" },
+        { "id": "12401153", "gm": "Le Tuan Minh" },
+        { "id": "2101246", "gm": "Rafael Leitao" },
+        { "id": "24131423", "gm": "Daniil Yuffa" },
+        { "id": "34184934", "gm": "Gleb Dudin" },
+        { "id": "2106388", "gm": "Luis Paulo Supi" },
+        { "id": "10601619", "gm": "Ahmed Adly" },
+        { "id": "1304364", "gm": "Vadim Milov" },
+        { "id": "1202758", "gm": "Liviu-Dieter Nisipeanu" },
+        { "id": "2806851", "gm": "Maxim Rodshtein" },
+        { "id": "1700022", "gm": "Ferdinand Hellers" },
+        { "id": "25002767", "gm": "Pa Iniyan" },
+        { "id": "950122", "gm": "Velimir Ivic" },
+        { "id": "13402960", "gm": "Nijat Abasov" },
+        { "id": "4650891", "gm": "Arkadij Naiditsch" },
+        { "id": "4118987", "gm": "Evgeniy Najer" },
+        { "id": "700070", "gm": "Judit Polgár" },
+        { "id": "8602980", "gm": "Hou Yifan" },
+        { "id": "700088", "gm": "Susan Polgár" },
+        { "id": "8608059", "gm": "Zhu Jiner" },
+        { "id": "8603006", "gm": "Ju Wenjun" },
+        { "id": "8605114", "gm": "Lei Tingjie" },
+        { "id": "12801259", "gm": "Viktorija Čmilytė" },
+        { "id": "8603642", "gm": "Tan Zhongyi" },
+        { "id": "13708694", "gm": "Bibisara Assaubayeva" },
+        { "id": "13600036", "gm": "Maia Chiburdanidze" },
+        { "id": "35006916", "gm": "Divya Deshmukh" },
+        { "id": "4134974", "gm": "Nadezhda Kosintseva" },
+        { "id": "4128125", "gm": "Alexandra Kosteniuk" },
+        { "id": "4133471", "gm": "Tatiana Kosintseva" },
+        { "id": "13703544", "gm": "Zhansaya Abdumalik" },
+        { "id": "13601903", "gm": "Nana Dzagnidze" },
+        { "id": "8600635", "gm": "Xu Yuhua" },
+        { "id": "14114550", "gm": "Mariya Muzychuk" },
+        { "id": "5015197", "gm": "Harika Dronavalli" },
+        { "id": "5091756", "gm": "Vaishali Rameshbabu" },
+        { "id": "8601283", "gm": "Zhao Xue" },
+        { "id": "8600546", "gm": "Zhu Chen" },
+        { "id": "2012782", "gm": "Irina Krush" },
+        { "id": "4641833", "gm": "Elisabeth Pähtz" },
+        { "id": "14110911", "gm": "Anna Ushenina" },
+        { "id": "617822", "gm": "Marie Sebag" },
+        { "id": "1700030", "gm": "Pia Cramling" },
+        { "id": "4195752", "gm": "Olga Girya" },
+        { "id": "1106619", "gm": "Monika Soćko" },
+        { "id": "1004786", "gm": "Zhaoqin Peng" },
+        { "id": "13600168", "gm": "Ketevan Arakhamia-Grant" },
+        { "id": "600024", "gm": "Mikhail Tal" },
+        { "id": "600057", "gm": "Boris Spassky" },
+        { "id": "1500840", "gm": "Koneru Humpy" }
+      ]
+    },
+    "Ruy Lopez|black": {
+      "count": 95,
+      "gms": [
+        { "id": "8603677", "gm": "Ding Liren" },
+        { "id": "2016192", "gm": "Hikaru Nakamura" },
+        { "id": "2020009", "gm": "Fabiano Caruana" },
+        { "id": "5202213", "gm": "Wesley So" },
+        { "id": "14205483", "gm": "Javokhir Sindarov" },
+        { "id": "14204118", "gm": "Nodirbek Abdusattorov" },
+        { "id": "25059530", "gm": "R Praggnanandhaa" },
+        { "id": "12940690", "gm": "Vincent Keymer" },
+        { "id": "5000017", "gm": "Viswanathan Anand" },
+        { "id": "12401137", "gm": "Lê Quang Liêm" },
+        { "id": "12521213", "gm": "Amin Tabatabaei" },
+        { "id": "13300474", "gm": "Levon Aronian" },
+        { "id": "2093596", "gm": "Hans Niemann" },
+        { "id": "1039784", "gm": "Jorden Van Foreest" },
+        { "id": "4158814", "gm": "Dmitry Andreikin" },
+        { "id": "14203987", "gm": "Nodirbek Yakubboev" },
+        { "id": "13401319", "gm": "Shakhriyar Mamedyarov" },
+        { "id": "25092340", "gm": "Nihal Sarin" },
+        { "id": "2040506", "gm": "Samuel Sevian" },
+        { "id": "12539929", "gm": "Parham Maghsoodloo" },
+        { "id": "2900084", "gm": "Veselin Topalov" },
+        { "id": "5029465", "gm": "Vidit Gujrathi" },
+        { "id": "2056437", "gm": "Awonder Liang" },
+        { "id": "24175439", "gm": "Andrey Esipenko" },
+        { "id": "35028600", "gm": "M Pranesh" },
+        { "id": "410608", "gm": "David Howell" },
+        { "id": "14200244", "gm": "Rustam Kasimdzhanov" },
+        { "id": "14102951", "gm": "Pavel Eljanov" },
+        { "id": "703303", "gm": "Peter Leko" },
+        { "id": "12923044", "gm": "Frederik Svane" },
+        { "id": "13306553", "gm": "Haik Martirosyan" },
+        { "id": "2023970", "gm": "Ray Robson" },
+        { "id": "24126055", "gm": "Daniil Dubov" },
+        { "id": "3805662", "gm": "Jose Eduardo Martinez Alcantara" },
+        { "id": "24101605", "gm": "Vladislav Artemiev" },
+        { "id": "2285525", "gm": "David Anton Guijarro" },
+        { "id": "5007003", "gm": "Pentala Harikrishna" },
+        { "id": "13306766", "gm": "Shant Sargsyan" },
+        { "id": "5084423", "gm": "Aryan Chopra" },
+        { "id": "35093487", "gm": "Raunak Sadhwani" },
+        { "id": "13302507", "gm": "Robert Hovhannisyan" },
+        { "id": "4135539", "gm": "Kirill Alekseenko" },
+        { "id": "14101025", "gm": "Alexander Onischuk" },
+        { "id": "4262875", "gm": "Nikolas Theodorou" },
+        { "id": "4162722", "gm": "Ernesto Inarkiev" },
+        { "id": "13515110", "gm": "Denis Lazavik" },
+        { "id": "14103320", "gm": "Ruslan Ponomariov" },
+        { "id": "4126025", "gm": "Alexander Grischuk" },
+        { "id": "14100010", "gm": "Vasyl Ivanchuk" },
+        { "id": "30901561", "gm": "Brandon Jacobson" },
+        { "id": "12909572", "gm": "Dmitrij Kollars" },
+        { "id": "5061245", "gm": "Abhimanyu Puranik" },
+        { "id": "4108116", "gm": "Maksim Chigaev" },
+        { "id": "14508150", "gm": "Ivan Saric" },
+        { "id": "4657101", "gm": "Rasmus Svane" },
+        { "id": "30953499", "gm": "Andy Woodward" },
+        { "id": "14109182", "gm": "Yuriy Kryvoruchko" },
+        { "id": "1400355", "gm": "Peter Heine Nielsen" },
+        { "id": "13300881", "gm": "Gabriel Sargissian" },
+        { "id": "712779", "gm": "Benjamin Gledura" },
+        { "id": "605506", "gm": "Etienne Bacrot" },
+        { "id": "14210703", "gm": "Mukhiddin Madaminov" },
+        { "id": "24107581", "gm": "Alexandr Predke" },
+        { "id": "13402935", "gm": "Vasif Durarbayli" },
+        { "id": "608742", "gm": "Laurent Fressinet" },
+        { "id": "13402129", "gm": "Eltaj Safarli" },
+        { "id": "2099438", "gm": "Andrew Hong" },
+        { "id": "10601457", "gm": "Bassem Amin" },
+        { "id": "404853", "gm": "Luke McShane" },
+        { "id": "309095", "gm": "David Navara" },
+        { "id": "3800024", "gm": "Julio Granda Zuniga" },
+        { "id": "5804418", "gm": "Tin Jingyao" },
+        { "id": "4111990", "gm": "Semen Khanin" },
+        { "id": "400041", "gm": "Michael Adams" },
+        { "id": "4120787", "gm": "Vladimir Malakhov" },
+        { "id": "21864080", "gm": "Jan Malek" },
+        { "id": "4168003", "gm": "Maxim Matlakov" },
+        { "id": "400025", "gm": "Nigel Short" },
+        { "id": "2000024", "gm": "Gata Kamsky" },
+        { "id": "2209390", "gm": "Alexei Shirov" },
+        { "id": "24198455", "gm": "Arseniy Nesterov" },
+        { "id": "4194985", "gm": "David Paravyan" },
+        { "id": "13707647", "gm": "Denis Makhnev" },
+        { "id": "4650891", "gm": "Arkadij Naiditsch" },
+        { "id": "8600147", "gm": "Xie Jun" },
+        { "id": "5008123", "gm": "Humpy Koneru" },
+        { "id": "14109336", "gm": "Kateryna Lagno" },
+        { "id": "4134974", "gm": "Nadezhda Kosintseva" },
+        { "id": "4133471", "gm": "Tatiana Kosintseva" },
+        { "id": "13703544", "gm": "Zhansaya Abdumalik" },
+        { "id": "13602993", "gm": "Nino Batsiashvili" },
+        { "id": "5091756", "gm": "Vaishali Rameshbabu" },
+        { "id": "8601283", "gm": "Zhao Xue" },
+        { "id": "2902257", "gm": "Antoaneta Stefanova" },
+        { "id": "14101513", "gm": "Natalia Zhukova" }
+      ]
+    },
+    "French Defense|black": {
+      "count": 30,
+      "gms": [
+        { "id": "35009192", "gm": "Arjun Erigaisi" },
+        { "id": "738590", "gm": "Richárd Rapport" },
+        { "id": "8602883", "gm": "Wang Hao" },
+        { "id": "24651516", "gm": "Matthias Bluebaum" },
+        { "id": "13400924", "gm": "Teimour Radjabov" },
+        { "id": "13413937", "gm": "Aydin Suleymanli" },
+        { "id": "4152956", "gm": "Nikita Vitiugov" },
+        { "id": "4116992", "gm": "Alexander Morozevich" },
+        { "id": "14117908", "gm": "Igor Kovalenko" },
+        { "id": "5007003", "gm": "Pentala Harikrishna" },
+        { "id": "1512668", "gm": "Johan-Sebastian Christiansen" },
+        { "id": "14100010", "gm": "Vasyl Ivanchuk" },
+        { "id": "4657101", "gm": "Rasmus Svane" },
+        { "id": "14105730", "gm": "Anton Korobov" },
+        { "id": "4675789", "gm": "Georg Meier" },
+        { "id": "718572", "gm": "Ferenc Berkes" },
+        { "id": "8622388", "gm": "Xiao Tong" },
+        { "id": "662399", "gm": "Maxime Lagarde" },
+        { "id": "4173708", "gm": "Aleksandr Rakhmanov" },
+        { "id": "400025", "gm": "Nigel Short" },
+        { "id": "4125029", "gm": "Alexander Riazantsev" },
+        { "id": "8605114", "gm": "Lei Tingjie" },
+        { "id": "8600635", "gm": "Xu Yuhua" },
+        { "id": "5015197", "gm": "Harika Dronavalli" },
+        { "id": "13300210", "gm": "Elina Danielian" },
+        { "id": "12400149", "gm": "Hoang Thanh Trang" },
+        { "id": "1106619", "gm": "Monika Soćko" },
+        { "id": "1004786", "gm": "Zhaoqin Peng" },
+        { "id": "14101513", "gm": "Natalia Zhukova" },
+        { "id": "600024", "gm": "Mikhail Tal" }
+      ]
+    },
+    "Semi-Slav Defence|black": {
+      "count": 6,
+      "gms": [
+        { "id": "2805677", "gm": "Boris Gelfand" },
+        { "id": "2023970", "gm": "Ray Robson" },
+        { "id": "13302507", "gm": "Robert Hovhannisyan" },
+        { "id": "14114550", "gm": "Mariya Muzychuk" },
+        { "id": "23718293", "gm": "Vaclav Finek" },
+        { "id": "2200015", "gm": "Miguel Illescas Cordoba" }
+      ]
+    }
+  },
+  "suspectedDuplicates": [
+    {
+      "ids": [
+        "5008123",
+        "1500840"
+      ],
+      "names": [
+        "Humpy Koneru",
+        "Koneru Humpy"
+      ],
+      "status": "unverified",
+      "note": "Same birth date, federation, GM year and Wikipedia page in the records; FIDE identity not verified. Do not merge, alias or consolidate without verified identity evidence and the owner's separate approval."
+    }
+  ]
+}

@@ -116,9 +116,70 @@ area or dependency.
 |---|---|---|---|---|
 | Board | Protected code: demo and results board, pieces, board editor, move playback, evaluation bar | 5–10 | `npm test` (protected-code hash), `npm run clickthrough`, `test:results-identity` | High |
 | Scoring and survey | Protected code: survey, scoring, picker; picks and scoring in `expected.json`; opening data that changes picks | 2–4 | `npm test` (checks 1–6, 11), `npm run clickthrough` | High for code, Medium for data |
-| GM data | `NOTABLE_GM_POOLS`, GM records and `notableGm` names; `gm-baseline.json` | 4, 5 | `npm test` (checks 7–11), `test:results-identity` | Medium; High if rotation or pop-up code changes |
+| GM data | `NOTABLE_GM_POOLS`, GM records and `notableGm` names; `gm-baseline.json`; `tools/survey-regression/pool-governance.json` | 4, 5 | `npm test` (checks 7–11 and pool governance), `test:results-identity` | Medium; High if rotation or pop-up code changes |
 | Deployment workflows | `.github/workflows/`, `CNAME`, the **Protect main** ruleset | all, through CI and the Live Guardian | **Regression tests** on the PR itself; `test:known-shrink`, `test:guardian-report`, `test:retries`; Live Guardian after deployment | High, plus policy review |
 | Labs ECO picker | Protected code: Labs opening picker | 11 | `npm run clickthrough` (Labs ECO picker, offline on the PR, live in the Live Guardian) | High |
+
+## Notable GM pool governance
+Every pool in `NOTABLE_GM_POOLS` has exactly one classification, recorded in
+`tools/survey-regression/pool-governance.json`. `npm test` enforces this file through
+`tools/survey-regression/pool_governance.js`. Classifications describe how a pool is governed. They do not change
+routing: every pool still supplies the Notable GM for its own cards in the same way.
+
+- **Variation-Level Analytical Pool** (`variation-level`): a pool for one variation, sub-line or narrow group of
+  codes. It may show **at most five distinct GMs**.
+- **Family-Level Recommendation Pool** (`family-level`): a pool that recommends GMs for a whole opening family on
+  one side. It is exempt from the five-GM maximum **only** when its entry holds structured evidence for every
+  criterion F1–F5 below **and** the owner's approval (`approval.by` "Calvin", a date, and an https link to the
+  approval). Missing, malformed or placeholder evidence fails the test and gives no exemption.
+- **Unclassified** (`unclassified`): not yet individually reviewed. An unclassified pool gets no exemption. Each
+  pool that already had more than five GMs on 2026-10-30 is frozen in `frozenRosters` with its exact GM list
+  (FIDE id and name). Any addition or removal fails until the pool is classified, and no other unclassified pool
+  may exceed five GMs. New pools need an entry before they can merge.
+
+**Six-pool tactical limit.** A GM may belong to at most six Variation-Level Analytical Pools. Family-level
+memberships with complete evidence never count. A GM with more than six confirmed variation-level memberships
+fails the test. A GM is certified only when every pool they are in is validly classified: variation-level, or
+family-level with complete F1–F5 evidence and approval. Any membership in a pool that is unclassified, missing
+from the registry, has a missing or invalid classification, has incomplete family-level evidence or approval, or
+where the GM's identity cannot be confirmed makes their status **NOT CERTIFIED — classification incomplete**.
+That is neither an exemption nor a confirmed violation. The test names each such GM with the pools and reasons,
+and lists those who could exceed six once classified. The limit is certified only when every pool is validly
+classified.
+
+**GM identity.** GMs are counted by FIDE id: the entry's `id` when it matches a GM record of the same name,
+otherwise the id of the record with the entry's exact name. An `id` that belongs to a different name fails.
+Records with different ids are different GMs. `suspectedDuplicates` flags records that may be one person,
+currently Humpy Koneru 5008123 and Koneru Humpy 1500840. Flagged records stay separate, are counted separately
+and must both remain. They are not merged, aliased or consolidated without verified identity evidence and the
+owner's separate approval.
+
+**Family-level criteria.** Each must be met and recorded for the individual pool, in this structure:
+- **F1 family scope** `{ family, reference, codes }`: one named opening family from an authoritative https
+  reference (for example lichess-org/chess-openings), and `codes` listing exactly the pool's codes. A single
+  variation or sub-line does not qualify.
+- **F2 several variations** `{ variations: [{ name, codes, sources }] }`: at least two distinct named variations of
+  that family. Names are compared ignoring case and spacing, so duplicates do not count. Each variation has ECO
+  codes inside the pool and at least one https source.
+- **F3 family-level evidence** `{ gms: [{ gm, fideId, basis, sources }] }`: one row for every GM the pool shows,
+  matched by FIDE id, with a specific basis and at least one https source supporting the family on that side.
+  Evidence for only one variation belongs in a variation-level pool.
+- **F4 recommendation role** `{ statement, notAContainer: true }`: the pool is the recommendation source for the
+  family's cards. It is not a navigation hub or container, and no pool sits inside another.
+- **F5 individual review** `{ reviewer, reviewRef }`: an independent review of this pool's evidence (not by the
+  approver), linked by https.
+
+Text fields must be specific: generic placeholders such as "recorded evidence", "TBD", "n/a" or "see above" are
+rejected, and `example.com` links do not count as sources.
+These are structural checks only. A well-formed https link is not proof that the source supports the claim, and
+passing tests do not establish the truth or quality of any evidence. Each pool's evidence is judged by human
+review, and the owner gives final approval of every classification and exemption.
+
+**What never classifies a pool:** its key or name (for example the word "family"), its size, its number of
+codes, `matchScope: "FAMILY ONLY"`, `familyLabels`, `recordLabels`, or the batch or wave that added it.
+Classifications, frozen rosters and identity flags change only through a pull request that edits
+`pool-governance.json` with the evidence above. That PR is GM data (impact index), needs an independent review,
+and needs the owner's approval of each pool it classifies or roster it changes.
 
 ## ECO repair acceptance checklist
 - [ ] Inspect the current ECO data in `index.html`.
