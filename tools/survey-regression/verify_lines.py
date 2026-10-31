@@ -13,7 +13,9 @@ that still requires human source review. Lines are capped at 20 plies.
 
 A row is PREFIX_REPLAYED only if:
   1. ECO format, opening name, and side fields are present (format check only);
-  2. >= THRESHOLD distinct registered source families share the same prefix;
+  2. >= THRESHOLD distinct registered source families share the same prefix
+     (4 by default; --threshold 3 applies only to the ECOs in
+     THREE_SOURCE_ECOS, currently C54, and every other ECO still needs 4);
   3. that prefix replays legally with python-chess; and
   4. it is <= 20 plies.
 This status does not verify the ECO/name/side mapping.
@@ -41,6 +43,8 @@ import chess
 PINNED = "1.10.0"
 MAX_PLIES = 20
 ALLOWED_THRESHOLDS = (3, 4)
+# The only ECOs where --threshold 3 may apply; every other ECO stays at 4.
+THREE_SOURCE_ECOS = ("C54",)
 ECO_PATTERN = re.compile(r"^[A-E][0-9]{2}$")
 
 
@@ -145,14 +149,22 @@ def canonical_source_family(column):
     return None
 
 
+def applied_threshold(eco, requested):
+    """Fail closed: a requested threshold of 3 applies only to THREE_SOURCE_ECOS."""
+    return 3 if requested == 3 and eco in THREE_SOURCE_ECOS else 4
+
+
 def check_row(row, threshold):
     eco = (row.get("eco") or "").strip().upper()
     opening_name = (row.get("opening_name") or "").strip()
     side = (row.get("side") or "").strip().lower()
+    requested, threshold = threshold, applied_threshold(eco, threshold)
     res = {
         "eco": eco,
         "opening_name": opening_name,
         "side": side,
+        "threshold_requested": requested,
+        "threshold_applied": threshold,
         "site_columns_with_line": 0,
         "source_families_with_line": 0,
         "source_families": [],
@@ -459,7 +471,13 @@ def selftest():
 
     assert check_row(row(legal, 4), 4)["status"] == "PREFIX_REPLAYED"
     assert check_row(row(legal, 3), 4)["status"] == "EXCLUDED"
-    assert check_row(row(legal, 3), 3)["status"] == "PREFIX_REPLAYED"
+    # Threshold 3 is an ECO-specific exception: C60 still needs four families.
+    c60_at_3 = check_row(row(legal, 3), 3)
+    assert c60_at_3["status"] == "EXCLUDED" and c60_at_3["threshold_applied"] == 4
+    assert c60_at_3["threshold_requested"] == 3 and "need 4" in c60_at_3["reason"]
+    c54_at_3 = check_row(dict(row(legal, 3), eco="C54", opening_name="Giuoco Piano"), 3)
+    assert c54_at_3["status"] == "PREFIX_REPLAYED" and c54_at_3["threshold_applied"] == 3
+    assert check_row(dict(row(legal, 3), eco="C54", opening_name="Giuoco Piano"), 4)["status"] == "EXCLUDED"
     assert check_row(row(illegal, 4), 4)["replay"] == "FAIL"
     assert check_row(row(long_line, 4), 4)["plies"] == MAX_PLIES
 
@@ -501,18 +519,19 @@ def selftest():
     assert alias_result["source_families_with_line"] == 1
     assert canonical_source_family("site_chesscom2") == "chesscom"
 
-    # Three registered independent families can satisfy threshold three.
+    # Three registered independent families can satisfy threshold three for C54 only.
     independent = {
-        "eco": "C60", "opening_name": "Ruy Lopez", "side": "White",
+        "eco": "C54", "opening_name": "Giuoco Piano", "side": "White",
         "site_chesscom": legal,
         "site_chessgames": legal,
         "site_wikibooks": legal,
     }
     assert check_row(independent, 3)["status"] == "PREFIX_REPLAYED"
+    assert check_row(dict(independent, eco="C60", opening_name="Ruy Lopez"), 3)["status"] == "EXCLUDED"
 
     # Lichess-derived Chessiverse content is one family, not a second vote.
     lichess_derived = {
-        "eco": "C60", "opening_name": "Ruy Lopez", "side": "White",
+        "eco": "C54", "opening_name": "Giuoco Piano", "side": "White",
         "site_lichess": legal,
         "site_chessiverse": legal,
         "site_chesscom": legal,
@@ -738,6 +757,7 @@ def main():
     for result in results:
         print(
             f"{result['eco']:5} {result['status']:18} "
+            f"threshold={result['threshold_applied']} "
             f"agree_families={result['agreeing_families']}/{result['source_families_with_line']} "
             f"columns={result['site_columns_with_line']} "
             f"plies={result['plies']} {result['reason']}"
@@ -747,7 +767,9 @@ def main():
             json.dump(
                 {
                     "python_chess": chess.__version__,
-                    "threshold": args.threshold,
+                    "threshold_requested": args.threshold,
+                    "three_source_ecos": list(THREE_SOURCE_ECOS),
+                    "threshold_rule": "4 independent registered families by default; a requested threshold of 3 applies only to three_source_ecos; each row reports threshold_applied.",
                     "max_plies": MAX_PLIES,
                     "scope": "Distinct registered source-family prefix consensus and legal SAN replay only; ECO/name/side correspondence requires independent source review.",
                     "rows": results,
