@@ -110,26 +110,28 @@ function familyLevelGaps(entry, pool, gms, registry) {
 
 // pools: [{ key, codes, pool: [{ gm, id, status }] }]; records: [{ id, name }]; registry: pool-governance.json
 function checkPoolGovernance(pools, records, registry) {
-  const issues = [], warnings = [];
+  const issues = [], registryIssues = [], warnings = [];
   const resolve = identityResolver(records);
   const maxGms = registry.maxGmsPerVariationPool, maxPools = registry.maxVariationPoolsPerGm;
-  if (!Number.isInteger(maxGms) || !Number.isInteger(maxPools)) issues.push('pool-governance.json needs integer maxGmsPerVariationPool and maxVariationPoolsPerGm');
-  if (JSON.stringify(registry.familyLevelCriteria) !== JSON.stringify(CRITERIA)) issues.push(`pool-governance.json familyLevelCriteria must be ${CRITERIA.join(', ')}`);
-  if (!registry.approver) issues.push('pool-governance.json needs an approver');
-  const registryOk = !issues.length;
+  if (!Number.isInteger(maxGms) || !Number.isInteger(maxPools)) registryIssues.push('pool-governance.json needs integer maxGmsPerVariationPool and maxVariationPoolsPerGm');
+  if (JSON.stringify(registry.familyLevelCriteria) !== JSON.stringify(CRITERIA)) registryIssues.push(`pool-governance.json familyLevelCriteria must be ${CRITERIA.join(', ')}`);
+  if (!registry.approver) registryIssues.push('pool-governance.json needs an approver');
   const entries = registry.pools || {}, frozen = registry.frozenRosters || {};
   const keys = new Set(pools.map(p => p.key));
-  for (const k of Object.keys(entries)) if (!keys.has(k)) issues.push(`pool-governance.json lists "${k}", which is not a pool`);
-  for (const k of Object.keys(frozen)) if (!keys.has(k)) issues.push(`frozenRosters lists "${k}", which is not a pool`);
+  for (const k of Object.keys(entries)) if (!keys.has(k)) registryIssues.push(`pool-governance.json lists "${k}", which is not a pool`);
+  for (const k of Object.keys(frozen)) if (!keys.has(k)) registryIssues.push(`frozenRosters lists "${k}", which is not a pool`);
 
-  // Suspected duplicate identities: reported every run; both records must still exist separately
+  // Suspected duplicate identities: reported every run; both records must still exist separately.
+  // These are registry-wide integrity checks, so finish them before deciding registry validity.
   const recIds = new Set(records.map(r => String(r.id)));
   const duplicates = (registry.suspectedDuplicates || []).map(d => {
     const ids = (d.ids || []).map(String);
-    if (ids.length < 2 || new Set(ids).size !== ids.length) issues.push(`suspectedDuplicates: needs 2 or more distinct ids, got ${ids.join(', ')}`);
-    for (const id of ids) if (!recIds.has(id)) issues.push(`suspectedDuplicates: GM record ${id} is missing; records under review must be kept separately until the owner approves a reconciliation`);
+    if (ids.length < 2 || new Set(ids).size !== ids.length) registryIssues.push(`suspectedDuplicates: needs 2 or more distinct ids, got ${ids.join(', ')}`);
+    for (const id of ids) if (!recIds.has(id)) registryIssues.push(`suspectedDuplicates: GM record ${id} is missing; records under review must be kept separately until the owner approves a reconciliation`);
     return { ids, status: d.status || 'unverified' };
   });
+  const registryOk = registryIssues.length === 0;
+  issues.push(...registryIssues);
 
   const counts = { 'variation-level': 0, 'family-level': 0, 'family-level (exempt)': 0, unclassified: 0 };
   // id -> { name, variation: [pool keys], incomplete: [{ pool, reason }] }. A membership is "incomplete" when its
@@ -157,11 +159,17 @@ function checkPoolGovernance(pools, records, registry) {
     if (!entry) { issues.push(`${p.key}: no entry in pool-governance.json (every pool needs an explicit classification)`); reason = 'no registry entry'; }
     else if (!CLASSES.includes(cls)) { issues.push(`${p.key}: classification "${cls}" is not one of ${CLASSES.join(', ')}`); reason = `invalid classification "${cls}"`; }
     else counts[cls]++;
-    if (!reason && cls !== 'unclassified' && p.key in frozen) issues.push(`${p.key}: classified, so it must not be in frozenRosters`);
+    if (!reason && cls !== 'unclassified' && p.key in frozen) {
+      issues.push(`${p.key}: classified, so it must not be in frozenRosters`);
+      reason = 'classified pool remains frozen';
+    }
     if (reason) {
       // nothing more can be checked for this pool
     } else if (cls === 'variation-level') {
-      if (n > maxGms) issues.push(`${p.key}: variation-level pool has ${n} GMs; maximum is ${maxGms}`);
+      if (n > maxGms) {
+        issues.push(`${p.key}: variation-level pool has ${n} GMs; maximum is ${maxGms}`);
+        reason = 'variation-level pool exceeds maximum';
+      }
     } else if (cls === 'family-level') {
       const gaps = registryOk ? familyLevelGaps(entry, p, gms, registry) : ['registry settings invalid'];
       if (gaps.length) { issues.push(`${p.key}: family-level evidence is incomplete, so no exemption applies (${gaps.join('; ')})`); reason = 'family-level evidence or approval incomplete'; }
@@ -174,9 +182,11 @@ function checkPoolGovernance(pools, records, registry) {
         const have = new Map(gms.map(g => [g.id, g.name]));
         const added = [...have].filter(([id]) => !want.has(id)).map(([id, nm]) => `${nm} (${id})`);
         const removed = [...want].filter(([id]) => !have.has(id)).map(([id, nm]) => `${nm} (${id})`);
-        if (added.length) issues.push(`${p.key}: frozen roster gained ${added.join(', ')} (unauthorized addition)`);
-        if (removed.length) issues.push(`${p.key}: frozen roster lost ${removed.join(', ')} (unauthorized removal)`);
-        if (frozen[p.key].count !== want.size) issues.push(`${p.key}: frozenRosters count ${frozen[p.key].count} does not match its ${want.size} listed GMs`);
+        let frozenMismatch = false;
+        if (added.length) { issues.push(`${p.key}: frozen roster gained ${added.join(', ')} (unauthorized addition)`); frozenMismatch = true; }
+        if (removed.length) { issues.push(`${p.key}: frozen roster lost ${removed.join(', ')} (unauthorized removal)`); frozenMismatch = true; }
+        if (frozen[p.key].count !== want.size) { issues.push(`${p.key}: frozenRosters count ${frozen[p.key].count} does not match its ${want.size} listed GMs`); frozenMismatch = true; }
+        if (frozenMismatch) reason = 'unclassified; frozen roster mismatch';
       } else if (n > maxGms) {
         issues.push(`${p.key}: unclassified pool has ${n} GMs (more than ${maxGms}) and no frozen roster; classify it or keep it at ${maxGms} or fewer`);
       }
@@ -194,14 +204,25 @@ function checkPoolGovernance(pools, records, registry) {
   // and approval); any incomplete membership gives NOT CERTIFIED, neither an exemption nor a confirmed violation.
   const sixPool = { certified: [], notCertified: [], couldExceed: [], reasons: {} };
   for (const [id, m] of Object.entries(memberships)) {
-    if (m.variation.length > maxPools) issues.push(`${m.name} (${id}) is in ${m.variation.length} variation-level pools; maximum is ${maxPools}`);
+    if (!registryOk) {
+      sixPool.notCertified.push(id);
+      sixPool.reasons[id] = `${m.name}: registry-wide validation failed (${registryIssues.join('; ')})`;
+      continue;
+    }
+    if (m.variation.length > maxPools) {
+      issues.push(`${m.name} (${id}) is in ${m.variation.length} variation-level pools; maximum is ${maxPools}`);
+      sixPool.notCertified.push(id);
+      sixPool.reasons[id] = `${m.name}: ${m.variation.length} confirmed variation-level pools exceed the maximum of ${maxPools}`;
+      continue;
+    }
     if (m.incomplete.length) {
       sixPool.notCertified.push(id);
       sixPool.reasons[id] = `${m.name}: ` + m.incomplete.map(x => `${x.pool} (${x.reason})`).join(', ');
       if (m.variation.length + m.incomplete.length > maxPools) sixPool.couldExceed.push(`${m.name} ${m.variation.length}+${m.incomplete.length}`);
     } else sixPool.certified.push(id);
   }
-  const complete = registryOk && incompletePools === 0;
+  // The headline certification must never contradict a registry or pool issue.
+  const complete = registryOk && incompletePools === 0 && issues.length === 0;
   sixPool.incompletePools = incompletePools;
   sixPool.status = complete ? 'CERTIFIED' : 'NOT CERTIFIED — classification incomplete';
   for (const d of duplicates) warnings.push(`suspected duplicate identity (${d.status}): GM records ${d.ids.join(' and ')} are counted separately; not merged`);

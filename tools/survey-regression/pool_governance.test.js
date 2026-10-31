@@ -37,11 +37,11 @@ const cases = [
   // Explicit classification
   { name: 'unclassified pool within 5 GMs passes', pools: [pool('A|white', gms(5))], reg: registry({ 'A|white': U }), issues: [] },
   { name: 'pool with no registry entry fails', pools: [pool('A|white', gms(2))], reg: registry({}), issues: ['no entry in pool-governance.json'] },
-  { name: 'registry entry for a pool that does not exist fails', pools: [], reg: registry({ 'Gone|black': U }), issues: ['which is not a pool'] },
+  { name: 'registry entry for a pool that does not exist fails', pools: [], reg: registry({ 'Gone|black': U }), issues: ['which is not a pool'], six: 'NOT CERTIFIED — classification incomplete' },
   { name: 'unknown classification fails', pools: [pool('A|white', gms(2))], reg: registry({ 'A|white': { classification: 'macro' } }), issues: ['is not one of'] },
   // Five-GM limit
   { name: 'variation-level pool with 5 GMs passes', pools: [pool('A|white', gms(5))], reg: registry({ 'A|white': V }), issues: [] },
-  { name: 'variation-level pool with 6 GMs fails', pools: [pool('A|white', gms(6))], reg: registry({ 'A|white': V }), issues: ['variation-level pool has 6 GMs; maximum is 5'] },
+  { name: 'variation-level pool with 6 GMs fails', pools: [pool('A|white', gms(6))], reg: registry({ 'A|white': V }), issues: ['variation-level pool has 6 GMs; maximum is 5'], six: 'NOT CERTIFIED — classification incomplete', notCertified: ['101', '102', '103', '104', '105', '106'] },
   { name: 'pending, unknown-name and repeated entries are not counted',
     pools: [{ key: 'A|white', codes: CODES, pool: gms(5).map(gm => ({ gm, status: 'verified' })).concat([{ gm: 'GM 6', status: 'pending' }, { gm: 'No Record', status: 'verified' }, { gm: 'GM 1', status: 'verified' }]) }],
     reg: registry({ 'A|white': V }), issues: [] },
@@ -84,12 +84,12 @@ const cases = [
   { name: 'frozen roster with a swapped GM fails both ways', pools: [pool('A|white', gms(7).concat(['GM 10']))], reg: registry({ 'A|white': U }, { 'A|white': frozenOf(gms(8)) }),
     issues: ['gained GM 10', 'lost GM 8'] },
   { name: 'frozen roster whose count disagrees with its list fails', pools: [pool('A|white', gms(8))], reg: registry({ 'A|white': U }, { 'A|white': Object.assign(frozenOf(gms(8)), { count: 9 }) }), issues: ['does not match its 8 listed GMs'] },
-  { name: 'a classified pool left in frozenRosters fails', pools: [pool('A|white', gms(5))], reg: registry({ 'A|white': V }, { 'A|white': frozenOf(gms(5)) }), issues: ['must not be in frozenRosters'] },
-  { name: 'frozen roster entry for a missing pool fails', pools: [], reg: registry({}, { 'Gone|white': frozenOf(gms(6)) }), issues: ['frozenRosters lists "Gone|white"'] },
+  { name: 'a classified pool left in frozenRosters fails', pools: [pool('A|white', gms(5))], reg: registry({ 'A|white': V }, { 'A|white': frozenOf(gms(5)) }), issues: ['must not be in frozenRosters'], six: 'NOT CERTIFIED — classification incomplete', notCertified: ['101', '102', '103', '104', '105'] },
+  { name: 'frozen roster entry for a missing pool fails', pools: [], reg: registry({}, { 'Gone|white': frozenOf(gms(6)) }), issues: ['frozenRosters lists "Gone|white"'], six: 'NOT CERTIFIED — classification incomplete' },
   // Six-pool limit
   { name: 'GM in 7 variation-level pools fails the 6-pool limit',
     pools: gms(7).map((_, i) => pool(`P${i}|white`, ['Solo'])), reg: registry(Object.fromEntries(gms(7).map((_, i) => [`P${i}|white`, V]))),
-    issues: ['Solo (200) is in 7 variation-level pools; maximum is 6'] },
+    issues: ['Solo (200) is in 7 variation-level pools; maximum is 6'], six: 'NOT CERTIFIED — classification incomplete', notCertified: ['200'] },
   { name: 'GM in 6 variation-level pools plus 2 family-level pools passes and is CERTIFIED',
     pools: gms(8).map((_, i) => pool(`P${i}|white`, ['Solo'])),
     reg: registry(Object.fromEntries(gms(8).map((_, i) => [`P${i}|white`, i < 6 ? V : family(['Solo'])]))), issues: [], six: 'CERTIFIED' },
@@ -124,6 +124,17 @@ const cases = [
   { name: 'all memberships validly classified gives CERTIFIED with no GM left uncertified',
     pools: [pool('P0|white', ['Solo']), pool('P1|white', ['Solo'])], reg: registry({ 'P0|white': V, 'P1|white': family(['Solo']) }),
     issues: [], six: 'CERTIFIED', certified: ['200'] },
+  // Registry-wide integrity must block every per-GM certification, including variation-only memberships.
+  { name: 'a stale pool key blocks certification for all shown GMs',
+    pools: [pool('P0|white', ['Solo'])], reg: registry({ 'P0|white': V, 'Gone|white': U }),
+    issues: ['which is not a pool'], six: 'NOT CERTIFIED — classification incomplete', notCertified: ['200'] },
+  { name: 'a stale frozen-roster key blocks certification for all shown GMs',
+    pools: [pool('P0|white', ['Solo'])], reg: registry({ 'P0|white': V }, { 'Gone|white': frozenOf(['GM 1']) }),
+    issues: ['frozenRosters lists "Gone|white"'], six: 'NOT CERTIFIED — classification incomplete', notCertified: ['200'] },
+  { name: 'invalid registry settings block variation-level-only GMs',
+    pools: [pool('P0|white', ['Solo'])],
+    reg: Object.assign(registry({ 'P0|white': V }), { familyLevelCriteria: ['F1-family-scope'] }),
+    issues: ['familyLevelCriteria must be'], six: 'NOT CERTIFIED — classification incomplete', notCertified: ['200'] },
   // Identity
   { name: 'an entry with a FIDE id and an entry by name for the same record count as one GM',
     pools: [{ key: 'A|white', codes: CODES, pool: [{ gm: 'GM 1', id: '101', status: 'verified' }, { gm: 'GM 1', status: 'verified' }].concat(gms(5).slice(1).map(gm => ({ gm, status: 'verified' }))) }],
@@ -135,7 +146,7 @@ const cases = [
   { name: 'a flagged suspected duplicate is reported and both records must remain',
     pools: [], reg: registry({}, {}, { suspectedDuplicates: [{ ids: ['5008123', '1500840'], status: 'unverified' }] }), issues: [], warnings: ['5008123 and 1500840 are counted separately; not merged'] },
   { name: 'a flagged record that disappears fails',
-    pools: [], reg: registry({}, {}, { suspectedDuplicates: [{ ids: ['5008123', '9999999'], status: 'unverified' }] }), issues: ['GM record 9999999 is missing'] },
+    pools: [], reg: registry({}, {}, { suspectedDuplicates: [{ ids: ['5008123', '9999999'], status: 'unverified' }] }), issues: ['GM record 9999999 is missing'], six: 'NOT CERTIFIED — classification incomplete' },
 ];
 
 let failed = 0;
