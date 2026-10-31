@@ -637,13 +637,13 @@ def boundary_selftest():
     assert "leaves the site's B20 line" in errors(
         record(assigned_side_moves=["e5", "Nc6", "Nf6"],
                full_legal_replay_sequence=["e4", "e5", "Nf3", "Nc6", "d4", "Nf6"]), catalog)
-    short = check_move_boundary(record(eco="B90"), catalog)
+    short = check_move_boundary(record(eco="B90", system_name="Sicilian Najdorf"), catalog)
     assert short["status"] == "VALID" and short["eco_identity"] == "PREFIX_ONLY" and short["warnings"]
 
     # Start from Move 5 needs five assigned-side moves, never five plies.
     assert move_five_start(record()) is None                       # 3 black moves, 6 plies
     assert move_five_start(white) is None                          # 3 white moves, 5 plies
-    najdorf = record(eco="B90", assigned_side_moves=["c5", "d6", "cxd4", "Nf6", "a6"],
+    najdorf = record(eco="B90", system_name="Sicilian Najdorf", assigned_side_moves=["c5", "d6", "cxd4", "Nf6", "a6"],
                      full_legal_replay_sequence=catalog[2]["B90"])
     assert check_move_boundary(najdorf, catalog)["status"] == "VALID"
     start = move_five_start(najdorf)
