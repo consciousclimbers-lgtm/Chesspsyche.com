@@ -360,6 +360,9 @@ def check_move_boundary(record, catalog=None):
         if eco not in names:
             errors.append(f"{eco} is not in the site's ECO list")
         else:
+            if record["system_name"] != names[eco]:
+                errors.append(
+                    f"{eco} system_name {record['system_name']!r} does not match the site's ECO name {names[eco]!r}")
             owner = sides.get(eco)
             if owner not in (side, "either"):
                 errors.append(f"{eco} belongs to {owner} in the site's ECO side map, not {side}")
@@ -629,6 +632,7 @@ def boundary_selftest():
     ok = check_move_boundary(record(), catalog)
     assert ok["status"] == "VALID" and ok["eco_identity"] == "REACHED"
     assert "not in the site's ECO list" in errors(record(eco="A00"), catalog)
+    assert "system_name" in errors(record(system_name="Wrong Sicilian Name"), catalog)
     assert "belongs to black" in errors(dict(white, eco="B20", assigned_side="white"), catalog)
     assert "leaves the site's B20 line" in errors(
         record(assigned_side_moves=["e5", "Nc6", "Nf6"],
